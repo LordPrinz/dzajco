@@ -59,7 +59,7 @@ const Form = () => {
 	};
 
 	return (
-		<form onSubmit={formSubmitHandler}>
+		<form onSubmit={formSubmitHandler} className="form">
 			<input
 				type="text"
 				placeholder="Link"

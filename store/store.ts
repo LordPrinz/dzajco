@@ -1,7 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
+import notificationSlice from "./slices/notificationSlice";
 
 export const store = configureStore({
-	reducer: {},
+	reducer: {
+		notification: notificationSlice,
+	},
 });
 
 export type RootState = ReturnType<typeof store.getState>;

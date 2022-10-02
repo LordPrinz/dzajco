@@ -8,8 +8,12 @@ export const notificationSlice = createSlice({
 	name: "notification",
 	initialState,
 	reducers: {
-		show: () => {},
-		hide: () => {},
+		show: (state, action) => {
+			state.notification = action.payload;
+		},
+		hide: (state, action) => {
+			state.notification = null;
+		},
 	},
 });
 
