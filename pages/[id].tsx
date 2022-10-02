@@ -8,7 +8,7 @@ const Page: NextPage = () => {
 
 export default Page;
 
-export async function getServerSideProps({ req, res }: { req: any; res: any }) {
+export async function getServerSideProps({ req }: { req: any }) {
 	const url = req.url.slice(1);
 
 	await dbConnect();

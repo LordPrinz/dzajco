@@ -38,13 +38,13 @@ export default async function handler(
 				},
 			]);
 
-			return res.status(201).json({ message: "Created" });
+			return res.status(201).json({ message: "Created", shortUrl: cutomName });
 		}
 
 		let isGenerated = false;
-
+		let shortUrl: string;
 		while (!isGenerated) {
-			const shortUrl = nanoid(generateRandom(3, 10));
+			shortUrl = nanoid(generateRandom(3, 10));
 			const link = await linkSchema.findOne({ _id: shortUrl });
 
 			if (link) {
@@ -60,7 +60,7 @@ export default async function handler(
 					clicks: 0,
 				},
 			]);
-			return res.status(201).json({ message: "Created" });
+			return res.status(201).json({ message: "Created", shortUrl });
 		}
 	}
 
