@@ -3,10 +3,15 @@ import React, { useState } from "react";
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
+
+	const clearInputs = () => {
+		setEnteredUrl("");
+		setCustomName("");
+	};
+
 	const formSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
-		console.log("XD");
 		if (!enteredUrl) {
 			return;
 		}
@@ -22,7 +27,7 @@ const Form = () => {
 				},
 			}).then((response) => response.json());
 
-			console.log(await response);
+			clearInputs();
 
 			return;
 		}
@@ -37,6 +42,8 @@ const Form = () => {
 				"Content-Type": "application/json",
 			},
 		}).then((response) => response.json());
+
+		clearInputs();
 	};
 
 	const linkInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
