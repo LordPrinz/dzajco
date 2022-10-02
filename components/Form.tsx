@@ -17,6 +17,9 @@ const Form = () => {
 				body: JSON.stringify({
 					url: enteredUrl,
 				}),
+				headers: {
+					"Content-Type": "application/json",
+				},
 			});
 			return;
 		}
@@ -27,6 +30,9 @@ const Form = () => {
 				url: enteredUrl,
 				customName,
 			}),
+			headers: {
+				"Content-Type": "application/json",
+			},
 		});
 	};
 
