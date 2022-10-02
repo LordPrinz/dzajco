@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse, NextPage } from "next";
-import dbConnect from "../lib/dbConnect";
-import linkSchema from "../models/link-schema";
+import dbConnect from "../../lib/dbConnect";
+import linkSchema from "../../models/link-schema";
 
 const Page: NextPage = () => {
 	return <div>Redirecting...</div>;
