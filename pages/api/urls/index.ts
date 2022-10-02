@@ -41,12 +41,17 @@ export default async function handler(
 			return res.status(201).json({ message: "Created", shortUrl: cutomName });
 		}
 
+		const link = await linkSchema.findOne({ full: body.url });
+
+		if (link) {
+			return res.status(201).json({ message: "Created", shortUrl: link._id });
+		}
+
 		let isGenerated = false;
 		let shortUrl: string;
 		while (!isGenerated) {
 			shortUrl = nanoid(generateRandom(3, 10));
 			const link = await linkSchema.findOne({ _id: shortUrl });
-
 			if (link) {
 				continue;
 			}

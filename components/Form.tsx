@@ -12,7 +12,7 @@ const Form = () => {
 		}
 
 		if (!customName) {
-			const result = await fetch("/api/urls", {
+			const response = await fetch("/api/urls", {
 				method: "POST",
 				body: JSON.stringify({
 					url: enteredUrl,
@@ -20,11 +20,14 @@ const Form = () => {
 				headers: {
 					"Content-Type": "application/json",
 				},
-			});
+			}).then((response) => response.json());
+
+			console.log(await response);
+
 			return;
 		}
 
-		const result = await fetch("/api/urls", {
+		const response = await fetch("/api/urls", {
 			method: "POST",
 			body: JSON.stringify({
 				url: enteredUrl,
@@ -33,7 +36,7 @@ const Form = () => {
 			headers: {
 				"Content-Type": "application/json",
 			},
-		});
+		}).then((response) => response.json());
 	};
 
 	const linkInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
