@@ -6,6 +6,7 @@ const Form = () => {
 	const formSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
+		console.log("XD");
 		if (!enteredUrl) {
 			return;
 		}
