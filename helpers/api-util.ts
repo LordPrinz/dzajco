@@ -1,20 +1,19 @@
 import dbConnect from "../lib/dbConnect";
 import linkSchema from "../models/link-schema";
 export async function saveUrl(fullUrl: string, customUrl?: string) {
-	const response = await fetch("/api/urls", {
-		method: "POST",
-		body: JSON.stringify({
-			url: fullUrl,
-			customName: customUrl,
-		}),
-		headers: {
-			"Content-Type": "application/json",
-		},
-	})
-		.then((response) => response.json())
-		.catch((err) => console.error(err));
-
-	return response;
+	// const response = await fetch("/api/urls", {
+	// 	method: "POST",
+	// 	body: JSON.stringify({
+	// 		url: fullUrl,
+	// 		customName: customUrl,
+	// 	}),
+	// 	headers: {
+	// 		"Content-Type": "application/json",
+	// 	},
+	// })
+	// 	.then((response) => response.json())
+	// 	.catch((err) => console.error(err));
+	// return response;
 }
 
 export async function getUrl(id: string) {

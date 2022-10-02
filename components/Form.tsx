@@ -27,6 +27,8 @@ const Form = () => {
 				},
 			}).then((response) => response.json());
 
+			console.log(response);
+
 			clearInputs();
 
 			return;
@@ -42,6 +44,8 @@ const Form = () => {
 				"Content-Type": "application/json",
 			},
 		}).then((response) => response.json());
+
+		console.log(response);
 
 		clearInputs();
 	};
