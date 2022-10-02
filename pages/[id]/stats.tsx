@@ -22,8 +22,6 @@ export async function getServerSideProps({ req }: { req: any }) {
 
 	const link = await linkSchema.findById(url);
 
-	console.log(url);
-
 	if (!link) {
 		return {
 			notFound: true,
