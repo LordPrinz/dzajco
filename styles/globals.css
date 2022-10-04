@@ -15,4 +15,5 @@ body {
 
 @layer components {
     .form {}
+    .notification {}
 }
