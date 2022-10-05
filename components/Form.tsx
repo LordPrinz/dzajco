@@ -60,19 +60,24 @@ const Form = () => {
 
 	return (
 		<form onSubmit={formSubmitHandler} className="form">
+			<div className="flex gap-10">
+				<input
+					className="input"
+					type="text"
+					placeholder="Link"
+					value={enteredUrl}
+					onInput={linkInputHandler}
+				/>
+
+				<input type="submit" value="Skróć" />	
+			</div>
 			<input
 				type="text"
-				placeholder="Link"
-				value={enteredUrl}
-				onInput={linkInputHandler}
-			/>
-			<input
-				type="text"
+				className="input hidden"
 				placeholder="Custom Name"
 				value={customName}
 				onInput={nameInputHandler}
 			/>
-			<input type="submit" value="Skróć" />
 		</form>
 	);
 };

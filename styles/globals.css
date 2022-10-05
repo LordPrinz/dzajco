@@ -2,6 +2,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 * {
     box-sizing: border-box;
 }
@@ -14,6 +15,11 @@ body {
 }
 
 @layer components {
-    .form {}
+    .input {
+        @apply flex-1 py-4 rounded-full pl-6 outline-none;
+    }
+    .form {
+        @apply flex flex-col w-8/12 mx-auto;
+    }
     .notification {}
 }
