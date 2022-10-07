@@ -69,7 +69,7 @@ const Form = () => {
 					onInput={linkInputHandler}
 				/>
 
-				<input type="submit" value="Skróć" className="submit-button" />
+				<input type="submit" value="Dżajcuj" className="submit-button" />
 			</div>
 			<input
 				type="text"

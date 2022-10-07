@@ -15,13 +15,13 @@ body {
 
 @layer components {
 	.input {
-		@apply flex-1 py-4 rounded-full  pl-6 outline-none z-10;
+		@apply flex-1 py-4 rounded-full  pl-6 outline-none z-10 pr-3;
 	}
 	.submit-button {
-		@apply bg-[#4762fb] -translate-x-7 pl-11 pr-8 rounded-tr-full rounded-br-full text-white cursor-pointer;
+		@apply bg-[#4762fb] -translate-x-7 pl-10 pr-7 rounded-tr-full transition rounded-br-full text-white cursor-pointer outline-none hover:bg-[#2042ff] hover:transition;
 	}
 	.form {
-		@apply flex flex-col w-8/12 mx-auto mt-10;
+		@apply flex flex-col w-7/12 mx-auto mt-10;
 	}
 	.notification {
 	}

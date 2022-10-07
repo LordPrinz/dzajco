@@ -10,6 +10,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 				<title>Dzajco</title>
 				<meta name="description" content="Dzajco link shortener" />
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+				<link rel="icon" type="image/x-icon" href="logo.svg" />
 			</Head>
 			<Component {...pageProps} />
 		</Provider>
