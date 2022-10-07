@@ -3,23 +3,26 @@
 @tailwind components;
 @tailwind utilities;
 * {
-    box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    font-family: "Open Sans", "Lato", sans-serif;
-    color: #414141;
-    background-color: #eee;
+	margin: 0;
+	font-family: "Open Sans", "Lato", sans-serif;
+	color: #414141;
+	background-color: #eee;
 }
 
 @layer components {
-    .input {
-        @apply flex-1 py-4 rounded-full pl-6 outline-none;
-    }
-    .submit-button {}
-    .form {
-        @apply flex flex-col w-8/12 mx-auto;
-    }
-    .notification {}
+	.input {
+		@apply flex-1 py-4 rounded-full  pl-6 outline-none z-10;
+	}
+	.submit-button {
+		@apply bg-[#4762fb] -translate-x-7 pl-11 pr-8 rounded-tr-full rounded-br-full text-white cursor-pointer;
+	}
+	.form {
+		@apply flex flex-col w-8/12 mx-auto mt-10;
+	}
+	.notification {
+	}
 }

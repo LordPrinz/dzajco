@@ -60,7 +60,7 @@ const Form = () => {
 
 	return (
 		<form onSubmit={formSubmitHandler} className="form">
-			<div className="flex gap-10">
+			<div className="flex">
 				<input
 					className="input"
 					type="text"
@@ -69,7 +69,7 @@ const Form = () => {
 					onInput={linkInputHandler}
 				/>
 
-				<input type="submit" value="Skróć" />	
+				<input type="submit" value="Skróć" className="submit-button" />
 			</div>
 			<input
 				type="text"
