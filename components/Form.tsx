@@ -12,7 +12,7 @@ const Form = () => {
 		setCustomName("");
 	};
 
-	const formSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+	const formSubmitHandler = async (event: any) => {
 		event.preventDefault();
 
 		if (!enteredUrl) {
@@ -27,7 +27,9 @@ const Form = () => {
 		}
 
 		if (!customName) {
-			const id = toast.loading("Loading...");
+			const id = toast.loading("Loading...", {
+				autoClose: 10000,
+			});
 
 			const response = await fetch("/api/urls", {
 				method: "POST",
@@ -99,7 +101,7 @@ const Form = () => {
 	};
 
 	return (
-		<form onSubmit={formSubmitHandler} className="form">
+		<form className="form" onSubmit={(event) => event.preventDefault()}>
 			<div className="flex">
 				<input
 					className="input"
@@ -109,7 +111,12 @@ const Form = () => {
 					onInput={linkInputHandler}
 				/>
 
-				<input type="submit" value="Dżajcuj" className="submit-button" />
+				<input
+					type="submit"
+					value="Dżajcuj"
+					className="submit-button"
+					onClick={formSubmitHandler}
+				/>
 			</div>
 			<Hidden>
 				<input
