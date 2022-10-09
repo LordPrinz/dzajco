@@ -32,6 +32,11 @@ body {
 	.h3 {
 		@apply text-xl;
 	}
+
+	.hidden-description {
+		@apply flex items-center gap-1.5 text-sm;
+	}
+
 	.notification {
 	}
 }
