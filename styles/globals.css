@@ -23,7 +23,15 @@ body {
 	.form {
 		@apply flex flex-col w-7/12 mx-auto mt-10;
 	}
-
+	.header {
+		@apply flex flex-col items-center mt-14 pb-2;
+	}
+	.h1 {
+		@apply text-4xl pb-4 font-bold;
+	}
+	.h3 {
+		@apply text-xl;
+	}
 	.notification {
 	}
 }
