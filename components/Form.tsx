@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Hidden from "./Hidden";
 
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
@@ -71,13 +72,15 @@ const Form = () => {
 
 				<input type="submit" value="Dżajcuj" className="submit-button" />
 			</div>
-			<input
-				type="text"
-				className="input hidden"
-				placeholder="Custom Name"
-				value={customName}
-				onInput={nameInputHandler}
-			/>
+			<Hidden>
+				<input
+					type="text"
+					className="input"
+					placeholder="Custom Name"
+					value={customName}
+					onInput={nameInputHandler}
+				/>
+			</Hidden>
 		</form>
 	);
 };

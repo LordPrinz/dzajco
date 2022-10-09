@@ -23,6 +23,7 @@ body {
 	.form {
 		@apply flex flex-col w-7/12 mx-auto mt-10;
 	}
+
 	.notification {
 	}
 }
