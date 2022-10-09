@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Hidden from "./Hidden";
-
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
@@ -58,6 +59,14 @@ const Form = () => {
 	const nameInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setCustomName(event.target.value);
 	};
+	toast(<div>Copy</div>, {
+		position: "bottom-right",
+		autoClose: 5000,
+		hideProgressBar: false,
+		closeOnClick: true,
+		pauseOnHover: true,
+		draggable: true,
+	});
 
 	return (
 		<form onSubmit={formSubmitHandler} className="form">
