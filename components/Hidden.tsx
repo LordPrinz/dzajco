@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AiFillCaretRight } from "react-icons/ai";
 const Hidden = ({ children }: { children: React.ReactNode }) => {
-	const [isShownm, setIsShown] = useState(false);
+	const [isShown, setIsShown] = useState(false);
 
 	return (
 		<>
@@ -12,11 +12,11 @@ const Hidden = ({ children }: { children: React.ReactNode }) => {
 				}}
 			>
 				<span className="hidden-description">
-					<AiFillCaretRight />
+					<AiFillCaretRight className={`${isShown ? "rotate-90" : ""} transition`} />
 					Więcej opcji
 				</span>
 			</button>
-			{isShownm && children}
+			{isShown && children}
 		</>
 	);
 };
