@@ -27,52 +27,27 @@ const Form = () => {
 		}
 
 		if (!customName) {
-			const id = toast.loading("Loading...", {
-				autoClose: 10000,
-			});
+			const response = await toast.promise(
+				fetch("/api/urls", {
+					method: "POST",
+					body: JSON.stringify({
+						url: enteredUrl,
+					}),
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}).then(
+					async (data) => data.status !== 201 && Promise.reject(await data.json())
+				),
+				{
+					pending: "Loading...",
+					success: "Less go",
+					error: "Invalid link provided!",
+				}
+			);
 
-			const response = await fetch("/api/urls", {
-				method: "POST",
-				body: JSON.stringify({
-					url: enteredUrl,
-				}),
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}).then(async (response) => {
-				return { data: await response.json(), code: response.status };
-			});
-			if (response.code === 201) {
-				toast.update(id, {
-					render: (
-						<div className="flex justify-between items-center px-2 py-3 mr-3  rounded-md">
-							<span>{response.data.shortUrl}</span>
-							<AiOutlineCopy
-								className="text-xl"
-								onClick={() =>
-									navigator.clipboard.writeText(`http://localhost:3000/${response.data.shortUrl}`)
-								}
-							/>
-						</div>
-					),
-					type: "success",
-					autoClose: 10000,
-					pauseOnHover: true,
-					isLoading: false,
-					closeButton: true,
-				});
-			} else {
-				toast.update(id, {
-					render: response.data.message,
-					type: "error",
-					autoClose: 3000,
-					closeOnClick: true,
-					pauseOnHover: true,
-					draggable: true,
-					isLoading: false,
-					closeButton: true,
-				});
-			}
+			console.log(response);
+
 			clearInputs();
 			return;
 		}
