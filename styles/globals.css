@@ -38,5 +38,6 @@ body {
 	}
 
 	.notification {
+		@apply flex items-center justify-between pr-4;
 	}
 }

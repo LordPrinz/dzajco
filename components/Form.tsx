@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import Hidden from "./Hidden";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AiOutlineCopy } from "react-icons/ai";
+import LinkCopier from "./LinkCopier";
+
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
@@ -37,11 +38,22 @@ const Form = () => {
 						"Content-Type": "application/json",
 					},
 				}).then(
-					async (data) => data.status !== 201 && Promise.reject(await data.json())
+					async (data) => {
+						if(data.status === 201) {
+
+						data.json().then(d => {
+							toast(<LinkCopier url={d.shortUrl}/>, {
+								type: "success",
+								autoClose: 15000,
+								style: {"background": "rgb(229 231 235)"}
+							})
+						})
+						}
+						return data.status !== 201 && Promise.reject(await data.json())
+					}
 				),
 				{
 					pending: "Loading...",
-					success: "Less go",
 					error: "Invalid link provided!",
 				}
 			);
