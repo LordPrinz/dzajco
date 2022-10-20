@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Hidden from "./Hidden";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AiOutlineCopy } from "react-icons/ai";
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
@@ -37,7 +36,8 @@ const Form = () => {
 						"Content-Type": "application/json",
 					},
 				}).then(
-					async (data) => data.status !== 201 && Promise.reject(await data.json())
+					async (data) =>
+						data.status !== 201 && Promise.reject(await data.json())
 				),
 				{
 					pending: "Loading...",
