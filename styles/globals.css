@@ -3,41 +3,44 @@
 @tailwind components;
 @tailwind utilities;
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-	margin: 0;
-	font-family: "Open Sans", "Lato", sans-serif;
-	color: #414141;
-	background-color: #eee;
+  margin: 0;
+  font-family: "Open Sans", "Lato", sans-serif;
+  color: #414141;
+  background-color: #eee;
 }
 
 @layer components {
-	.input {
-		@apply flex-1 py-4 rounded-full  pl-6 outline-none z-10 pr-5;
-	}
-	.submit-button {
-		@apply bg-[#4762fb] -translate-x-7 pl-10 pr-7 rounded-tr-full transition rounded-br-full text-white cursor-pointer outline-none hover:bg-[#2042ff] hover:transition;
-	}
-	.form {
-		@apply flex flex-col w-7/12 mx-auto mt-10;
-	}
-	.header {
-		@apply flex flex-col items-center mt-16 pb-2;
-	}
-	.h1 {
-		@apply text-4xl pb-4 font-bold;
-	}
-	.h3 {
-		@apply text-xl;
-	}
+  .input {
+    @apply flex-1 py-4 rounded-full  pl-6 outline-none z-10 pr-5;
+  }
+  .submit-button {
+    @apply bg-[#4762fb] -translate-x-7 pl-10 pr-7 rounded-tr-full transition rounded-br-full text-white cursor-pointer outline-none hover:bg-[#2042ff] hover:transition;
+  }
+  .form {
+    @apply flex flex-col w-7/12 mx-auto mt-10;
+  }
+  .header {
+    @apply flex flex-col items-center mt-16 pb-2;
+  }
+  .h1 {
+    @apply text-4xl pb-4 font-bold;
+  }
+  .h3 {
+    @apply text-xl;
+  }
 
-	.hidden-description {
-		@apply flex items-center gap-1.5 text-sm;
-	}
+  .hidden-description {
+    @apply flex items-center gap-1.5 text-sm;
+  }
 
-	.notification {
-		@apply flex items-center justify-between pr-4;
-	}
+  .notification {
+    @apply flex items-center justify-between pr-5;
+  }
+  .notification-icon {
+    @apply translate-y-0 transition hover:-translate-y-0.5 hover:transition;
+  }
 }
