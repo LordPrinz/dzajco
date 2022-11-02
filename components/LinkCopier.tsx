@@ -1,31 +1,33 @@
-import { useCallback, useEffect } from "react";
-import { AiOutlineCopy } from "react-icons/ai";
+import { useCallback, useState } from "react";
+import { AiOutlineCheck, AiOutlineCopy } from "react-icons/ai";
 import copy from "../util/copy";
 
 const LinkCopier = ({ url }: { url: string }) => {
-  const copyHandler = useCallback(() => {
-    copy(`${window.location.href}${url}`);
-  }, [url]);
+	const [isClicked, setIsClicked] = useState(false);
 
-  let pop;
+	const copyHandler = useCallback(() => {
+		copy(`${window.location.href}${url}`);
+		setIsClicked(true);
+	}, [url]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      console.log("XD");
-      pop = "-translate-y-0.5 transition";
-    }, 2000);
-  }, []);
-
-  return (
-    <div className="notification" onClick={copyHandler}>
-      <div className="notification-link">{url}</div>
-      <AiOutlineCopy
-        size={25}
-        className={`notification-icon ${pop}`}
-        onClick={copyHandler}
-      />
-    </div>
-  );
+	return (
+		<div className={`notification`} onClick={copyHandler}>
+			<div className="notification-link">{url}</div>
+			{isClicked ? (
+				<AiOutlineCheck
+					size={25}
+					className={`notification-icon`}
+					onClick={copyHandler}
+				/>
+			) : (
+				<AiOutlineCopy
+					size={25}
+					className={`notification-icon`}
+					onClick={copyHandler}
+				/>
+			)}
+		</div>
+	);
 };
 
 export default LinkCopier;
