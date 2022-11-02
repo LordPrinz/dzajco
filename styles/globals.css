@@ -15,13 +15,16 @@ body {
 
 @layer components {
 	.input {
-		@apply flex-1 py-4 rounded-full  pl-6 outline-none z-10 pr-5;
+		@apply flex-1 py-4 rounded-full pl-6 outline-none z-10 pr-5 w-full;
+	}
+	.input-main {
+		@apply tablet:rounded-tr-none tablet:rounded-br-none;
 	}
 	.submit-button {
-		@apply bg-[#4762fb] -translate-x-7 pl-10 pr-7 rounded-tr-full transition rounded-br-full text-white cursor-pointer outline-none hover:bg-[#2042ff] hover:transition;
+		@apply bg-[#4762fb] -translate-x-7 pl-10 pr-7 tablet:pl-7 rounded-tr-full transition rounded-br-full text-white cursor-pointer outline-none hover:bg-[#2042ff] hover:transition tablet:translate-x-0;
 	}
 	.form {
-		@apply flex flex-col w-7/12 mx-auto mt-10;
+		@apply flex flex-col w-10/12 tablet:w-11/12 mx-auto mt-10 max-w-3xl;
 	}
 	.header {
 		@apply flex flex-col items-center mt-16 pb-2;
@@ -30,7 +33,7 @@ body {
 		@apply text-4xl pb-4 font-bold;
 	}
 	.h3 {
-		@apply text-xl;
+		@apply text-xl tablet:text-lg inline-block text-center;
 	}
 
 	.hidden-description {

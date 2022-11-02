@@ -111,7 +111,7 @@ const Form = () => {
 		<form className="form" onSubmit={(event) => event.preventDefault()}>
 			<div className="flex">
 				<input
-					className="input"
+					className="input input-main"
 					type="text"
 					placeholder="Link"
 					value={enteredUrl}
