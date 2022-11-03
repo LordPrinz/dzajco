@@ -21,6 +21,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 				<meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
 				<meta name="language" content="English" />
 				<meta name="author" content="LordPrinz" />
+				<meta property="og:image" content="logo.svg" />
 			</Head>
 			<Component {...pageProps} />
 		</>
