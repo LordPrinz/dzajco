@@ -97,7 +97,7 @@ const Form = () => {
 					data.json().then((d) => {
 						toast(<LinkCopier url={d.shortUrl} />, {
 							type: "success",
-							autoClose: 15000,
+							autoClose: 150000,
 							onClick: () => {
 								copy(`${window.location.href}${d.shortUrl}`);
 							},
