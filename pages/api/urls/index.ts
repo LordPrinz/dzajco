@@ -21,24 +21,30 @@ export default async function handler(
 			return res.status(422).json({ message: "Invalid link provided." });
 		}
 
-		const cutomName = body.customName;
+		const customName = body.customName;
 
-		if (cutomName) {
-			const link = await linkSchema.findOne({ _id: cutomName });
+		if (customName) {
+			const link = await linkSchema.findOne({ _id: customName });
 
 			if (link) {
 				return res.status(422).json({ message: "This name already exists." });
 			}
 
+			if (customName.match(/\s/g)) {
+				return res
+					.status(422)
+					.json({ message: "Custom name should not contanin white spaces" });
+			}
+
 			linkSchema.insertMany([
 				{
-					_id: cutomName,
+					_id: customName,
 					full: body.url,
 					clicks: 0,
 				},
 			]);
 
-			return res.status(201).json({ message: "Created", shortUrl: cutomName });
+			return res.status(201).json({ message: "Created", shortUrl: customName });
 		}
 
 		const link = await linkSchema.findOne({ full: body.url });

@@ -59,10 +59,29 @@ const Form = () => {
 				}
 			);
 
-			clearInputs();
 			return;
 		}
 
+		if (customName.length > 25) {
+			toast("Custom name is too long. Length should be not greater than 25", {
+				autoClose: 5000,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				type: "error",
+			});
+			return;
+		}
+		if (customName.match(/\s/g)) {
+			toast("Custom name should not contanin white spaces", {
+				autoClose: 5000,
+				closeOnClick: true,
+				pauseOnHover: true,
+				draggable: true,
+				type: "error",
+			});
+			return;
+		}
 		const response = await toast.promise(
 			fetch("/api/urls", {
 				method: "POST",
@@ -107,11 +126,11 @@ const Form = () => {
 	};
 
 	const linkInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setEnteredUrl(event.target.value);
+		setEnteredUrl(event.target.value.trim());
 	};
 
 	const nameInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setCustomName(event.target.value);
+		setCustomName(event.target.value.trim());
 	};
 
 	return (
@@ -138,6 +157,7 @@ const Form = () => {
 					className="input"
 					placeholder="Custom Name"
 					value={customName}
+					maxLength={25}
 					onInput={nameInputHandler}
 				/>
 			</Hidden>
