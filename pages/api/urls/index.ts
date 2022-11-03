@@ -76,9 +76,7 @@ export default async function handler(
 	}
 
 	const url = `${req.headers.host}/404`;
-	const protocol = req.headers.referer?.split(/\/\//)[0];
-
-	const fetchRes = await fetch(`${protocol}/${url}`);
+	const fetchRes = await fetch(`https://${url}`);
 	const notFoundPage = await fetchRes.text();
 	return res.status(404).send(notFoundPage);
 }
