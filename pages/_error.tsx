@@ -2,12 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import image from "./../public/cracked_egg.svg";
 import Head from "next/head";
+import logo from "./../public/logo.svg";
 function Error({ statusCode }: { statusCode: number }) {
 	return (
 		<>
 			<Head>
 				<title>Something went wrong!</title>
-			</Head>{" "}
+				<link rel="icon" type="image/x-icon" href={logo} />
+			</Head>
 			<div className="flex justify-center items-center h-[100vh] flex-col">
 				<Link href="/">
 					<a className="-translate-y-4">

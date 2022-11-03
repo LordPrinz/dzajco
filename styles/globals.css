@@ -27,7 +27,7 @@ body {
 		@apply flex flex-col w-10/12 tablet:w-11/12 mx-auto mt-10 max-w-3xl;
 	}
 	.header {
-		@apply flex flex-col items-center mt-16 pb-2;
+		@apply flex flex-col items-center mt-20 pb-3;
 	}
 	.h1 {
 		@apply text-4xl pb-4 font-bold;

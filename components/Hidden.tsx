@@ -12,8 +12,10 @@ const Hidden = ({ children }: { children: React.ReactNode }) => {
 				}}
 			>
 				<span className="hidden-description">
-					<AiFillCaretRight className={`${isShown ? "rotate-90" : ""} transition`} />
-					Więcej opcji
+					<AiFillCaretRight
+						className={`${isShown ? "rotate-90" : ""} transition`}
+					/>
+					More Options
 				</span>
 			</button>
 			{isShown && children}
