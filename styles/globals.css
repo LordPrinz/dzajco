@@ -41,7 +41,7 @@ body {
 	}
 
 	.notification {
-		@apply flex items-center justify-between pr-5 relative;
+		@apply flex items-center justify-between pr-5 h-full;
 	}
 	.notification-icon {
 		@apply transition hover:text-slate-600 hover:transition;

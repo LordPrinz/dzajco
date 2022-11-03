@@ -3,6 +3,7 @@ import Hidden from "./Hidden";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LinkCopier from "./LinkCopier";
+import copy from "../util/copy";
 
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
@@ -44,6 +45,9 @@ const Form = () => {
 								type: "success",
 								autoClose: 15000,
 								style: { background: "rgb(229 231 235)" },
+								onClose: () => {
+									copy(`${window.location.href}${d.shortUrl}`);
+								},
 							});
 						});
 					}
@@ -75,6 +79,9 @@ const Form = () => {
 						toast(<LinkCopier url={d.shortUrl} />, {
 							type: "success",
 							autoClose: 15000,
+							onClick: () => {
+								copy(`${window.location.href}${d.shortUrl}`);
+							},
 							style: { background: "rgb(229 231 235)" },
 						});
 					});
