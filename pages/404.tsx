@@ -2,14 +2,13 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import image from "./../public/404.svg";
-import logo from "./../public/logo.svg";
 
 export default function FourOhFour() {
 	return (
 		<>
 			<Head>
 				<title>404 Not Found</title>
-				<link rel="icon" type="image/x-icon" href={logo} />
+				<link rel="icon" type="image/x-icon" href="logo.svg" />
 			</Head>
 			<div className="flex justify-center items-center h-[100vh] flex-col scale-75">
 				<Link href="/">

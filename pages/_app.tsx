@@ -18,7 +18,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 					content="link, bitly, link shortener, shortener, dzajlopment, LordPrinz, dzajco, dzajcarz, bubr, dżajco, dżajcarz, zip file, Oskar Płaziński, short, short link, zsti, lordprinzteam, team, lpt, best link, best, best link shortener"
 				/>
 				<meta name="robots" content="index, follow" />
-				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+				<meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
 				<meta name="language" content="English" />
 				<meta name="author" content="LordPrinz" />
 			</Head>
