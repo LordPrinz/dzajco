@@ -16,7 +16,7 @@ export default function FourOhFour() {
 						<Image src={image} alt="Cracked egg image" width="530" />
 					</a>
 				</Link>
-				<h1 className="text-5xl mb-11 translate-y-10 font-extrabold  ml-10 tracking-widest text-[#1C1C1C]">
+				<h1 className="text-5xl mb-11 translate-y-10 font-extrabold  ml-10 tracking-widest text-[#1C1C1C] tablet:text-3xl text-center tablet:ml-4">
 					Page Not Found
 				</h1>
 			</div>
