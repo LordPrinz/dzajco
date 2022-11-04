@@ -7,7 +7,7 @@ const StatsPage: NextPage = (props: any) => {
     <>
       <div className="flex justify-center items-center h-[100vh] flex-col">
         <div className="relative">
-          <h1 className="text-6xl p-32 border-8 border rounded-full">
+          <h1 className="text-6xl p-32 border-8 rounded-full">
             {props.clicks || 0}
           </h1>
           <span className="absolute top-0 left-1/2 -translate-x-1/2 z-10 bg-[#eee] px-4 -translate-y-4 text-4xl text-[#909296]">
