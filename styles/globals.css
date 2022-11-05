@@ -60,3 +60,7 @@ body {
 		@apply w-full h-full fill-transparent stroke-[#414141] stroke-[3] translate-x-1 translate-y-1;
 	}
 }
+
+::selection {
+	background-color: #f4bb29;
+}

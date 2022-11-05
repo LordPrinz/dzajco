@@ -186,7 +186,7 @@ const Form = () => {
 					onInput={nameInputHandler}
 				/>
 
-				<div className="flex  mt-10">
+				<div className="flex mt-6">
 					<input
 						className="input input-main"
 						type="text"

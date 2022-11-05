@@ -1,7 +1,5 @@
-import type { NextApiRequest, NextApiResponse, NextPage } from "next";
+import type { NextPage } from "next";
 import { getUrl } from "../../helpers/api-util";
-import dbConnect from "../../lib/dbConnect";
-import linkSchema from "../../models/link-schema";
 
 const Page: NextPage = () => {
 	return <div>Redirecting...</div>;
