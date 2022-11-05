@@ -4,13 +4,26 @@ import dbConnect from "../../../lib/dbConnect";
 import linkSchema from "../../../models/link-schema";
 import generateRandom from "../../../util/generateRandom";
 import isValidUrl from "../../../util/isValidUrl";
+import { v4 as uuidv4 } from "uuid";
+import rateLimit from "../../../util/rateLimit";
+
+const limiter = rateLimit({
+	interval: 60 * 1000,
+	uniqueTokenPerInterval: 500,
+});
+
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
-	await dbConnect();
+	try {
+		await limiter.check(res, 10, "CACHE_TOKEN"); // 10 requests per minute
+	} catch {
+		return res.status(429).json({ error: "Rate limit exceeded" });
+	}
 
 	if (req.method === "POST") {
+		await dbConnect();
 		const { body } = req;
 
 		if (!body.url) {
@@ -28,6 +41,13 @@ export default async function handler(
 
 			if (link) {
 				return res.status(422).json({ message: "This name already exists." });
+			}
+
+			if (customName.length > 25) {
+				return res.status(422).json({
+					message:
+						"Custom name is too long. Length should be not greater than 25.",
+				});
 			}
 
 			if (customName.match(/\s/g)) {
