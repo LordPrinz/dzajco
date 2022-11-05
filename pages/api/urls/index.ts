@@ -4,7 +4,6 @@ import dbConnect from "../../../lib/dbConnect";
 import linkSchema from "../../../models/link-schema";
 import generateRandom from "../../../util/generateRandom";
 import isValidUrl from "../../../util/isValidUrl";
-import { v4 as uuidv4 } from "uuid";
 import rateLimit from "../../../util/rateLimit";
 
 const limiter = rateLimit({
@@ -17,7 +16,7 @@ export default async function handler(
 	res: NextApiResponse
 ) {
 	try {
-		await limiter.check(res, 10, "CACHE_TOKEN"); // 10 requests per minute
+		await limiter.check(res, 10, process.env.token!); // 10 requests per minute
 	} catch {
 		return res.status(429).json({ error: "Rate limit exceeded" });
 	}

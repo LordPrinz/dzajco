@@ -51,6 +51,16 @@ const Form = () => {
 							});
 						});
 					}
+
+					if (data.status === 429) {
+						data.json().then((d) => {
+							toast(d.error, {
+								type: "error",
+								autoClose: 5000,
+							});
+						});
+						return;
+					}
 					return data.status !== 201 && Promise.reject(await data.json());
 				}),
 				{
@@ -112,9 +122,20 @@ const Form = () => {
 							autoClose: 5000,
 						});
 					});
-				} else {
-					return data.status !== 201 && Promise.reject(await data.json());
+					return;
 				}
+
+				if (data.status === 429) {
+					data.json().then((d) => {
+						toast(d.error, {
+							type: "error",
+							autoClose: 5000,
+						});
+					});
+					return;
+				}
+
+				return data.status !== 201 && Promise.reject(await data.json());
 			}),
 			{
 				pending: "Loading...",
