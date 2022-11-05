@@ -7,7 +7,7 @@ import isValidUrl from "../../../util/isValidUrl";
 import rateLimit from "../../../util/rateLimit";
 
 const limiter = rateLimit({
-	interval: 60 * 1000,
+	interval: 1000,
 	uniqueTokenPerInterval: 500,
 });
 
@@ -16,7 +16,7 @@ export default async function handler(
 	res: NextApiResponse
 ) {
 	try {
-		await limiter.check(res, 10, process.env.token!); // 10 requests per minute
+		await limiter.check(res, 3, process.env.token!); // 3 requests per secound
 	} catch {
 		return res.status(429).json({ error: "Rate limit exceeded" });
 	}

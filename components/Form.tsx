@@ -4,14 +4,19 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LinkCopier from "./LinkCopier";
 import copy from "../util/copy";
+import { useRouter } from "next/router";
 
 const Form = () => {
+	const router = useRouter();
+
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
+	const [enteredLink, setEnteredLink] = useState("");
 
 	const clearInputs = () => {
 		setEnteredUrl("");
 		setCustomName("");
+		setEnteredLink("");
 	};
 
 	const formSubmitHandler = async (event: any) => {
@@ -181,6 +186,30 @@ const Form = () => {
 					maxLength={25}
 					onInput={nameInputHandler}
 				/>
+
+				<div className="flex  mt-10">
+					<input
+						className="input input-main"
+						type="text"
+						placeholder="Link"
+						value={enteredLink}
+						onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
+							setEnteredLink(event.target.value.trim());
+						}}
+					/>
+					<input
+						type="submit"
+						value="Show Counter"
+						className="submit-button"
+						onClick={() => {
+							if (enteredLink.trim().length === 0) {
+								return;
+							}
+
+							window.location.href = `${enteredLink}/stats`;
+						}}
+					/>
+				</div>
 			</Hidden>
 		</form>
 	);
