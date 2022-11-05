@@ -1,20 +1,15 @@
 import type { NextPage } from "next";
 import dbConnect from "../../lib/dbConnect";
 import linkSchema from "../../models/link-schema";
-import { SiEgghead } from "react-icons/si";
 import Circle from "../../components/Circle";
+import Head from "next/head";
 const StatsPage: NextPage = (props: any) => {
 	return (
 		<>
+			<Head>
+				<title>Dzajco | Link click counter</title>
+			</Head>
 			<div className="flex justify-center items-center h-[100vh] flex-col">
-				{/* <div className="relative">
-          <h1 className="text-6xl p-32 border-8 rounded-full">
-            {props.clicks || 0}
-          </h1>
-          <span className="absolute top-0 left-1/2 -translate-x-1/2 z-10 bg-[#eee] px-4 -translate-y-4 text-4xl text-[#909296]">
-            <SiEgghead />
-          </span>
-        </div> */}
 				<Circle number={props.clicks} />
 			</div>
 		</>
