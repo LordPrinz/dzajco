@@ -39,9 +39,9 @@ module.exports = {
         },
         extend: {
             animation: {
-                "fill-circle": "fillCircle .7s linear  1 both",
-                "fill-egg": "fillEgg .2s linear .7s 1 both",
-                fadeIn: "fadeIn .25s linear .7s 1 both",
+                "fill-circle": "fillCircle .7s linear .5s  1 both",
+                "fill-egg": "fillEgg .2s linear 1.3s 1 both",
+                fadeIn: "fadeIn .25s linear 1.3s 1 both",
             },
         },
     },

@@ -56,7 +56,6 @@ const Form = () => {
 							});
 						});
 					}
-
 					if (data.status === 429) {
 						data.json().then((d) => {
 							toast(d.error, {
@@ -191,7 +190,7 @@ const Form = () => {
 					<input
 						className="input input-main"
 						type="text"
-						placeholder="Link"
+						placeholder="Short Link"
 						value={enteredLink}
 						onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
 							setEnteredLink(event.target.value.trim());
