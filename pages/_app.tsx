@@ -7,7 +7,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 			<Head>
 				<title>Dzajco</title>
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				<link rel="icon" type="image/x-icon" href="logo.svg" />
+				<link rel="icon" type="image/x-icon" href="/logo.svg" />
 				<meta name="title" content="Dzajco" />
 				<meta
 					name="description"

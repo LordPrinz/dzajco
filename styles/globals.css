@@ -46,4 +46,16 @@ body {
 	.notification-icon {
 		@apply transition hover:text-slate-600 hover:transition;
 	}
+	.circle-card {
+		@apply relative flex;
+	}
+	.circle-percent {
+		@apply relative scale-[2.7] rotate-[270deg] tablet:scale-[2];
+	}
+	.svg {
+		@apply relative max-w-[150px];
+	}
+	.circle {
+		@apply w-full h-full fill-transparent stroke-[#414141] stroke-[3] translate-x-1 translate-y-1;
+	}
 }

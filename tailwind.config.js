@@ -9,7 +9,41 @@ module.exports = {
             tablet: { max: "650px" },
             smallDesk: { max: "800px" },
         },
-        extend: {},
+        keyframes: {
+            fillEgg: {
+                "0%": {
+                    fill: "#414141",
+                },
+                "100%": {
+                    fill: "#4762fb",
+                },
+            },
+            fillCircle: {
+                "0%": {
+                    "stroke-dashoffset": 440,
+                },
+                "100%": {
+                    "stroke-dashoffset": 0,
+                },
+            },
+            fadeIn: {
+                "0%": {
+                    transform: "translateY(calc(-50% + 20px)) translateX(-50%)",
+                    opacity: 0,
+                },
+                "100%": {
+                    transform: "translateY(-50%) translateX(-50%)",
+                    opacity: 1,
+                },
+            },
+        },
+        extend: {
+            animation: {
+                "fill-circle": "fillCircle .7s linear  1 both",
+                "fill-egg": "fillEgg .2s linear .7s 1 both",
+                fadeIn: "fadeIn .25s linear .7s 1 both",
+            },
+        },
     },
     plugins: [],
 };
