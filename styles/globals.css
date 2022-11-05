@@ -62,5 +62,6 @@ body {
 }
 
 ::selection {
-	background-color: #f4bb29;
+	background-color: #5c74fe;
+	color: #fff;
 }
