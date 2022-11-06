@@ -2,13 +2,16 @@ import { toast } from "react-toastify";
 import LinkCopier from "../../components/LinkCopier";
 import showError from "./showError";
 import showSuccess from "./showSuccess";
+import "react-toastify/dist/ReactToastify.css";
 
 const promiseToast = async ({
 	url,
 	customName,
+	errorMessage,
 }: {
 	url: string;
-	customName: string;
+	customName?: string;
+	errorMessage?: string;
 }) => {
 	await toast.promise(
 		fetch("/api/urls", {
@@ -22,7 +25,7 @@ const promiseToast = async ({
 			},
 		}).then(async (response) =>
 			response.json().then((data) => {
-				if (data.status === 201) {
+				if (response.status === 201) {
 					showSuccess(<LinkCopier url={data.shortUrl} />, data.shortUrl);
 				} else {
 					showError(data.message);
@@ -32,7 +35,7 @@ const promiseToast = async ({
 		),
 		{
 			pending: "Loading...",
-			error: "An error has occured",
+			error: errorMessage || "An error has occured",
 		}
 	);
 };

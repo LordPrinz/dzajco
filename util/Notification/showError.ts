@@ -1,4 +1,5 @@
 import { toast, ToastContent, ToastOptions } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const showError = (
 	title: ToastContent<unknown>,

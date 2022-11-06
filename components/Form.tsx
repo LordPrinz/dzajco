@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import Hidden from "./Hidden";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import LinkCopier from "./LinkCopier";
-import copy from "../util/copy";
 import { useRouter } from "next/router";
 import showError from "../util/Notification/showError";
+import promiseToast from "../util/Notification/promiseToast";
 
 const Form = () => {
 	const router = useRouter();
@@ -27,46 +24,10 @@ const Form = () => {
 		}
 
 		if (!customName) {
-			const response = await toast.promise(
-				fetch("/api/urls", {
-					method: "POST",
-					body: JSON.stringify({
-						url: enteredUrl,
-					}),
-					headers: {
-						"Content-Type": "application/json",
-					},
-				}).then(async (data) => {
-					if (data.status === 201) {
-						data.json().then((d) => {
-							toast(<LinkCopier url={d.shortUrl} />, {
-								type: "success",
-								autoClose: 15000,
-								style: { background: "rgb(229 231 235)" },
-								onClose: () => {
-									copy(`${window.location.href}${d.shortUrl}`);
-								},
-							});
-						});
-					}
-					if (data.status === 429) {
-						data.json().then((d) => {
-							toast(d.error, {
-								type: "error",
-								autoClose: 5000,
-							});
-						});
-						return;
-					}
-					return data.status !== 201 && Promise.reject(await data.json());
-				}),
-				{
-					pending: "Loading...",
-					error: "Invalid link provided!",
-				}
-			);
-
-			return;
+			return promiseToast({
+				url: enteredUrl,
+				errorMessage: "Invalid link provided!",
+			});
 		}
 
 		if (customName.length > 25) {
@@ -78,7 +39,7 @@ const Form = () => {
 			return showError("Custom name should not contanin white spaces");
 		}
 
-		// toast
+		promiseToast({ url: enteredUrl, customName });
 
 		clearInputs();
 	};

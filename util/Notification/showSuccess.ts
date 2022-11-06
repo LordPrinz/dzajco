@@ -1,5 +1,6 @@
 import { toast, ToastContent, ToastOptions } from "react-toastify";
 import copy from "../copy";
+import "react-toastify/dist/ReactToastify.css";
 
 const popupClickHandler = (shortUrl: string) => {
 	copy(`${window.location.href}${shortUrl}`);
