@@ -1,4 +1,4 @@
-import type { NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
 import { getUrl } from "../../helpers/api-util";
 
 const Page: NextPage = () => {
@@ -7,8 +7,8 @@ const Page: NextPage = () => {
 
 export default Page;
 
-export async function getServerSideProps({ req }: { req: any }) {
-	const url = req.url.slice(1);
+export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+	const url = req.url!.slice(1);
 
 	const link = await getUrl(url);
 
@@ -24,4 +24,4 @@ export async function getServerSideProps({ req }: { req: any }) {
 			permanent: true,
 		},
 	};
-}
+};
