@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import Hidden from "./Hidden";
-import { useRouter } from "next/router";
 import showError from "../util/Notification/showError";
 import promiseToast from "../util/Notification/promiseToast";
+import isValidUrl from "../util/isValidUrl";
 
 const Form = () => {
-	const router = useRouter();
-
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
 	const [enteredLink, setEnteredLink] = useState("");
@@ -24,10 +22,16 @@ const Form = () => {
 		}
 
 		if (!customName) {
-			return promiseToast({
+			if (!isValidUrl(customName)) {
+				return showError("Invalid link provided!");
+			}
+
+			promiseToast({
 				url: enteredUrl,
 				errorMessage: "Invalid link provided!",
 			});
+
+			return clearInputs();
 		}
 
 		if (customName.length > 25) {
@@ -50,6 +54,20 @@ const Form = () => {
 
 	const nameInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setCustomName(event.target.value.trim());
+	};
+
+	const statsLinkInputHandler = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		setEnteredLink(event.target.value.trim());
+	};
+
+	const showCounterHandler = () => {
+		if (enteredLink.trim().length === 0) {
+			return;
+		}
+
+		window.location.href = `${enteredLink}/stats`;
 	};
 
 	return (
@@ -86,21 +104,13 @@ const Form = () => {
 						type="text"
 						placeholder="Short Link"
 						value={enteredLink}
-						onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
-							setEnteredLink(event.target.value.trim());
-						}}
+						onInput={statsLinkInputHandler}
 					/>
 					<input
 						type="submit"
 						value="Show Counter"
 						className="submit-button"
-						onClick={() => {
-							if (enteredLink.trim().length === 0) {
-								return;
-							}
-
-							window.location.href = `${enteredLink}/stats`;
-						}}
+						onClick={showCounterHandler}
 					/>
 				</div>
 			</Hidden>

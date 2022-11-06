@@ -26,11 +26,9 @@ const promiseToast = async ({
 		}).then(async (response) =>
 			response.json().then((data) => {
 				if (response.status === 201) {
-					showSuccess(<LinkCopier url={data.shortUrl} />, data.shortUrl);
-				} else {
-					showError(data.message);
-					Promise.reject();
+					return showSuccess(<LinkCopier url={data.shortUrl} />, data.shortUrl);
 				}
+				showError(data.message);
 			})
 		),
 		{
