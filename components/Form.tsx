@@ -22,7 +22,7 @@ const Form = () => {
 		}
 
 		if (!customName) {
-			if (!isValidUrl(customName)) {
+			if (!isValidUrl(enteredUrl)) {
 				return showError("Invalid link provided!");
 			}
 
