@@ -33,12 +33,15 @@ body {
 	.h1 {
 		@apply text-4xl pb-4 font-bold;
 	}
-	.h3 {
+	.h2 {
 		@apply text-xl tablet:text-lg inline-block text-center;
 	}
 
 	.hidden-description {
 		@apply flex items-center gap-1.5 text-sm;
+	}
+	.hidden__button {
+		@apply mt-4 mb-4 ml-2 self-start py-2;
 	}
 
 	.notification {
@@ -61,6 +64,15 @@ body {
 	}
 	.circle {
 		@apply w-full h-full fill-transparent stroke-[#414141] stroke-[3] translate-x-1 translate-y-1;
+	}
+	.circle-counter {
+		@apply text-7xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-fadeIn tablet:text-6xl;
+	}
+	.circle-icon {
+		@apply text-5xl absolute left-1/2 -translate-x-1/2 -top-full  translate-y-1/4 z-10 bg-[#eee] px-1 animate-fill-egg tablet:text-4xl tablet:-top-1/2 tablet:-translate-y-1/4 tablet:px-0.5;
+	}
+	.circle-cover {
+		@apply stroke-[#4762fb] [stroke-dasharray:440] animate-fill-circle;
 	}
 	.stats__circleContainer {
 		@apply flex justify-center items-center h-[100vh] flex-col;
