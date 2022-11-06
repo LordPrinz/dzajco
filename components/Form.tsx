@@ -21,11 +21,11 @@ const Form = () => {
 			return showError("You have to pass a valid link!");
 		}
 
-		if (!customName) {
-			if (!isValidUrl(enteredUrl)) {
-				return showError("Invalid link provided!");
-			}
+		if (!isValidUrl(enteredUrl)) {
+			return showError("Invalid link provided!");
+		}
 
+		if (!customName) {
 			promiseToast({
 				url: enteredUrl,
 				errorMessage: "Invalid link provided!",
