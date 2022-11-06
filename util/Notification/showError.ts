@@ -1,6 +1,9 @@
-import { toast } from "react-toastify";
+import { toast, ToastContent, ToastOptions } from "react-toastify";
 
-const showError = (title: string, restProps: unknown[]) =>
+const showError = (
+	title: ToastContent<unknown>,
+	restProps?: ToastOptions<unknown>[]
+) =>
 	toast(title, {
 		autoClose: 5000,
 		closeOnClick: true,

@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import LinkCopier from "./LinkCopier";
 import copy from "../util/copy";
 import { useRouter } from "next/router";
+import showError from "../util/Notification/showError";
 
 const Form = () => {
 	const router = useRouter();
@@ -21,16 +22,8 @@ const Form = () => {
 
 	const formSubmitHandler = async (event: any) => {
 		event.preventDefault();
-
 		if (!enteredUrl) {
-			toast("You have to pass a valid link!", {
-				autoClose: 5000,
-				closeOnClick: true,
-				pauseOnHover: true,
-				draggable: true,
-				type: "error",
-			});
-			return;
+			return showError("You have to pass a valid link!");
 		}
 
 		if (!customName) {
@@ -77,24 +70,12 @@ const Form = () => {
 		}
 
 		if (customName.length > 25) {
-			toast("Custom name is too long. Length should be not greater than 25", {
-				autoClose: 5000,
-				closeOnClick: true,
-				pauseOnHover: true,
-				draggable: true,
-				type: "error",
-			});
-			return;
+			return showError(
+				"Custom name is too long. Length should be not greater than 25"
+			);
 		}
 		if (customName.match(/\s/g)) {
-			toast("Custom name should not contanin white spaces", {
-				autoClose: 5000,
-				closeOnClick: true,
-				pauseOnHover: true,
-				draggable: true,
-				type: "error",
-			});
-			return;
+			return showError("Custom name should not contanin white spaces");
 		}
 		const response = await toast.promise(
 			fetch("/api/urls", {
