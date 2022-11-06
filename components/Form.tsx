@@ -77,56 +77,8 @@ const Form = () => {
 		if (customName.match(/\s/g)) {
 			return showError("Custom name should not contanin white spaces");
 		}
-		const response = await toast.promise(
-			fetch("/api/urls", {
-				method: "POST",
-				body: JSON.stringify({
-					url: enteredUrl,
-					customName,
-				}),
-				headers: {
-					"Content-Type": "application/json",
-				},
-			}).then(async (data) => {
-				if (data.status === 201) {
-					data.json().then((d) => {
-						toast(<LinkCopier url={d.shortUrl} />, {
-							type: "success",
-							autoClose: 150000,
-							onClick: () => {
-								copy(`${window.location.href}${d.shortUrl}`);
-							},
-							style: { background: "rgb(229 231 235)" },
-						});
-					});
-				}
-				if (data.status === 422) {
-					data.json().then((d) => {
-						toast(d.message, {
-							type: "error",
-							autoClose: 5000,
-						});
-					});
-					return;
-				}
 
-				if (data.status === 429) {
-					data.json().then((d) => {
-						toast(d.error, {
-							type: "error",
-							autoClose: 5000,
-						});
-					});
-					return;
-				}
-
-				return data.status !== 201 && Promise.reject(await data.json());
-			}),
-			{
-				pending: "Loading...",
-				error: "An error has occured",
-			}
-		);
+		// toast
 
 		clearInputs();
 	};
