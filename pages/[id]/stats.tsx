@@ -1,4 +1,4 @@
-import type { NextPage } from "next";
+import type { NextPage, GetServerSideProps } from "next";
 import dbConnect from "../../lib/dbConnect";
 import linkSchema from "../../models/link-schema";
 import Circle from "../../components/Circle";
@@ -6,8 +6,17 @@ import Head from "next/head";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 import { useRouter } from "next/router";
 
-const StatsPage: NextPage = (props: any) => {
+type Props = {
+	clicks: number;
+};
+
+const StatsPage: NextPage<Props> = (props) => {
 	const router = useRouter();
+
+	const backButtonHandler = () => {
+		router.back();
+	};
+
 	return (
 		<>
 			<Head>
@@ -15,12 +24,10 @@ const StatsPage: NextPage = (props: any) => {
 			</Head>
 			<div className="relative">
 				<AiOutlineArrowLeft
-					className="absolute text-3xl left-5 top-5 cursor-pointer hover:text-[#313131] transition hover:transition"
-					onClick={() => {
-						router.back();
-					}}
+					className="stats__backButton"
+					onClick={backButtonHandler}
 				/>
-				<div className="flex justify-center items-center h-[100vh] flex-col">
+				<div className="stats__circleContainer">
 					<Circle number={props.clicks} />
 				</div>
 			</div>
@@ -30,8 +37,8 @@ const StatsPage: NextPage = (props: any) => {
 
 export default StatsPage;
 
-export async function getServerSideProps({ req }: { req: any }) {
-	const url = req.url.slice(1).split("/")[0];
+export const getServerSideProps: GetServerSideProps = async ({ req }) => {
+	const url = req.url?.slice(1).split("/")[0];
 
 	await dbConnect();
 
@@ -49,4 +56,4 @@ export async function getServerSideProps({ req }: { req: any }) {
 			page: url,
 		},
 	};
-}
+};

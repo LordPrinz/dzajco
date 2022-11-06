@@ -59,6 +59,12 @@ body {
 	.circle {
 		@apply w-full h-full fill-transparent stroke-[#414141] stroke-[3] translate-x-1 translate-y-1;
 	}
+	.stats__circleContainer {
+		@apply flex justify-center items-center h-[100vh] flex-col;
+	}
+	.stats__backButton {
+		@apply absolute text-3xl left-5 top-5 cursor-pointer hover:text-[#313131] transition hover:transition;
+	}
 }
 
 ::selection {
