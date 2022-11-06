@@ -1,6 +1,15 @@
 import { toast } from "react-toastify";
 import LinkCopier from "../../components/LinkCopier";
-const promiseToast = async ({ url, customName }: any) => {
+import showError from "./showError";
+import showSuccess from "./showSuccess";
+
+const promiseToast = async ({
+	url,
+	customName,
+}: {
+	url: string;
+	customName: string;
+}) => {
 	await toast.promise(
 		fetch("/api/urls", {
 			method: "POST",
@@ -14,12 +23,10 @@ const promiseToast = async ({ url, customName }: any) => {
 		}).then(async (response) =>
 			response.json().then((data) => {
 				if (data.status === 201) {
-					toast(<LinkCopier url={data.shortUrl} />, {
-						type: "success",
-						autoClose: 150000,
-						onClick: popupClickHandler.bind(null, data.shortUrl),
-						style: { background: "rgb(229 231 235)" },
-					});
+					showSuccess(<LinkCopier url={data.shortUrl} />, data.shortUrl);
+				} else {
+					showError(data.message);
+					Promise.reject();
 				}
 			})
 		),
