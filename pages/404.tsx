@@ -10,15 +10,13 @@ export default function FourOhFour() {
 				<title>404 Not Found</title>
 				<link rel="icon" type="image/x-icon" href="logo.svg" />
 			</Head>
-			<div className="flex justify-center items-center h-[100vh] flex-col scale-75">
+			<div className="fourohfour__container">
 				<Link href="/">
-					<a className="-translate-y-4">
+					<a className="fourohfour__image">
 						<Image src={image} alt="Cracked egg image" width="530" />
 					</a>
 				</Link>
-				<h1 className="text-5xl mb-11 translate-y-10 font-extrabold  ml-10 tracking-widest text-[#1C1C1C] tablet:text-3xl text-center tablet:ml-4">
-					Page Not Found
-				</h1>
+				<h1 className="fourohfour__title">Page Not Found</h1>
 			</div>
 		</>
 	);

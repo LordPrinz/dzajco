@@ -80,6 +80,15 @@ body {
 	.stats__backButton {
 		@apply absolute text-3xl left-5 top-5 cursor-pointer hover:text-[#313131] transition hover:transition;
 	}
+	.fourohfour__container {
+		@apply flex justify-center items-center h-[100vh] flex-col scale-75;
+	}
+	.fourohfour__image {
+		@apply -translate-y-4;
+	}
+	.fourohfour__title {
+		@apply text-5xl mb-11 translate-y-10 font-extrabold  ml-10 tracking-widest text-[#1C1C1C] tablet:text-3xl text-center tablet:ml-4;
+	}
 }
 
 ::selection {
