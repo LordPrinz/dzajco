@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import Hidden from "./Hidden";
 import showError from "../util/Notification/showError";
 import promiseToast from "../util/Notification/promiseToast";
@@ -9,11 +9,11 @@ const Form = () => {
 	const [customName, setCustomName] = useState("");
 	const [enteredLink, setEnteredLink] = useState("");
 
-	const clearInputs = () => {
+	const clearInputs = useCallback(() => {
 		setEnteredUrl("");
 		setCustomName("");
 		setEnteredLink("");
-	};
+	}, []);
 
 	const formSubmitHandler = async (event: any) => {
 		event.preventDefault();
@@ -48,19 +48,19 @@ const Form = () => {
 		clearInputs();
 	};
 
-	const linkInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const linkInputHandler = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
 		setEnteredUrl(event.target.value.trim());
-	};
+	}, [enteredUrl]);
 
-	const nameInputHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const nameInputHandler = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
 		setCustomName(event.target.value.trim());
-	};
+	}, [customName]);
 
-	const statsLinkInputHandler = (
+	const statsLinkInputHandler = useCallback((
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
 		setEnteredLink(event.target.value.trim());
-	};
+	}, [enteredLink]);
 
 	const showCounterHandler = () => {
 		if (enteredLink.trim().length === 0) {
