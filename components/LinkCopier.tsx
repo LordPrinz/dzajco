@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { AiOutlineCheck, AiOutlineCopy } from "react-icons/ai";
 
 type Props = {
@@ -10,7 +10,7 @@ const LinkCopier: FC<Props> = ({ url }) => {
 
 	const copyHandler = useCallback(() => {
 		setIsClicked(true);
-	}, [url]);
+	}, []);
 
 	const icon = isClicked ? (
 		<AiOutlineCheck
