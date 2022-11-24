@@ -31,7 +31,7 @@ body {
 		@apply flex flex-col items-center pt-20 pb-3;
 	}
 	.h1 {
-		@apply text-4xl pb-4 font-bold;
+		@apply text-5xl pb-7 font-bold;
 	}
 	.h2 {
 		@apply text-xl tablet:text-lg inline-block text-center;
