@@ -1,4 +1,4 @@
-import { FC } from "react";
+import React, { FC } from "react";
 import { SiEgghead } from "react-icons/si";
 
 type Props = {
@@ -25,4 +25,4 @@ const Circle: FC<Props> = ({ number }) => {
 	);
 };
 
-export default Circle;
+export default React.memo(Circle);
