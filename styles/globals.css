@@ -111,6 +111,11 @@ body {
 	}
 
 	.links__list {
+		@apply mb-3 text-sm;
+	}
+
+	.links__link {
+		@apply px-2 py-1 mx-2 pb-1.5 relative transition hover:transition;
 	}
 }
 

@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { AiOutlineCheck, AiOutlineCopy } from "react-icons/ai";
 
 type Props = {
