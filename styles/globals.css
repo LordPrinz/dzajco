@@ -109,6 +109,9 @@ body {
 	.footer {
 		@apply pb-1 flex items-end place-self-center flex-1 pt-1;
 	}
+
+	.links__list {
+	}
 }
 
 ::selection {

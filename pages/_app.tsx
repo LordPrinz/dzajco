@@ -15,7 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 				/>
 				<meta
 					name="keywords"
-					content="link, bitly, link shortener, shortener, dzajlopment, LordPrinz, dzajco, dzajcarz, bubr, dżajco, dżajcarz, zip file, Oskar Płaziński, short, short link, zsti, lordprinzteam, team, lpt, best link, best, best link shortener"
+					content="link, bitly, link shortener, shortener, dzajlopment, LordPrinz, dzajco, dzajcarz, bubr, dżajco, dżajcarz, zip file, Oskar Płaziński, short, short link, zsti, lordprinzteam, team, lpt, best link, best, best link shortener, de, dzajde, dzaj.de, dzaj de, dzaj de link, dzajde link, dzaj.de link, dzaj.de link short, dzajde link short, dzaj de link short"
 				/>
 				<meta name="robots" content="index, follow" />
 				<meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />

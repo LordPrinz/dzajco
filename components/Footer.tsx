@@ -1,5 +1,11 @@
+import LinksList from "./LinksList";
+
 const Footer = () => {
-	return <footer className="footer">xd</footer>;
+	return (
+		<footer className="footer">
+			<LinksList />
+		</footer>
+	);
 };
 
 export default Footer;
