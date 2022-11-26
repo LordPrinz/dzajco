@@ -111,15 +111,15 @@ body {
 		@apply text-4xl mb-11  ml-10 tracking-widest;
 	}
 	.footer {
-		@apply pb-1 flex items-end place-self-center flex-1 pt-1 mt-3;
+		@apply pb-1 flex items-end place-self-center flex-1 pt-1 mt-3 flex-wrap;
 	}
 
 	.links__list {
-		@apply mb-3 text-sm;
+		@apply mb-3 text-sm text-center;
 	}
 
 	.links__link {
-		@apply px-2 py-1 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
+		@apply px-2 py-1 my-2 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
 	}
 	.mainContent {
 		@apply flex self-center mt-6 flex-col w-9/12 tablet:w-11/12;
