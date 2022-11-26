@@ -14,18 +14,20 @@ const Api: NextPage = () => {
 				<div className="apiExplanation">
 					<div className="apiElement">
 						<h4 className="h4">Get Redirect URL</h4>
-						<div className="code">
-							<div className="apiMethod">GET</div> /urls/&#123;shortCode&#125;
-						</div>
-						<h5 className="h5">Response</h5>
-						<div className="jsonCode">
-							<div className="statusCode">
-								Status: <span>200</span>
+						<div className="expandable">
+							<div className="code">
+								<div className="apiMethod">GET</div> /urls/&#123;shortCode&#125;
 							</div>
-							<pre>
-								&#123; {"\n"}
-								{"  "}"fullLink": string {"\n"}&#125;
-							</pre>
+							<h5 className="h5">Response</h5>
+							<div className="jsonCode">
+								<div className="statusCode">
+									Status: <span>200</span>
+								</div>
+								<pre>
+									&#123; {"\n"}
+									{"  "}"fullLink": string {"\n"}&#125;
+								</pre>
+							</div>
 						</div>
 					</div>
 					<div className="apiElement">
