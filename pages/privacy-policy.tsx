@@ -1,5 +1,6 @@
 import { NextPage } from "next";
 import Head from "next/head";
+import Footer from "../components/Footer";
 import BackButton from "../components/GoBackButton";
 const PrivacyPolicy: NextPage = () => {
 	return (
@@ -8,7 +9,9 @@ const PrivacyPolicy: NextPage = () => {
 				<title>Dzajco | Privacy Policy</title>
 			</Head>
 			<BackButton />
-			<div>Work in progress.</div>
+			<main className="mainContent">
+				<h3 className="h3">Privacy Policy</h3>
+			</main>
 		</>
 	);
 };

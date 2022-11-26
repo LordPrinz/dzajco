@@ -41,6 +41,9 @@ body {
 	.h2 {
 		@apply text-xl tablet:text-lg inline-block text-center;
 	}
+	.h3 {
+		@apply text-3xl tablet:text-lg inline-block text-center;
+	}
 
 	.hidden-description {
 		@apply flex items-center gap-1.5 text-sm;
@@ -116,6 +119,9 @@ body {
 
 	.links__link {
 		@apply px-2 py-1 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
+	}
+	.mainContent {
+		@apply flex self-center mt-4;
 	}
 }
 

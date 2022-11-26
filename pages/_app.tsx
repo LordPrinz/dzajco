@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
+import Footer from "../components/Footer";
 function MyApp({ Component, pageProps }: AppProps) {
 	return (
 		<>
@@ -24,6 +25,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 				<meta property="og:image" content="logo.svg" />
 			</Head>
 			<Component {...pageProps} />
+			<Footer />
 		</>
 	);
 }

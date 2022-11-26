@@ -1,5 +1,6 @@
 import { NextPage } from "next";
 import Head from "next/head";
+import Footer from "../components/Footer";
 import BackButton from "../components/GoBackButton";
 
 const Api: NextPage = () => {
@@ -9,7 +10,9 @@ const Api: NextPage = () => {
 				<title>Dzajco | API</title>
 			</Head>
 			<BackButton />
-			<div>Work in progress.</div>
+			<main className="mainContent">
+				<h3 className="h3">Dzaj.de API v1.4.0</h3>
+			</main>
 		</>
 	);
 };
