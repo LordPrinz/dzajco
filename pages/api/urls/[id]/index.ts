@@ -26,6 +26,6 @@ export default async function handler(
 			return res.status(404).json("Page not found!");
 		}
 
-		return res.status(200).json(link.full);
+		return res.status(200).json({ fullLink: link.full });
 	}
 }

@@ -121,7 +121,19 @@ body {
 		@apply px-2 py-1 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
 	}
 	.mainContent {
-		@apply flex self-center mt-4;
+		@apply flex self-center mt-6 flex-col w-9/12 tablet:w-11/12;
+	}
+	.apiExplanation {
+		@apply flex mt-20 flex-col gap-10;
+	}
+	.code {
+		@apply border border-[#bcbcbc] my-1 rounded-sm pl-0 flex items-center;
+	}
+	.apiMethod {
+		@apply bg-[#6c74fe] text-white p-1.5 h-full mr-3 -ml-[1px] rounded-tl-sm rounded-bl-sm px-4;
+	}
+	.h4 {
+		@apply text-xl;
 	}
 }
 
