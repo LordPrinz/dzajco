@@ -15,7 +15,7 @@ const Api: NextPage = () => {
 					<ApiElement
 						title="Get Redirect URL"
 						method="get"
-						endpoint="/urls/&#123;shortUrl&#125;"
+						endpoint="/api/urls/&#123;shortUrl&#125;"
 					>
 						<h5 className="h5">Response</h5>
 						<div className="jsonCode">
@@ -52,7 +52,7 @@ const Api: NextPage = () => {
 					<ApiElement
 						title="Get URL Stats"
 						method="get"
-						endpoint="/urls/&#123;shortUrl&#125;/stats"
+						endpoint="/api/urls/&#123;shortUrl&#125;/stats"
 					>
 						<h5 className="h5">Response</h5>
 						<div className="jsonCode">
