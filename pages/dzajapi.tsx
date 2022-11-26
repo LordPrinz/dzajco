@@ -17,11 +17,16 @@ const Api: NextPage = () => {
 						<div className="code">
 							<div className="apiMethod">GET</div> /urls/&#123;shortCode&#125;
 						</div>
-						<p>Response</p>
-						<div className="code">
-							Status: <span>200</span>
+						<h5 className="h5">Response</h5>
+						<div className="jsonCode">
+							<div className="statusCode">
+								Status: <span>200</span>
+							</div>
+							<pre>
+								&#123; {"\n"}
+								{"  "}"fullLink": string {"\n"}&#125;
+							</pre>
 						</div>
-						<div className="code">&#123; "fullLink": string &#125;</div>
 					</div>
 					<div className="apiElement">
 						<h4 className="h4">Get URL Stats</h4>
@@ -29,33 +34,49 @@ const Api: NextPage = () => {
 							<div className="apiMethod">GET</div>
 							/urls/&#123;shortCode&#125;/stats
 						</div>
-						<p>Response</p>
-						<div className="code">
-							Status: <span>200</span>
+						<h5 className="h5">Response</h5>
+						<div className="jsonCode">
+							<div className="statusCode">
+								Status: <span>200</span>
+							</div>
+							<pre>
+								&#123; {"\n"}
+								{"  "}"clicks": number {"\n"}&#125;
+							</pre>
 						</div>
-						<div className="code">&#123; "clicks": number &#125;</div>
 					</div>
 					<div className="apiElement">
 						<h4 className="h4">Generate Short Link</h4>
 						<div className="code">
 							<div className="apiMethod">POST</div>/api/urls
 						</div>
-						Body
-						<div className="code">&#123; "url": string &#125;</div>
-						<p>Response</p>
-						<div>
-							<div className="code">
+						<h5 className="h5">Body</h5>
+						<div className="jsonCode">
+							<pre>
+								&#123; {"\n"}
+								{"  "}"url": string {"\n"}&#125;
+							</pre>
+						</div>
+						<h5 className="h5">Response</h5>
+						<div className="jsonCode">
+							<div className="statusCode">
 								Status: <span>201</span>
 							</div>
-							<div className="code">
-								&#123; "message": string, "shortUrl": string &#125;
-							</div>
+							<pre>
+								&#123; {"\n"}
+								{"  "}"message": string {"\n"}
+								{"  "}"shortUrl": string{"\n"}&#125;
+							</pre>
 						</div>
-						<div>
-							<div className="code">
+						<div className="jsonCode">
+							<div className="statusCode statusCode--error">
 								Status: <span>422</span>
-								&#123; "message": string &#125;
 							</div>
+							<pre>
+								&#123; {"\n"}
+								{"  "}"message": string {"\n"}
+								&#125;
+							</pre>
 						</div>
 					</div>
 				</div>

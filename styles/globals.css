@@ -135,6 +135,37 @@ body {
 	.h4 {
 		@apply text-xl;
 	}
+	.h5 {
+		@apply text-lg mt-5;
+	}
+	.jsonCode {
+		@apply border border-[#6c73fea8] my-2 py-2 rounded-sm flex items-center bg-[#6c73fe4e] relative pl-2;
+	}
+
+	.statusCode {
+		@apply absolute right-6 top-2 text-xs;
+	}
+}
+
+.statusCode::after {
+	content: "";
+	top: calc(50% - 1px);
+	right: -5px;
+	transform: translateX(100%) translateY(-50%);
+	border-radius: 100%;
+	width: 9px;
+	height: 9px;
+	background-color: #5aa27c;
+	position: absolute;
+}
+
+.statusCode--error::after {
+	background-color: #ff4b4b;
+}
+
+.statusCode > span {
+	font-weight: bold;
+	font-size: 0.8rem;
 }
 
 .links__link:not(:last-child)::after {
