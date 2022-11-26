@@ -3,30 +3,20 @@ import dbConnect from "../../lib/dbConnect";
 import linkSchema from "../../models/link-schema";
 import Circle from "../../components/Circle";
 import Head from "next/head";
-import { AiOutlineArrowLeft } from "react-icons/ai";
-import { useRouter } from "next/router";
+import BackButton from "../../components/GoBackButton";
 
 type Props = {
 	clicks: number;
 };
 
 const StatsPage: NextPage<Props> = (props) => {
-	const router = useRouter();
-
-	const backButtonHandler = () => {
-		router.back();
-	};
-
 	return (
 		<>
 			<Head>
 				<title>Dzajco | Link click counter</title>
 			</Head>
 			<div className="relative">
-				<AiOutlineArrowLeft
-					className="stats__backButton"
-					onClick={backButtonHandler}
-				/>
+				<BackButton />
 				<div className="stats__circleContainer">
 					<Circle number={props.clicks} />
 				</div>
