@@ -4,19 +4,19 @@ const LinksList = () => {
 	const links = [
 		{
 			name: "Author",
-			url: "https://dzaj.de/author",
+			url: "https://github.com/LordPrinz",
 		},
 		{
 			name: "Github",
-			url: "https://dzaj.de/github",
+			url: "https://github.com/LordPrinz/dzajco",
 		},
 		{
 			name: "About",
-			url: "https://dzaj.de/about",
+			url: "https://github.com/LordPrinz/dzajco#table-of-contents",
 		},
 		{
 			name: "API",
-			url: "#",
+			url: "/api",
 		},
 		{
 			name: "Private Police",
