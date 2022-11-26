@@ -25,7 +25,7 @@ export default async function handler(
 	const link = await linkSchema.findById(url);
 
 	if (!link) {
-		return res.status(404).json("Page not found!");
+		return res.status(404).json({ message: "Page not found!" });
 	}
 
 	return res.status(200).json({ clicks: link.clicks });

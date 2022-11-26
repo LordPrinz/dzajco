@@ -23,7 +23,7 @@ export default async function handler(
 		const link = await getUrl(url);
 
 		if (!link.full) {
-			return res.status(404).json("Page not found!");
+			return res.status(404).json({ message: "Page not found!" });
 		}
 
 		return res.status(200).json({ fullLink: link.full });
