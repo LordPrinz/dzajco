@@ -10,7 +10,7 @@ const Api: NextPage = () => {
 			</Head>
 			<BackButton />
 			<main className="mainContent">
-				<h3 className="h3">Dzajco API v1.4.0</h3>
+				<h3 className="h3">Dzajco API v1.2.0</h3>
 				<div className="apiExplanation">
 					<ApiElement
 						title="Get Redirect URL"
