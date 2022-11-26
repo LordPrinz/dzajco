@@ -2,7 +2,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import BackButton from "../components/GoBackButton";
 import Expandable from "../components/Expandable";
-
+import ApiElement from "../components/ApiElement";
 const Api: NextPage = () => {
 	return (
 		<>
@@ -13,7 +13,7 @@ const Api: NextPage = () => {
 			<main className="mainContent">
 				<h3 className="h3">Dzaj.de API v1.4.0</h3>
 				<div className="apiExplanation">
-					<div className="apiElement">
+					<ApiElement>
 						<h4 className="h4">Get Redirect URL</h4>
 						<div className="code">
 							<div className="apiMethod">GET</div> /urls/&#123;shortCode&#125;
@@ -30,9 +30,9 @@ const Api: NextPage = () => {
 								</pre>
 							</div>
 						</Expandable>
-					</div>
+					</ApiElement>
 
-					<div className="apiElement">
+					<ApiElement>
 						<h4 className="h4">Get URL Stats</h4>
 						<div className="code">
 							<div className="apiMethod">GET</div>
@@ -50,8 +50,8 @@ const Api: NextPage = () => {
 								</pre>
 							</div>
 						</Expandable>
-					</div>
-					<div className="apiElement">
+					</ApiElement>
+					<ApiElement>
 						<h4 className="h4">Generate Short Link</h4>
 						<div className="code">
 							<div className="apiMethod">POST</div>/api/urls
@@ -86,7 +86,7 @@ const Api: NextPage = () => {
 								</pre>
 							</div>
 						</Expandable>
-					</div>
+					</ApiElement>
 				</div>
 			</main>
 		</>
