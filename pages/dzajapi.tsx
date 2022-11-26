@@ -13,11 +13,11 @@ const Api: NextPage = () => {
 			<main className="mainContent">
 				<h3 className="h3">Dzaj.de API v1.4.0</h3>
 				<div className="apiExplanation">
-					<ApiElement>
-						<h4 className="h4">Get Redirect URL</h4>
-						<div className="code">
-							<div className="apiMethod">GET</div> /urls/&#123;shortCode&#125;
-						</div>{" "}
+					<ApiElement
+						title="Get Redirect URL"
+						method="get"
+						endpoint="/urls/&#123;shortCode&#125;"
+					>
 						<Expandable>
 							<h5 className="h5">Response</h5>
 							<div className="jsonCode">
@@ -32,12 +32,11 @@ const Api: NextPage = () => {
 						</Expandable>
 					</ApiElement>
 
-					<ApiElement>
-						<h4 className="h4">Get URL Stats</h4>
-						<div className="code">
-							<div className="apiMethod">GET</div>
-							/urls/&#123;shortCode&#125;/stats
-						</div>
+					<ApiElement
+						title="Get URL Stats"
+						method="get"
+						endpoint="/urls/&#123;shortCode&#125;/stats"
+					>
 						<Expandable>
 							<h5 className="h5">Response</h5>
 							<div className="jsonCode">
@@ -51,11 +50,11 @@ const Api: NextPage = () => {
 							</div>
 						</Expandable>
 					</ApiElement>
-					<ApiElement>
-						<h4 className="h4">Generate Short Link</h4>
-						<div className="code">
-							<div className="apiMethod">POST</div>/api/urls
-						</div>
+					<ApiElement
+						title="Generate Short Link"
+						method="post"
+						endpoint="/api/urls"
+					>
 						<Expandable>
 							<h5 className="h5">Body</h5>
 							<div className="jsonCode">
