@@ -111,12 +111,22 @@ body {
 	}
 
 	.links__list {
-		@apply mb-3 text-sm;
+		@apply mb-4 text-sm;
 	}
 
 	.links__link {
-		@apply px-2 py-1 mx-2 pb-1.5 relative transition hover:transition;
+		@apply px-2 py-1 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
 	}
+}
+
+.links__link:not(:last-child)::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	right: -9px;
+	width: 1px;
+	height: 100%;
+	background-color: #d7d7d7;
 }
 
 ::selection {

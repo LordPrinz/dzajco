@@ -19,15 +19,15 @@ const LinksList = () => {
 			url: "#",
 		},
 		{
-			name: "Private Policy",
+			name: "Private Police",
 			url: "#",
 		},
 	];
 
 	return (
 		<ul className="links__list">
-			{links.map((link) => (
-				<FooterLink name={link.name} url={link.url} />
+			{links.map((link, index) => (
+				<FooterLink key={index} name={link.name} url={link.url} />
 			))}
 		</ul>
 	);
