@@ -16,11 +16,11 @@ const LinksList = () => {
 		},
 		{
 			name: "API",
-			url: "/api",
+			url: "/dzajapi",
 		},
 		{
-			name: "Private Police",
-			url: "#",
+			name: "Privacy Policy",
+			url: "/privacy-policy",
 		},
 	];
 
