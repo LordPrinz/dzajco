@@ -130,6 +130,9 @@ body {
 	.code {
 		@apply border border-[#bcbcbc] my-1 rounded-sm pl-0 flex items-center cursor-pointer;
 	}
+	.code--noRound {
+		@apply rounded-bl-none rounded-br-none;
+	}
 	.apiMethod {
 		@apply bg-[#6c74fe] text-white p-1.5 h-full mr-3 -ml-[1px] rounded-tl-sm rounded-bl-sm px-4;
 	}
@@ -145,6 +148,9 @@ body {
 
 	.statusCode {
 		@apply absolute right-6 top-2 text-xs;
+	}
+	.expandable {
+		@apply px-3 pb-2 pt-0.5 -mt-2 border border-t-0 border-[#bcbcbc];
 	}
 }
 

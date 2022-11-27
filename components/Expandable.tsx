@@ -6,7 +6,7 @@ type Props = {
 };
 
 const Expandable: FC<Props> = ({ children, isShown }) => {
-	return <div>{isShown ? children : null}</div>;
+	return isShown ? <div className="expandable">{children}</div> : null;
 };
 
 export default Expandable;

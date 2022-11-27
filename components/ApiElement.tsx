@@ -18,7 +18,10 @@ const apiElement: FC<Props> = ({ children, title, method, endpoint }) => {
 	return (
 		<div>
 			<h4 className="h4">{title}</h4>
-			<div className="code" onClick={clickHandler}>
+			<div
+				className={`code ${isShown ? "code--noRound" : ""}`}
+				onClick={clickHandler}
+			>
 				<div className="apiMethod">{method.toUpperCase()}</div> {endpoint}
 			</div>
 			<Expandable isShown={isShown}>{children}</Expandable>
