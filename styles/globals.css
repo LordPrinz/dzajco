@@ -122,7 +122,7 @@ body {
 		@apply px-2 py-1 my-2 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
 	}
 	.mainContent {
-		@apply flex self-center mt-6 flex-col w-9/12 tablet:w-11/12;
+		@apply flex self-center mt-5 flex-col w-9/12 tablet:w-11/12;
 	}
 	.apiExplanation {
 		@apply flex mt-20 flex-col gap-3;
