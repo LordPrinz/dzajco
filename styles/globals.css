@@ -117,7 +117,9 @@ body {
 	.links__list {
 		@apply mb-3 text-sm text-center;
 	}
-
+	.links__item {
+		@apply inline-block relative;
+	}
 	.links__link {
 		@apply px-2 py-1 my-2 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe];
 	}
@@ -175,11 +177,11 @@ body {
 	font-size: 0.8rem;
 }
 
-.links__link:not(:last-child)::after {
+.links__item:not(:last-child)::after {
 	content: "";
 	position: absolute;
 	top: 0;
-	right: -9px;
+	right: 0px;
 	width: 1px;
 	height: 100%;
 	background-color: #d7d7d7;
