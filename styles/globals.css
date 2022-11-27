@@ -154,6 +154,16 @@ body {
 	.expandable {
 		@apply px-3 pb-2 pt-0.5 -mt-2 border border-t-0 border-[#bcbcbc];
 	}
+
+	.link {
+		@apply underline;
+	}
+	.list--decimal {
+		@apply list-decimal;
+	}
+	.list--points {
+		@apply list-disc ml-5;
+	}
 }
 
 .statusCode::after {
