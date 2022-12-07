@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
 import { ToastContainer } from "react-toastify";
-import Footer from "../components/Footer";
 import Form from "../components/Form";
 import Header from "../components/Header";
 
