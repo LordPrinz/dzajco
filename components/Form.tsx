@@ -9,14 +9,21 @@ const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
 	const [enteredLink, setEnteredLink] = useState("");
+	const [valueOption, setValueOption] = useState("never");
 
 	const clearInputs = useCallback(() => {
 		setEnteredUrl("");
 		setCustomName("");
 		setEnteredLink("");
+		setValueOption("never");
 	}, []);
 
+	const updateOptionHandler = (event: any) => {
+		setValueOption(event.target.value);
+	};
+
 	const formSubmitHandler = async (event: any) => {
+		console.log(valueOption);
 		event.preventDefault();
 		if (!enteredUrl) {
 			return showError("You have to pass a valid link!");
@@ -24,6 +31,10 @@ const Form = () => {
 
 		if (!isValidUrl(enteredUrl)) {
 			return showError("Invalid link provided!");
+		}
+
+		if (!valueOption) {
+			return showError("No expiration date provided!");
 		}
 
 		if (!customName) {
@@ -109,7 +120,7 @@ const Form = () => {
 					maxLength={25}
 					onInput={nameInputHandler}
 				/>
-				<Select />
+				<Select onInput={updateOptionHandler} value={valueOption} />
 
 				<div className="flex mt-6">
 					<input
