@@ -18,7 +18,7 @@ const Form = () => {
 		setValueOption("never");
 	}, []);
 
-	const updateOptionHandler = (event: any) => {
+	const updateOptionHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
 		setValueOption(event.target.value);
 	};
 
