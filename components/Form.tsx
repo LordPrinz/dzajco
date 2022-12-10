@@ -3,6 +3,7 @@ import Hidden from "./Hidden";
 import showError from "../util/Notification/showError";
 import promiseToast from "../util/Notification/promiseToast";
 import isValidUrl from "../util/isValidUrl";
+import Select from "./Select";
 
 const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
@@ -108,6 +109,7 @@ const Form = () => {
 					maxLength={25}
 					onInput={nameInputHandler}
 				/>
+				<Select />
 
 				<div className="flex mt-6">
 					<input
