@@ -43,24 +43,35 @@ const Form = () => {
 			return showError("Custom name should not contanin white spaces");
 		}
 
+		if (customName.match("/")) {
+			return showError("Custom name should not contain '/'");
+		}
+
 		promiseToast({ url: enteredUrl, customName });
 
 		clearInputs();
 	};
 
-	const linkInputHandler = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-		setEnteredUrl(event.target.value.trim());
-	}, [enteredUrl]);
+	const linkInputHandler = useCallback(
+		(event: React.ChangeEvent<HTMLInputElement>) => {
+			setEnteredUrl(event.target.value.trim());
+		},
+		[enteredUrl]
+	);
 
-	const nameInputHandler = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-		setCustomName(event.target.value.trim());
-	}, [customName]);
+	const nameInputHandler = useCallback(
+		(event: React.ChangeEvent<HTMLInputElement>) => {
+			setCustomName(event.target.value.trim());
+		},
+		[customName]
+	);
 
-	const statsLinkInputHandler = useCallback((
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		setEnteredLink(event.target.value.trim());
-	}, [enteredLink]);
+	const statsLinkInputHandler = useCallback(
+		(event: React.ChangeEvent<HTMLInputElement>) => {
+			setEnteredLink(event.target.value.trim());
+		},
+		[enteredLink]
+	);
 
 	const showCounterHandler = () => {
 		if (enteredLink.trim().length === 0) {
@@ -106,6 +117,7 @@ const Form = () => {
 						value={enteredLink}
 						onInput={statsLinkInputHandler}
 					/>
+
 					<input
 						type="submit"
 						value="Show Counter"
