@@ -8,10 +8,12 @@ const promiseToast = async ({
 	url,
 	customName,
 	errorMessage,
+	expirationTime,
 }: {
 	url: string;
 	customName?: string;
 	errorMessage?: string;
+	expirationTime: string;
 }) => {
 	await toast.promise(
 		fetch("/api/urls", {

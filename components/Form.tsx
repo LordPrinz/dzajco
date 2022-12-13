@@ -9,21 +9,21 @@ const Form = () => {
 	const [enteredUrl, setEnteredUrl] = useState("");
 	const [customName, setCustomName] = useState("");
 	const [enteredLink, setEnteredLink] = useState("");
-	const [valueOption, setValueOption] = useState("never");
+	const [expirationTime, setExpirationTime] = useState("never");
 
 	const clearInputs = useCallback(() => {
 		setEnteredUrl("");
 		setCustomName("");
 		setEnteredLink("");
-		setValueOption("never");
+		setExpirationTime("never");
 	}, []);
 
 	const updateOptionHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		setValueOption(event.target.value);
+		setExpirationTime(event.target.value);
 	};
 
 	const formSubmitHandler = async (event: any) => {
-		console.log(valueOption);
+		console.log(expirationTime);
 		event.preventDefault();
 		if (!enteredUrl) {
 			return showError("You have to pass a valid link!");
@@ -33,7 +33,7 @@ const Form = () => {
 			return showError("Invalid link provided!");
 		}
 
-		if (!valueOption) {
+		if (!expirationTime) {
 			return showError("No expiration date provided!");
 		}
 
@@ -41,6 +41,7 @@ const Form = () => {
 			promiseToast({
 				url: enteredUrl,
 				errorMessage: "Invalid link provided!",
+				expirationTime,
 			});
 
 			return clearInputs();
@@ -59,7 +60,7 @@ const Form = () => {
 			return showError("Custom name should not contain '/'");
 		}
 
-		promiseToast({ url: enteredUrl, customName });
+		promiseToast({ url: enteredUrl, customName, expirationTime });
 
 		clearInputs();
 	};
@@ -120,7 +121,7 @@ const Form = () => {
 					maxLength={25}
 					onInput={nameInputHandler}
 				/>
-				<Select onInput={updateOptionHandler} value={valueOption} />
+				<Select onInput={updateOptionHandler} value={expirationTime} />
 
 				<div className="flex mt-6">
 					<input
