@@ -1,10 +1,5 @@
 const Select = ({ onInput, value }: any) => (
-	<select
-		className="select"
-		onInput={onInput}
-		defaultValue={"never"}
-		value={value}
-	>
+	<select className="select" onInput={onInput} value={value}>
 		<option value="never" className="option">
 			Link never expires
 		</option>
