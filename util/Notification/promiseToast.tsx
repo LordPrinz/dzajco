@@ -21,6 +21,7 @@ const promiseToast = async ({
 			body: JSON.stringify({
 				url,
 				customName,
+				expirationTime,
 			}),
 			headers: {
 				"Content-Type": "application/json",
