@@ -55,6 +55,8 @@ export default async function handler(
 					.json({ message: "Custom name should not contanin white spaces" });
 			}
 
+			const expirationTime = body.expirationTime || "never";
+
 			linkSchema.insertMany([
 				{
 					_id: customName,
@@ -82,6 +84,8 @@ export default async function handler(
 			}
 
 			isGenerated = true;
+
+			const expirationTime = body.expirationTime || "never";
 
 			linkSchema.insertMany([
 				{
