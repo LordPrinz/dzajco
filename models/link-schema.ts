@@ -5,6 +5,8 @@ const LinkSchema = new Schema({
 	clicks: { type: Number, required: true },
 });
 
+// fix
+
 const name = "LinkSchema";
 
 export default mongoose.models[name] || mongoose.model(name, LinkSchema, name);
