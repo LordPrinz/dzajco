@@ -7,7 +7,7 @@ import {
 } from "@/utils/api";
 import { NextRequest, NextResponse } from "next/server";
 import { createRequest } from "@/types/apiTypes";
-import dbConnect, { saveToDatabase } from "@/utils/db";
+import dbConnect, { formLinkModel, saveToDatabase } from "@/utils/db";
 
 export async function POST(requst: NextRequest) {
 	handleRateLimiter(requst);
@@ -31,7 +31,7 @@ export async function POST(requst: NextRequest) {
 			return sendWrongInputResponse(error);
 		}
 
-		const model = formLinkModel({ id: customName, fullUrl: url });
+		const model = formLinkModel({ id: customName, full: url });
 
 		saveToDatabase(model);
 		return createLinkResponse(customName);

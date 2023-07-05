@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import linkModel from "../models/linkModel";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -28,11 +29,41 @@ async function dbConnect() {
 
 export default dbConnect;
 
-type FindLinkType = {
-	shortUrl?: string;
+export type findLinkType = {
+	fullLink?: string;
 	id?: string;
 };
 
-export const findLink = async ({ shortUrl, id }: FindLinkType) => {};
+export type linkType = {
+	id: string;
+	full: string;
+	clicks?: number;
+	expire?: string;
+};
 
-export const saveToDatabase = async (model) => {};
+export const findLink = async ({ id, fullLink }: findLinkType) => {
+	if (id) {
+		return await linkModel.findById(id);
+	}
+
+	if (fullLink) {
+		return await linkModel.findOne({ full: fullLink });
+	}
+};
+
+export const formLinkModel = ({ id, full, expire }: linkType) => {
+	return {
+		_id: id,
+		full,
+		clicks: 0,
+		expire,
+	};
+};
+
+export const saveToDatabase = async (model: linkType) => {
+	const link = new linkModel({
+		...model,
+	});
+
+	await link.save();
+};
