@@ -5,9 +5,10 @@ import {
 	sendWrongInputResponse,
 	validateCustomName,
 } from "@/utils/api";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createRequest } from "@/types/apiTypes";
-import dbConnect, { formLinkModel, saveToDatabase } from "@/utils/db";
+import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
+import { generateUniqueLink } from "@/utils/utils";
 
 export async function POST(requst: NextRequest) {
 	handleRateLimiter(requst);
@@ -33,7 +34,21 @@ export async function POST(requst: NextRequest) {
 
 		const model = formLinkModel({ id: customName, full: url });
 
-		saveToDatabase(model);
+		await saveToDatabase(model);
 		return createLinkResponse(customName);
 	}
+
+	const existingLink = await findLink({ fullLink: url });
+
+	if (existingLink) {
+		return createLinkResponse(existingLink.id);
+	}
+
+	const shortUrl = await generateUniqueLink();
+
+	const link = formLinkModel({ id: shortUrl, full: url });
+
+	await saveToDatabase(link);
+
+	return createLinkResponse(shortUrl);
 }

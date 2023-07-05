@@ -45,6 +45,7 @@ export const isValidUrl = (url: string) => {
 	return urlPattern.test(url);
 };
 
+// TODO: Implement
 export const isValidCustomNameFormat = (customName: string) => {
 	return true;
 };
