@@ -3,23 +3,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { findLink } from "./db";
 
 export const sendWrongInputResponse = (message: string) => {
-	return new NextResponse(message, {
-		status: 422,
-	});
+	return NextResponse.json(
+		{
+			error: message,
+		},
+		{
+			status: 422,
+		}
+	);
 };
 
 export const createLinkResponse = (link: string) => {
-	return NextResponse.json({
-		message: "Created",
-		status: 201,
-		shortUrl: link,
-	});
+	return NextResponse.json(
+		{
+			message: "Created",
+			shortUrl: link,
+		},
+		{
+			status: 201,
+		}
+	);
 };
 
 export const handleRateLimiter = async (request: NextRequest) => {
 	if (!request.headers) {
 		// Handle the case where headers are not available
-		return new NextResponse(null, {
+		return NextResponse.json(null, {
 			status: 400,
 			statusText: "Bad Request",
 		});
@@ -63,8 +72,15 @@ export const isValidCustomNameFormat = (customName: string) => {
 	return true;
 };
 
+export const encodeCustomName = (customName: string) => {
+	return encodeURIComponent(customName.trim());
+};
+
 export const validateCustomName = async (customName: string) => {
-	const doesLinkExist = await findLink({ id: customName });
+	const doesLinkExist = await findLink({ id: encodeCustomName(customName) });
+
+	console.log(doesLinkExist);
+
 	if (doesLinkExist) {
 		return "This name already exists.";
 	}
@@ -76,8 +92,4 @@ export const validateCustomName = async (customName: string) => {
 	if (!isValidCustomNameFormat(customName)) {
 		return "Wrong custom name format.";
 	}
-};
-
-export const encodeCustomName = (customName: string) => {
-	return encodeURIComponent(customName.trim());
 };

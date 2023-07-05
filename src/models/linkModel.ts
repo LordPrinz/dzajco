@@ -22,6 +22,11 @@ LinkSchema.set("toJSON", {
 
 LinkSchema.set("toObject", { virtuals: true });
 
+LinkSchema.methods.incrementClicks = async function () {
+	this.clicks++;
+	await this.save();
+};
+
 const Link = mongoose.model("link", LinkSchema);
 
 export default Link;
