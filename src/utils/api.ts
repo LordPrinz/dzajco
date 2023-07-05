@@ -92,3 +92,9 @@ export const validateCustomName = async (customName: string) => {
 		return "Wrong custom name format.";
 	}
 };
+
+export const validateExpireTime = (expire: string) => {
+	const testDate = new Date(+expire) as any as string;
+
+	return testDate === "Invalid Date";
+};

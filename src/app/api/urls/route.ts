@@ -6,6 +6,7 @@ import {
 	sendRateLimitExceededError,
 	sendWrongInputResponse,
 	validateCustomName,
+	validateExpireTime,
 } from "@/utils/api";
 import { NextRequest } from "next/server";
 import { createRequest } from "@/types/apiTypes";
@@ -21,7 +22,8 @@ export async function POST(requst: NextRequest) {
 
 	await dbConnect();
 
-	const { url, customName }: Partial<createRequest> = await requst.json();
+	const { url, customName, expire }: Partial<createRequest> =
+		await requst.json();
 
 	if (!url) {
 		return sendWrongInputResponse("No full link provided.");
@@ -29,6 +31,12 @@ export async function POST(requst: NextRequest) {
 
 	if (!isValidUrl(url)) {
 		return sendWrongInputResponse("Invalid url format provided.");
+	}
+
+	if (expire && expire !== "never") {
+		if (validateExpireTime(expire)) {
+			return sendWrongInputResponse("Invalid expiration time provided.");
+		}
 	}
 
 	if (customName) {
@@ -40,7 +48,7 @@ export async function POST(requst: NextRequest) {
 
 		const encodedCustomName = encodeCustomName(customName);
 
-		const model = formLinkModel({ id: encodedCustomName, full: url });
+		const model = formLinkModel({ id: encodedCustomName, full: url, expire });
 
 		await saveToDatabase(model);
 		return createLinkResponse(encodedCustomName);
@@ -54,7 +62,7 @@ export async function POST(requst: NextRequest) {
 
 	const shortUrl = await generateUniqueLink();
 
-	const link = formLinkModel({ id: shortUrl, full: url });
+	const link = formLinkModel({ id: shortUrl, full: url, expire });
 
 	await saveToDatabase(link);
 
