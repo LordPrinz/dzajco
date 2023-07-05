@@ -1,5 +1,5 @@
 import { limiter } from "@/app/api/urls/config/limiter";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const sendWrongInputResponse = (message: string) => {
 	return new NextResponse(message, {
@@ -7,8 +7,15 @@ export const sendWrongInputResponse = (message: string) => {
 	});
 };
 
-export const handleRateLimiter = async (request: Request) => {
-	const origin = request.headers.get("origin");
+export const handleRateLimiter = async (request: NextRequest) => {
+	if (!request.headers) {
+		// Handle the case where headers are not available
+		return new NextResponse(null, {
+			status: 400,
+			statusText: "Bad Request",
+		});
+	}
+
 	const remaining = await limiter.removeTokens(1);
 
 	if (remaining < 0) {
@@ -21,4 +28,10 @@ export const handleRateLimiter = async (request: Request) => {
 			},
 		});
 	}
+};
+
+export const isValidUrl = (url: string) => {
+	const urlPattern =
+		/^(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])/i;
+	return urlPattern.test(url);
 };
