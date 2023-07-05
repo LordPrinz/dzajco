@@ -24,10 +24,21 @@ export async function GET(
 
 	const link = await findLink({ id: shortLink });
 
+	if (!link) {
+		return NextResponse.json(
+			{
+				error: "Link not found!",
+			},
+			{
+				status: 404,
+			}
+		);
+	}
+
 	return NextResponse.json({
-		id: link?.id,
-		fullLink: link?.full,
-		visits: link?.visits,
-		expire: link?.expire,
+		id: link.id,
+		fullLink: link.full,
+		visits: link.visits,
+		expire: link.expire,
 	});
 }
