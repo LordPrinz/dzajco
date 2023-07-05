@@ -25,27 +25,26 @@ export const createLinkResponse = (link: string) => {
 	);
 };
 
-export const handleRateLimiter = async (request: NextRequest) => {
-	if (!request.headers) {
-		// Handle the case where headers are not available
-		return NextResponse.json(null, {
-			status: 400,
-			statusText: "Bad Request",
-		});
-	}
-
+export const handleRateLimiter = async () => {
 	const remaining = await limiter.removeTokens(1);
 
-	if (remaining < 0) {
-		return new NextResponse(null, {
+	return remaining < 0;
+};
+
+export const sendRateLimitExceededError = () => {
+	return NextResponse.json(
+		{
+			error: "Too Many Requests",
+		},
+		{
 			status: 429,
 			statusText: "Too Many Requests",
 			headers: {
-				"Access-Control-Allow-Origin": origin || "*",
+				"Access-Control-Allow-Origin": "*",
 				"Content-Type": "text/plain",
 			},
-		});
-	}
+		}
+	);
 };
 
 export const isValidUrl = (url: string) => {

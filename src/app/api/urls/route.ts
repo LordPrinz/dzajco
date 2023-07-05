@@ -3,6 +3,7 @@ import {
 	encodeCustomName,
 	handleRateLimiter,
 	isValidUrl,
+	sendRateLimitExceededError,
 	sendWrongInputResponse,
 	validateCustomName,
 } from "@/utils/api";
@@ -12,7 +13,11 @@ import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
 import { generateUniqueLink } from "@/utils/utils";
 
 export async function POST(requst: NextRequest) {
-	handleRateLimiter(requst);
+	const isRateLimitExceeded = await handleRateLimiter();
+
+	if (isRateLimitExceeded) {
+		return sendRateLimitExceededError();
+	}
 
 	await dbConnect();
 
