@@ -53,7 +53,7 @@ export const findLink = async ({ id, fullLink }: findLinkType) => {
 
 export const formLinkModel = ({ id, full, expire }: linkType) => {
 	return {
-		_id: id,
+		id,
 		full,
 		clicks: 0,
 		expire,
@@ -62,6 +62,7 @@ export const formLinkModel = ({ id, full, expire }: linkType) => {
 
 export const saveToDatabase = async (model: linkType) => {
 	const link = new linkModel({
+		_id: model.id,
 		...model,
 	});
 

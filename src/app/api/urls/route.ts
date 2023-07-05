@@ -25,7 +25,7 @@ export async function POST(requst: NextRequest) {
 	}
 
 	if (customName) {
-		const error = validateCustomName(customName);
+		const error = await validateCustomName(customName);
 
 		if (error) {
 			return sendWrongInputResponse(error);
