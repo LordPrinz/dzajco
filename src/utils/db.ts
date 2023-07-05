@@ -27,3 +27,5 @@ async function dbConnect() {
 }
 
 export default dbConnect;
+
+export const doesLinkExist = async (id: string) => {};

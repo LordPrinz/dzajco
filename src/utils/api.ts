@@ -1,5 +1,6 @@
 import { limiter } from "@/app/api/urls/config/limiter";
 import { NextRequest, NextResponse } from "next/server";
+import { doesLinkExist } from "./db";
 
 export const sendWrongInputResponse = (message: string) => {
 	return new NextResponse(message, {
@@ -34,4 +35,22 @@ export const isValidUrl = (url: string) => {
 	const urlPattern =
 		/^(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])/i;
 	return urlPattern.test(url);
+};
+
+export const isValidCustomNameFormat = (customName: string) => {
+	return true;
+};
+
+export const validateCustomName = (customName: string) => {
+	if (doesLinkExist(customName)) {
+		return "This name already exists.";
+	}
+
+	if (customName.length > 25) {
+		return "Custom name is too long. Length should be not greater than 25.";
+	}
+
+	if (!isValidCustomNameFormat(customName)) {
+		return "Wrong custom name format.";
+	}
 };
