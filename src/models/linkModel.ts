@@ -1,10 +1,18 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
+
+interface ILink extends Document {
+	_id: string;
+	full: string;
+	visits: number;
+	expire: string;
+	incrementVisits: () => Promise<void>;
+}
 
 const LinkSchema = new Schema(
 	{
 		_id: { type: String, required: true },
 		full: { type: String, required: true },
-		clicks: { type: Number, required: true },
+		visits: { type: Number, required: true },
 		expire: { type: String, default: "never" },
 	},
 	{
@@ -22,11 +30,16 @@ LinkSchema.set("toJSON", {
 
 LinkSchema.set("toObject", { virtuals: true });
 
-LinkSchema.methods.incrementClicks = async function () {
-	this.clicks++;
+LinkSchema.methods.incrementVisits = async function (): Promise<void> {
+	this.visits++;
 	await this.save();
 };
 
-const Link = mongoose.model("link", LinkSchema);
+let Link: mongoose.Model<ILink>;
+try {
+	Link = mongoose.model<ILink>("link");
+} catch {
+	Link = mongoose.model<ILink>("link", LinkSchema);
+}
 
 export default Link;

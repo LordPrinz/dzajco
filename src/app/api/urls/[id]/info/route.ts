@@ -24,9 +24,10 @@ export async function GET(
 
 	const link = await findLink({ id: shortLink });
 
-	await link?.incrementVisits();
-
 	return NextResponse.json({
+		id: link?.id,
 		fullLink: link?.full,
+		visits: link?.visits,
+		expire: link?.expire,
 	});
 }

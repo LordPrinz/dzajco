@@ -37,7 +37,7 @@ export type findLinkType = {
 export type linkType = {
 	id: string;
 	full: string;
-	clicks?: number;
+	visits?: number;
 	expire?: string;
 };
 
@@ -55,7 +55,7 @@ export const formLinkModel = ({ id, full, expire }: linkType) => {
 	return {
 		id,
 		full,
-		clicks: 0,
+		visits: 0,
 		expire,
 	};
 };
