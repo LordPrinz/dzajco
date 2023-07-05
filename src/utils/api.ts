@@ -45,8 +45,21 @@ export const isValidUrl = (url: string) => {
 	return urlPattern.test(url);
 };
 
-// TODO: Implement
 export const isValidCustomNameFormat = (customName: string) => {
+	const invalidCharsAndProtocols = [
+		"/",
+		"\\",
+		"http:",
+		"https:",
+		"ftp:",
+		"mailto:",
+	];
+	for (const invalidCharOrProtocol of invalidCharsAndProtocols) {
+		if (customName.includes(invalidCharOrProtocol)) {
+			return false;
+		}
+	}
+
 	return true;
 };
 
@@ -63,4 +76,8 @@ export const validateCustomName = async (customName: string) => {
 	if (!isValidCustomNameFormat(customName)) {
 		return "Wrong custom name format.";
 	}
+};
+
+export const encodeCustomName = (customName: string) => {
+	return encodeURIComponent(customName.trim());
 };

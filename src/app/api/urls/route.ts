@@ -1,5 +1,6 @@
 import {
 	createLinkResponse,
+	encodeCustomName,
 	handleRateLimiter,
 	isValidUrl,
 	sendWrongInputResponse,
@@ -32,10 +33,12 @@ export async function POST(requst: NextRequest) {
 			return sendWrongInputResponse(error);
 		}
 
-		const model = formLinkModel({ id: customName, full: url });
+		const encodedCustomName = encodeCustomName(customName);
+
+		const model = formLinkModel({ id: encodedCustomName, full: url });
 
 		await saveToDatabase(model);
-		return createLinkResponse(customName);
+		return createLinkResponse(encodedCustomName);
 	}
 
 	const existingLink = await findLink({ fullLink: url });
