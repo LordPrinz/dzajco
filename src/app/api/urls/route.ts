@@ -1,4 +1,5 @@
 import {
+	createLinkResponse,
 	handleRateLimiter,
 	isValidUrl,
 	sendWrongInputResponse,
@@ -6,7 +7,7 @@ import {
 } from "@/utils/api";
 import { NextRequest, NextResponse } from "next/server";
 import { createRequest } from "@/types/apiTypes";
-import dbConnect from "@/utils/db";
+import dbConnect, { saveToDatabase } from "@/utils/db";
 
 export async function POST(requst: NextRequest) {
 	handleRateLimiter(requst);
@@ -29,10 +30,10 @@ export async function POST(requst: NextRequest) {
 		if (error) {
 			return sendWrongInputResponse(error);
 		}
-	}
 
-	return NextResponse.json({
-		msg: "XD",
-	});
-	//
+		const model = formLinkModel({ id: customName, fullUrl: url });
+
+		saveToDatabase(model);
+		return createLinkResponse(customName);
+	}
 }

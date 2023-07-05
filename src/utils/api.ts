@@ -1,10 +1,18 @@
 import { limiter } from "@/app/api/urls/config/limiter";
 import { NextRequest, NextResponse } from "next/server";
-import { doesLinkExist } from "./db";
+import { doesShortLinkExist } from "./db";
 
 export const sendWrongInputResponse = (message: string) => {
 	return new NextResponse(message, {
 		status: 422,
+	});
+};
+
+export const createLinkResponse = (link: string) => {
+	return NextResponse.json({
+		message: "Created",
+		status: 201,
+		shortUrl: link,
 	});
 };
 
@@ -42,7 +50,7 @@ export const isValidCustomNameFormat = (customName: string) => {
 };
 
 export const validateCustomName = (customName: string) => {
-	if (doesLinkExist(customName)) {
+	if (doesShortLinkExist(customName)) {
 		return "This name already exists.";
 	}
 

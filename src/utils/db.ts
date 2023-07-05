@@ -28,4 +28,11 @@ async function dbConnect() {
 
 export default dbConnect;
 
-export const doesLinkExist = async (id: string) => {};
+type FindLinkType = {
+	shortUrl?: string;
+	id?: string;
+};
+
+export const findLink = async ({ shortUrl, id }: FindLinkType) => {};
+
+export const saveToDatabase = async (model) => {};
