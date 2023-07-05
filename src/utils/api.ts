@@ -1,5 +1,5 @@
 import { limiter } from "@/app/api/urls/config/limiter";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { findLink } from "./db";
 
 export const sendWrongInputResponse = (message: string) => {
@@ -77,8 +77,6 @@ export const encodeCustomName = (customName: string) => {
 
 export const validateCustomName = async (customName: string) => {
 	const doesLinkExist = await findLink({ id: encodeCustomName(customName) });
-
-	console.log(doesLinkExist);
 
 	if (doesLinkExist) {
 		return "This name already exists.";
