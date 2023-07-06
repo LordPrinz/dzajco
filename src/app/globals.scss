@@ -2,28 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-	--foreground-rgb: 0, 0, 0;
-	--background-start-rgb: 214, 219, 220;
-	--background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		--foreground-rgb: 255, 255, 255;
-		--background-start-rgb: 0, 0, 0;
-		--background-end-rgb: 0, 0, 0;
-	}
+* {
+	box-sizing: border-box;
 }
 
 body {
-	color: rgb(var(--foreground-rgb));
-	background: linear-gradient(
-			to bottom,
-			transparent,
-			rgb(var(--background-end-rgb))
-		)
-		rgb(var(--background-start-rgb));
+	margin: 0;
+	font-family: "Open Sans", "Lato", sans-serif;
+	color: #414141;
+	background-color: #eee;
+	scroll-behavior: smooth;
 }
 
 @layer components {
@@ -33,10 +21,20 @@ body {
 		}
 		&__item {
 			@apply inline-block relative;
+
+			&:not(:last-child)::after {
+				content: "";
+				position: absolute;
+				top: 0;
+				right: 0px;
+				width: 1px;
+				height: 100%;
+				background-color: #d7d7d7;
+			}
 		}
 
 		&__link {
-			@apply px-2 py-1 my-2 overflow-hidden mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe] cursor-pointer;
+			@apply px-2 py-1 my-2 mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe] cursor-pointer;
 		}
 	}
 }
