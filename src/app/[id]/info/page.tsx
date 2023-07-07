@@ -12,13 +12,13 @@ const Page: NextPage<PageParams> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
 
-	if (link) {
-		link.incrementVisits().then(() => {
-			redirect(link.full);
-		});
+	if (!link) {
+		notFound();
 	}
 
-	notFound();
+	console.log(link);
+
+	return <div>xd</div>;
 };
 
 export default Page;
