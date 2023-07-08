@@ -2,15 +2,8 @@ import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
 
-type PageParams = {
-	params: {
-		[key: string]: string;
-	};
-};
-
 type Props = {
 	params: { id: string };
-	searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -25,7 +18,7 @@ export async function generateMetadata({ params }: Props) {
 	}
 }
 
-const Page: NextPage<PageParams> = async ({ params }) => {
+const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
 

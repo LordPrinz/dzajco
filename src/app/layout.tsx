@@ -3,10 +3,12 @@ import "./globals.scss";
 import Footer from "../components/Footer/Footer";
 
 export const metadata: Metadata = {
+	metadataBase: new URL("https://www.dzaj.de"),
 	title: {
 		default: "Dzajco",
 		template: `%s | Dzajco`,
 	},
+
 	description:
 		"Free link shortener created by Dzajlopment. It allows to set custom names on links, counts how many times someone entered your short link.",
 };

@@ -1,14 +1,22 @@
 import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
-type PageParams = {
-	params: {
-		[key: string]: string;
-	};
+type Props = {
+	params: { id: string };
 };
 
-const Page: NextPage<PageParams> = async ({ params }) => {
+export async function generateMetadata({ params }: Props) {
+	return {
+		title: "Link info",
+		description: "Number of visits on the link",
+		alternates: {
+			canonical: `https://www.dzaj.de/${params.id}/info`,
+		},
+	};
+}
+
+const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
 
