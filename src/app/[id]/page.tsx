@@ -24,16 +24,9 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 	const link = await findLink({ id: params.id });
 
-	console.log(link);
-
 	if (link) {
-		link.incrementVisits().then(() => {
-			setTimeout(() => {
-				redirect(
-					"https://nextjs.org/docs/app/building-your-application/routing/error-handling"
-				);
-			}, 3000);
-		});
+		link.incrementVisits();
+		redirect(link.full);
 	}
 
 	notFound();
