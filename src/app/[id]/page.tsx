@@ -1,3 +1,4 @@
+import { encodeCustomName } from "@/utils/api";
 import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -20,14 +21,22 @@ export async function generateMetadata({ params }: Props) {
 
 const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
+
 	const link = await findLink({ id: params.id });
+
+	console.log(link);
 
 	if (link) {
 		link.incrementVisits().then(() => {
-			redirect(link.full);
+			setTimeout(() => {
+				redirect(
+					"https://nextjs.org/docs/app/building-your-application/routing/error-handling"
+				);
+			}, 3000);
 		});
 	}
 
+	throw new Error("Rip bozo XD");
 	notFound();
 };
 
