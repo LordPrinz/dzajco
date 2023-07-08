@@ -22,7 +22,7 @@ const NotFoundPage = () => {
 					<Image src="/404.svg" alt="Cracked egg image" fill={true} />
 				</div>
 				<h3 className="text-4xl font-extrabold  tracking-widest text-[#1C1C1C] text-center ">
-					Page Not Found
+					No i co? <i>Dżajco</i>.
 				</h3>
 			</Link>
 		</main>

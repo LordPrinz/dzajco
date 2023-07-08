@@ -36,7 +36,6 @@ const Page: NextPage<Props> = async ({ params }) => {
 		});
 	}
 
-	throw new Error("Rip bozo XD");
 	notFound();
 };
 
