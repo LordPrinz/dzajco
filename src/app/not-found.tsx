@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const NotFoundPage = () => {
 	return (
-		<div className="flex h-full w-full items-center justify-center ">
+		<main className="flex h-full w-full items-center justify-center ">
 			<Link
 				className="flex text-[#1C1C1C] font-bold absolute text-4xl top-5 left-4 gap-1.5  justify-center px-2 py-1"
 				href="/">
@@ -25,7 +25,7 @@ const NotFoundPage = () => {
 					Page Not Found
 				</h3>
 			</Link>
-		</div>
+		</main>
 	);
 };
 

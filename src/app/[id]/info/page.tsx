@@ -26,7 +26,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 	console.log(link);
 
-	return <div>xd</div>;
+	return <main>xd</main>;
 };
 
 export default Page;
