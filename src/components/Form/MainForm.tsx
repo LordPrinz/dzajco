@@ -1,5 +1,5 @@
 const MainForm = () => {
-	return <div>Main Form</div>;
+	return <form></form>;
 };
 
 export default MainForm;

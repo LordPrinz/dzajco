@@ -1,5 +1,5 @@
 import Header from "@/components/Header/Header";
-import MainForm from "@/components/MainForm/MainForm";
+import MainForm from "@/components/Form/MainForm";
 import { ToastContainer } from "react-toastify";
 
 export default function Home() {
