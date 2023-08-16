@@ -1,6 +1,6 @@
 type Props = {
 	value: string;
-	formSubmitHandler: () => void;
+	formSubmitHandler?: () => void;
 	setValue: (value: string) => void;
 };
 

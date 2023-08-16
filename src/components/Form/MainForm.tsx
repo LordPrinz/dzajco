@@ -2,18 +2,27 @@
 
 import useInput from "@/hooks/useInput";
 import SubmitInput from "../Input/SubmitInput";
+import { FormEvent } from "react";
+import { isValidUrl } from "@/utils/api";
 
 const MainForm = () => {
-	const { setValue, value } = useInput({});
+	const { setValue, value, error } = useInput({
+		validate(value) {
+			return isValidUrl(value);
+		},
+	});
 
-	const formHandler = () => {};
+	const formHandler = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+	};
+
+	if (error) {
+		console.log("XD");
+	}
+
 	return (
-		<form>
-			<SubmitInput
-				setValue={setValue}
-				value={value}
-				formSubmitHandler={formHandler}
-			/>
+		<form onSubmit={formHandler}>
+			<SubmitInput setValue={setValue} value={value} />
 		</form>
 	);
 };
