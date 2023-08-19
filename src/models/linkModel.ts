@@ -20,6 +20,8 @@ const LinkSchema = new Schema(
 	}
 );
 
+LinkSchema.index({ expire: 1 }, { expireAfterSeconds: 0 });
+
 LinkSchema.set("toJSON", {
 	transform: function (doc, ret) {
 		ret.id = ret._id;
