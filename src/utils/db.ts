@@ -29,19 +29,19 @@ async function dbConnect() {
 
 export default dbConnect;
 
-export type findLinkType = {
+export type FindLinkType = {
 	fullLink?: string;
 	id?: string;
 };
 
-export type linkType = {
+export type LinkType = {
 	id: string;
 	full: string;
 	visits?: number;
-	expire?: string;
+	expire?: Date | null;
 };
 
-export const findLink = async ({ id, fullLink }: findLinkType) => {
+export const findLink = async ({ id, fullLink }: FindLinkType) => {
 	if (id) {
 		return await linkModel.findById(id);
 	}
@@ -51,7 +51,7 @@ export const findLink = async ({ id, fullLink }: findLinkType) => {
 	}
 };
 
-export const formLinkModel = ({ id, full, expire }: linkType) => {
+export const formLinkModel = ({ id, full, expire }: LinkType) => {
 	return {
 		id,
 		full,
@@ -60,7 +60,7 @@ export const formLinkModel = ({ id, full, expire }: linkType) => {
 	};
 };
 
-export const saveToDatabase = async (model: linkType) => {
+export const saveToDatabase = async (model: LinkType) => {
 	const link = new linkModel({
 		_id: model.id,
 		...model,

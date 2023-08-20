@@ -4,7 +4,7 @@ interface ILink extends Document {
 	_id: string;
 	full: string;
 	visits: number;
-	expire: string;
+	expire: Date | null;
 	incrementVisits: () => Promise<void>;
 }
 
@@ -13,7 +13,7 @@ const LinkSchema = new Schema(
 		_id: { type: String, required: true },
 		full: { type: String, required: true },
 		visits: { type: Number, required: true },
-		expire: { type: String, default: "never" },
+		expire: { type: Date, default: null },
 	},
 	{
 		versionKey: false,

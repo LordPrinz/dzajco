@@ -1,4 +1,3 @@
-import { encodeCustomName } from "@/utils/api";
 import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -23,6 +22,8 @@ const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 
 	const link = await findLink({ id: params.id });
+
+	console.log(link);
 
 	if (link) {
 		link.incrementVisits();

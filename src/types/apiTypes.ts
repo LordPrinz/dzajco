@@ -1,5 +1,5 @@
-export type createRequest = {
+export type CreateRequest = {
 	url: string;
 	customName?: string;
-	expire?: string;
+	expire?: Date | null;
 };
