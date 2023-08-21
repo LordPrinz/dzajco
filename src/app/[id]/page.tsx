@@ -20,17 +20,14 @@ export async function generateMetadata({ params }: Props) {
 
 const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
-
 	const link = await findLink({ id: params.id });
 
-	console.log(link);
-
-	if (link) {
-		link.incrementVisits();
-		redirect(link.full);
+	if (!link) {
+		notFound();
 	}
 
-	notFound();
+	link.incrementVisits();
+	redirect(link.full);
 };
 
 export default Page;

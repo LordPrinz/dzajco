@@ -33,10 +33,8 @@ export async function POST(requst: NextRequest) {
 		return sendWrongInputResponse("Invalid url format provided.");
 	}
 
-	if (expire) {
-		if (validateExpireTime(expire)) {
-			return sendWrongInputResponse("Invalid expiration time provided.");
-		}
+	if (expire && validateExpireTime(expire)) {
+		return sendWrongInputResponse("Invalid expiration time provided.");
 	}
 
 	if (customName) {

@@ -94,5 +94,5 @@ export const validateCustomName = async (customName: string) => {
 export const validateExpireTime = (expire: Date) => {
 	const testDate = new Date(expire) as any as string;
 
-	return testDate === "Invalid Date";
+	return testDate !== "Invalid Date";
 };
