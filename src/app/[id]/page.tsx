@@ -1,6 +1,7 @@
 import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 type Props = {
 	params: { id: string };
@@ -21,6 +22,10 @@ export async function generateMetadata({ params }: Props) {
 const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
+
+	const ip = headers().get("x-forwarded-for");
+
+	console.log(ip);
 
 	if (!link) {
 		notFound();
