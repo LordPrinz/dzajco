@@ -1,11 +1,18 @@
+import { Location } from "@/utils/utils";
 import mongoose, { Schema, Document } from "mongoose";
+
+type IVisitsLocation = {
+	visits: number;
+	_id: string;
+};
 
 interface ILink extends Document {
 	_id: string;
 	full: string;
 	visits: number;
 	expire: Date | null;
-	incrementVisits: () => Promise<void>;
+	incrementVisits: (location: Location) => Promise<void>;
+	visitsLocation: IVisitsLocation;
 }
 
 const LinkSchema = new Schema(
@@ -14,6 +21,12 @@ const LinkSchema = new Schema(
 		full: { type: String, required: true },
 		visits: { type: Number, required: true },
 		expire: { type: Date, default: null },
+		visitsLocation: [
+			{
+				visits: { type: Number },
+				_id: { type: String },
+			},
+		],
 	},
 	{
 		versionKey: false,
@@ -25,6 +38,8 @@ LinkSchema.index({ expire: 1 }, { expireAfterSeconds: 0 });
 LinkSchema.set("toJSON", {
 	transform: function (doc, ret) {
 		ret.id = ret._id;
+
+		delete ret._id;
 		delete ret._id;
 		delete ret.__v;
 	},
@@ -32,7 +47,24 @@ LinkSchema.set("toJSON", {
 
 LinkSchema.set("toObject", { virtuals: true });
 
-LinkSchema.methods.incrementVisits = async function (): Promise<void> {
+LinkSchema.methods.incrementVisits = async function (
+	location: Location
+): Promise<void> {
+	const locationPattern = `${location.city}_${location.state}_${location.country}`;
+
+	const index = this.visitsLocation.findIndex(
+		(visitLocation: IVisitsLocation) => visitLocation._id === locationPattern
+	);
+
+	if (index !== -1) {
+		this.visitsLocation[index].visits++;
+	} else {
+		this.visitsLocation.push({
+			visits: 1,
+			_id: locationPattern,
+		});
+	}
+
 	this.visits++;
 	await this.save();
 };

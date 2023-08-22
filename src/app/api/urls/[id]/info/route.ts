@@ -40,5 +40,6 @@ export async function GET(
 		fullLink: link.full,
 		visits: link.visits,
 		expire: link.expire,
+		visitsLocation: link?.visitsLocation,
 	});
 }

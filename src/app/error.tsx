@@ -10,8 +10,8 @@ const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
 
 	return (
 		<main className="flex h-full w-full items-center justify-center">
-			<div className="">
-				<div className="aspect-square relative scale-125  mb-8">
+			<div>
+				<div className="aspect-square relative scale-125  mb-8 max-w-md mx-auto">
 					<Image src="/cracked_egg.svg" alt="Cracked egg image" fill={true} />
 				</div>
 

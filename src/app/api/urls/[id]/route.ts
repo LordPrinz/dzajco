@@ -4,6 +4,8 @@ import {
 	sendRateLimitExceededError,
 } from "@/utils/api";
 import dbConnect, { findLink } from "@/utils/db";
+import { getUserLocation } from "@/utils/utils";
+import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -35,7 +37,13 @@ export async function GET(
 		);
 	}
 
-	await link.incrementVisits();
+	const ip = headers().get("x-forwarded-for")!;
+
+	const userLocation = await getUserLocation(
+		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
+	);
+
+	await link.incrementVisits(userLocation);
 
 	return NextResponse.json({
 		fullLink: link.full,

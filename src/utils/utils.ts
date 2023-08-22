@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { findLink } from "./db";
 import IPData from "ipdata";
+import axios from "axios";
 
 export const generateRandom = (min: number, max: number): number => {
 	min = Math.ceil(min);
@@ -28,22 +29,42 @@ export const generateUniqueLink = async () => {
 };
 
 export type Location = {
-	city: string | undefined;
+	city: string;
 	country: string;
-	countryCode: string;
-	lat: string;
-	lon: string;
+	location: {
+		latitude: string;
+		longitude: string;
+	};
+	state: string;
 };
 
 export const getUserLocation = async (ip: string) => {
-	const ipdata = new IPData(process.env.IP_DATA_KEY!);
-	const data = await ipdata.lookup(ip);
+	const data = await axios.get(
+		`https://api.geoapify.com/v1/ipinfo?&apiKey=${process.env
+			.GEOAPIFY_KEY!}&ip=${ip}`
+	);
+
+	const { city, country, location, state } = data.data;
+
 	return {
-		city: data.city,
-		country: data.country_name,
-		countryCode: data.country_code,
-		flag: data.flag,
-		lat: data.latitude?.toPrecision(10),
-		lon: data.longitude?.toPrecision(10),
-	};
+		city: city.name,
+		country: country.name,
+		location,
+		state: state.name,
+	} as Location;
+};
+
+export const getLocationBoundaries = async ({
+	latitude,
+	longitude,
+}: {
+	latitude: string;
+	longitude: string;
+}) => {
+	const data = await axios.get(
+		`https://api.geoapify.com/v1/boundaries/part-of?lon=${longitude}&lat=${latitude}&geometry=geometry_1000&apiKey=${process
+			.env.GEOAPIFY_KEY!}`
+	);
+
+	return data.data.features[0].geometry.coordinates;
 };

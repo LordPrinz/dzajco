@@ -58,6 +58,7 @@ export const formLinkModel = ({ id, full, expire }: LinkType) => {
 		full,
 		visits: 0,
 		expire,
+		visitsLocation: [],
 	};
 };
 
@@ -68,8 +69,4 @@ export const saveToDatabase = async (model: LinkType) => {
 	});
 
 	await link.save();
-};
-
-export const saveLocationHandler = async (location: Location) => {
-	// create location model,
 };
