@@ -6,7 +6,7 @@ export default function Home() {
 	return (
 		<main className="">
 			<Header />
-			<MainForm />
+			{/* <MainForm /> */}
 			<ToastContainer
 				position="bottom-right"
 				autoClose={5000}
