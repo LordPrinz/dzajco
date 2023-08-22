@@ -26,7 +26,13 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 	console.log(link);
 
-	return <main>xd</main>;
+	return (
+		<main className="grid grid-cols-2 grid-rows-5 gap-2 p-3">
+			<div className="info-panel row-start-1 row-end-3"></div>
+			<div className="info-panel row-start-3 row-end-6"></div>
+			<div className="info-panel row-start-1 row-end-6"></div>
+		</main>
+	);
 };
 
 export default Page;

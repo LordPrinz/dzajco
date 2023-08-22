@@ -6,15 +6,18 @@
 	box-sizing: border-box;
 }
 
-body {
-	margin: 0;
-	font-family: "Open Sans", "Lato", sans-serif;
-	color: #414141;
-	background-color: #eee;
-	scroll-behavior: smooth;
+@layer base {
+	body {
+		font-family: "Open Sans", "Lato", sans-serif;
+		@apply m-0 bg-gray-50 text-gray-900 scroll-smooth;
+	}
 }
 
 @layer components {
+	.info-panel {
+		@apply rounded-xl bg-white;
+	}
+
 	.links {
 		&__list {
 			@apply mb-3 text-sm text-center;

@@ -22,7 +22,7 @@ export default function RootLayout({
 		<html lang="en">
 			<body className="grid h-screen grid-rows-[1fr,min-content]">
 				{children}
-				<Footer />
+				{/* <Footer /> */}
 			</body>
 		</html>
 	);
