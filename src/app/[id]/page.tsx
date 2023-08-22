@@ -1,7 +1,8 @@
-import dbConnect, { findLink } from "@/utils/db";
+import dbConnect, { findLink, saveLocationHandler } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { getUserLocation } from "@/utils/utils";
 
 type Props = {
 	params: { id: string };
@@ -23,15 +24,17 @@ const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
 
-	const ip = headers().get("x-forwarded-for");
-
-	console.log(ip);
-
 	if (!link) {
 		notFound();
 	}
 
-	link.incrementVisits();
+	const ip = headers().get("x-forwarded-for")!;
+
+	const location = await getUserLocation(ip);
+
+	await saveLocationHandler(location);
+
+	// link.incrementVisits();
 	redirect(link.full);
 };
 
