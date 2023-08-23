@@ -9,7 +9,7 @@ type Props = {
 const SubmitInput = ({ className, title, placeholder }: Props) => {
 	return (
 		<div className={cn("flex w-[calc(100%+24px)]", className)}>
-			<input className="input flex-1 shadow" placeholder={placeholder} />
+			<input className="input flex-1" placeholder={placeholder} />
 			<input
 				type="submit"
 				className="bg-jajco-500 text-jajco-50 pl-10 pr-6 rounded-r-full -translate-x-6 cursor-pointer shadow"
