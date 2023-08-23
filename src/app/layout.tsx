@@ -20,10 +20,7 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body className="grid h-screen grid-rows-[1fr,min-content]">
-				{children}
-				{/* <Footer /> */}
-			</body>
+			<body className="grid h-screen gridLayout">{children}</body>
 		</html>
 	);
 }

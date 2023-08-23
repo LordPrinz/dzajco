@@ -6,6 +6,12 @@
 	box-sizing: border-box;
 }
 
+@layer utilities {
+	.gridLayout {
+		@apply grid-cols-mobileLayout sm:grid-cols-smallLayout lg:grid-cols-defaultLayout;
+	}
+}
+
 @layer base {
 	body {
 		font-family: "Open Sans", "Lato", sans-serif;
@@ -15,7 +21,7 @@
 
 @layer components {
 	.info-panel {
-		@apply rounded-xl bg-white;
+		@apply rounded-xl bg-white shadow;
 	}
 
 	.links {
