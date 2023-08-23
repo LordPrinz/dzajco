@@ -1,23 +1,12 @@
-import Header from "@/components/Header/Header";
 import MainForm from "@/components/Form/MainForm";
-import { ToastContainer } from "react-toastify";
+import Header from "@/components/Header/Header";
+import { mainFormAction } from "./_actions/formActions";
 
 export default function Home() {
 	return (
-		<main className="">
+		<main className="col-[center-start/center-end]">
 			<Header />
-			{/* <MainForm /> */}
-			<ToastContainer
-				position="bottom-right"
-				autoClose={5000}
-				hideProgressBar={false}
-				newestOnTop={true}
-				closeOnClick
-				rtl={false}
-				pauseOnFocusLoss
-				draggable
-				pauseOnHover
-			/>
+			<MainForm action={mainFormAction} />
 		</main>
 	);
 }

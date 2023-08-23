@@ -1,16 +1,12 @@
 "use client";
 
-import useInput from "@/hooks/useInput";
-import SubmitInput from "../Input/SubmitInput";
-import { FormEvent } from "react";
-import { isValidUrl } from "@/utils/api";
-import { TMainFormAction } from "@/app/_actions/formActions";
+import { TMainFormAction } from "../_actions/formActions";
 
 type Props = {
 	action: TMainFormAction;
 };
 
-const MainForm = ({ action }: any) => {
+const MainForm = ({ action }: Props) => {
 	// const { setValue, value, error } = useInput({
 	// 	validate(value) {
 	// 		return isValidUrl(value);

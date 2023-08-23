@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import "./globals.scss";
 import Footer from "../components/Footer/Footer";
+import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://www.dzaj.de"),
@@ -20,7 +21,20 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body className="grid h-screen gridLayout">{children}</body>
+			<body className="grid h-screen gridLayout">
+				{children}
+				<ToastContainer
+					position="bottom-right"
+					autoClose={5000}
+					hideProgressBar={false}
+					newestOnTop={true}
+					closeOnClick
+					rtl={false}
+					pauseOnFocusLoss
+					draggable
+					pauseOnHover
+				/>
+			</body>
 		</html>
 	);
 }

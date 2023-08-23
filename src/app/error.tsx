@@ -2,14 +2,13 @@
 
 import Button from "@/components/Buttons/Button";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
 	const { push } = useRouter();
 
 	return (
-		<main className="flex h-full w-full items-center justify-center">
+		<main className="flex h-full w-full items-center justify-center col-[center-start/center-end]">
 			<div>
 				<div className="aspect-square relative scale-125  mb-8 max-w-md mx-auto">
 					<Image src="/cracked_egg.svg" alt="Cracked egg image" fill={true} />
