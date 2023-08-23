@@ -8,7 +8,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.5",
     "lru-cache": "^7.14.1",
-    "mongoose": "^6.6.3",
+    "mongoose": "^6.11.3",
     "nanoid": "^4.0.0",
     "next": "latest",
     "react": "18.1.0",
