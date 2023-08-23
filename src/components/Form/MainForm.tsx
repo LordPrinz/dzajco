@@ -1,6 +1,7 @@
 "use client";
 
 import { TMainFormAction } from "@/app/_actions/formActions";
+import Input from "./Input";
 
 type Props = {
 	action: TMainFormAction;
@@ -22,8 +23,8 @@ const MainForm = ({ action }: Props) => {
 	// }
 
 	return (
-		<form action={action}>
-			{/* <SubmitInput setValue={setValue} value={value} /> */}
+		<form action={action} className="bg-red-200">
+			<Input />
 		</form>
 	);
 };
