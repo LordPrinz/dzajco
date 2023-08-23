@@ -1,3 +1,4 @@
+import { title } from "process";
 import SubmitInput from "./SubmitInput";
 
 export type InputType = "text" | "datetime" | "submit";
@@ -13,7 +14,7 @@ const Input = ({ type, className }: Props) => {
 	}
 
 	if (type === "submit") {
-		return <SubmitInput className={className} />;
+		return <SubmitInput className={className} title={title} />;
 	}
 
 	if (type === "text") {

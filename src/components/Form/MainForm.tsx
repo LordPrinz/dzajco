@@ -23,8 +23,10 @@ const MainForm = ({ action }: Props) => {
 	// }
 
 	return (
-		<form action={action} className="bg-red-200">
-			<Input type="submit" />
+		<form
+			action={action}
+			className="overflow-hidden px-1 max-w-3xl my-10 mx-auto">
+			<Input type="submit" title="Dżajcuj" />a
 		</form>
 	);
 };

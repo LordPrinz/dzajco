@@ -10,6 +10,9 @@
 	.gridLayout {
 		@apply grid-cols-mobileLayout sm:grid-cols-smallLayout lg:grid-cols-defaultLayout;
 	}
+	.input {
+		@apply py-4 rounded-full pl-6 outline-none z-10;
+	}
 }
 
 @layer base {
