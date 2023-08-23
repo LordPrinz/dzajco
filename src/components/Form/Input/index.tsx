@@ -1,4 +1,6 @@
-const Input = () => {
+export type Props = {};
+
+const Input = ({}: Props) => {
 	return <div>index</div>;
 };
 

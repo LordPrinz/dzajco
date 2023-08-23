@@ -21,6 +21,20 @@ module.exports = {
 					"[full-start] minmax(15px,1fr)  [center-start] repeat(8,[col-start] minmax(min-content,140px) [col-end]) [center-end] minmax(15px,1fr) [full-end]",
 			},
 			colors: {
+				jajco: {
+					50: "#fffee7",
+					100: "#fffec1",
+					200: "#fff886",
+					300: "#ffec41",
+					400: "#ffdb0d",
+					500: "#ffcc00",
+					600: "#d19500",
+					700: "#a66a02",
+					800: "#89530a",
+					900: "#74430f",
+					950: "#442304",
+				},
+
 				light: {
 					bg: {
 						primary: "#f9fafb",
