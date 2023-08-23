@@ -4,16 +4,18 @@ import { TMainFormAction } from "@/app/_actions/formActions";
 import Input from "./Input";
 import Hidden from "../shared/Hidden";
 import useInput from "@/hooks/useInput";
+import { isValidUrl } from "@/utils/api";
 
 type Props = {
 	action: TMainFormAction;
 };
 
 const MainForm = ({ action }: Props) => {
-	const { value: link, setValue: setLink } = useInput({});
-	const { value: customName, setValue: setCustomName } = useInput({});
+	const { value: link, setValue: setLink, error } = useInput({});
 
-	console.log(link, customName);
+	console.log(error);
+
+	const { value: customName, setValue: setCustomName } = useInput({});
 
 	return (
 		<form

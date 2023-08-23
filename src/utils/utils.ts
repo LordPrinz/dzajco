@@ -1,6 +1,5 @@
 import { nanoid } from "nanoid";
 import { findLink } from "./db";
-import IPData from "ipdata";
 import axios from "axios";
 
 export const generateRandom = (min: number, max: number): number => {

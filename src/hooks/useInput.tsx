@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface UseInputProps {
 	initialValue?: string;
-	validate?: (value: string) => boolean;
+	validate?: (value: string) => string | null;
 }
 
 interface UseInputReturn {
@@ -25,6 +25,18 @@ const useInput = ({
 		setValue(initialValue);
 		setError(null);
 	};
+
+	useEffect(() => {
+		if (!validate) {
+			return;
+		}
+
+		const error = validate(value);
+
+		if (error) {
+			setValue(error);
+		}
+	}, [value]);
 
 	return {
 		value,
