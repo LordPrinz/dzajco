@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState } from "react";
 
 interface UseInputProps {
 	initialValue?: string;

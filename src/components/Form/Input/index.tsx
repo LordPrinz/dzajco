@@ -8,20 +8,42 @@ export type Props = {
 	className?: string;
 	title?: string;
 	placeholder?: string;
+	value: string;
+	setValue: (value: string) => void;
 };
 
-const Input = ({ type, className, title, placeholder }: Props) => {
+const Input = ({
+	type,
+	className,
+	title,
+	placeholder,
+	setValue,
+	value,
+}: Props) => {
 	if (type === "datetime") {
 	}
 
 	if (type === "submit") {
 		return (
-			<SubmitInput className={className} title={title} placeholder={placeholder} />
+			<SubmitInput
+				className={className}
+				title={title}
+				placeholder={placeholder}
+				value={value}
+				setValue={setValue}
+			/>
 		);
 	}
 
 	if (type === "text") {
-		return <TextInput className={className} placeholder={placeholder} />;
+		return (
+			<TextInput
+				className={className}
+				placeholder={placeholder}
+				value={value}
+				setValue={setValue}
+			/>
+		);
 	}
 };
 
