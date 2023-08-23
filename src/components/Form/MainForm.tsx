@@ -24,7 +24,7 @@ const MainForm = ({ action }: Props) => {
 
 	return (
 		<form action={action} className="bg-red-200">
-			<Input />
+			<Input type="submit" />
 		</form>
 	);
 };
