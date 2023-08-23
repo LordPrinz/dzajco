@@ -2,6 +2,7 @@
 
 import { TMainFormAction } from "@/app/_actions/formActions";
 import Input from "./Input";
+import Hidden from "../shared/Hidden";
 
 type Props = {
 	action: TMainFormAction;
@@ -26,7 +27,10 @@ const MainForm = ({ action }: Props) => {
 		<form
 			action={action}
 			className="overflow-hidden px-1 max-w-3xl my-10 mx-auto">
-			<Input type="submit" title="Dżajcuj" placeholder="Link" />a
+			<Input type="submit" title="Dżajcuj" placeholder="Link" />
+			<Hidden className="mt-4" text="More Options">
+				saddassad
+			</Hidden>
 		</form>
 	);
 };

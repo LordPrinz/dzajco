@@ -1,14 +1,16 @@
 "use client";
 
+import { cn } from "@/utils/tailwind";
 import { useState } from "react";
 import { AiFillCaretRight } from "react-icons/ai";
 
 type Props = {
 	text: string;
 	children: React.ReactNode;
+	className?: string;
 };
 
-const Hidden = ({ children, text }: Props) => {
+const Hidden = ({ children, text, className }: Props) => {
 	const [isShown, setIsShown] = useState(false);
 
 	const arrowRotate = isShown ? "rotate-90" : "";
@@ -20,7 +22,7 @@ const Hidden = ({ children, text }: Props) => {
 	return (
 		<>
 			<button
-				className="mt-4 mb-4 ml-2 self-start py-2"
+				className={cn("self-start py-2", className)}
 				onClick={hiddenButtonHandler}>
 				<span className="flex items-center gap-1.5 text-sm">
 					<AiFillCaretRight className={`${arrowRotate} transition`} />
