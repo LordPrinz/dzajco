@@ -20,6 +20,7 @@ module.exports = {
 				mobileLayout:
 					"[full-start] minmax(15px,1fr)  [center-start] repeat(8,[col-start] minmax(min-content,140px) [col-end]) [center-end] minmax(15px,1fr) [full-end]",
 			},
+
 			colors: {
 				jajco: {
 					50: "#fffee7",

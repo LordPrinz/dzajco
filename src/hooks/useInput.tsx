@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 
+//TODO: Fix Validate Function
+
 interface UseInputProps {
 	initialValue?: string;
-	validate?: (value: string) => string | null;
+	validate?: (value?: string) => string | null;
 }
 
 interface UseInputReturn {

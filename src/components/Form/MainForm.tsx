@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { TMainFormAction } from "@/app/_actions/formActions";
 import Input from "./Input";
 import Hidden from "../shared/Hidden";
 import useInput from "@/hooks/useInput";
-import { isValidUrl } from "@/utils/api";
 
 type Props = {
 	action: TMainFormAction;
@@ -13,9 +13,11 @@ type Props = {
 const MainForm = ({ action }: Props) => {
 	const { value: link, setValue: setLink, error } = useInput({});
 
-	console.log(error);
-
 	const { value: customName, setValue: setCustomName } = useInput({});
+
+	const { value: expirationValue, setValue: setExpirationValue } = useInput({
+		initialValue: "never",
+	});
 
 	return (
 		<form
@@ -34,8 +36,14 @@ const MainForm = ({ action }: Props) => {
 					placeholder="Custom Name"
 					value={customName}
 					setValue={setCustomName}
+					className="mb-5"
 				/>
 				{/* TODO: Implement Expiration Date */}
+				<Input
+					type="datetime"
+					setValue={setExpirationValue}
+					value={expirationValue}
+				/>
 			</Hidden>
 		</form>
 	);

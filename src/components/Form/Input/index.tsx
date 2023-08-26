@@ -1,3 +1,4 @@
+import SelectTimeInput from "./SelectTimeInput";
 import SubmitInput from "./SubmitInput";
 import TextInput from "./TextInput";
 
@@ -21,6 +22,7 @@ const Input = ({
 	value,
 }: Props) => {
 	if (type === "datetime") {
+		return <SelectTimeInput value={value} setValue={setValue} />;
 	}
 
 	if (type === "submit") {
