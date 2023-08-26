@@ -24,6 +24,8 @@ const MainForm = ({ action }: Props) => {
 			initialValue: "",
 		});
 
+	// TODO: Send request to server
+
 	return (
 		<form
 			action={action}
@@ -43,7 +45,6 @@ const MainForm = ({ action }: Props) => {
 					setValue={setCustomName}
 					className="mb-5"
 				/>
-				{/* TODO: Implement Expiration Date */}
 				<Input
 					type="datetime"
 					setValue={setExpirationValue}
