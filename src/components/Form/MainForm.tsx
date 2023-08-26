@@ -19,6 +19,11 @@ const MainForm = ({ action }: Props) => {
 		initialValue: "never",
 	});
 
+	const { value: customExpirationValue, setValue: setCustomExpirationValue } =
+		useInput({
+			initialValue: "",
+		});
+
 	return (
 		<form
 			action={action}
@@ -43,6 +48,8 @@ const MainForm = ({ action }: Props) => {
 					type="datetime"
 					setValue={setExpirationValue}
 					value={expirationValue}
+					customValue={customExpirationValue}
+					setCustomValue={setCustomExpirationValue}
 				/>
 			</Hidden>
 		</form>

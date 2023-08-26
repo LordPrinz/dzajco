@@ -10,6 +10,8 @@ export type Props = {
 	title?: string;
 	placeholder?: string;
 	value: string;
+	setCustomValue?: (value: string) => void;
+	customValue?: string;
 	setValue: (value: string) => void;
 };
 
@@ -18,11 +20,20 @@ const Input = ({
 	className,
 	title,
 	placeholder,
+	customValue,
+	setCustomValue,
 	setValue,
 	value,
 }: Props) => {
 	if (type === "datetime") {
-		return <SelectTimeInput value={value} setValue={setValue} />;
+		return (
+			<SelectTimeInput
+				value={value}
+				setValue={setValue}
+				customValue={customValue}
+				setCustomValue={setCustomValue}
+			/>
+		);
 	}
 
 	if (type === "submit") {
