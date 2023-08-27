@@ -12,6 +12,7 @@ import { NextRequest } from "next/server";
 import { CreateRequest } from "@/types/apiTypes";
 import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
 import { generateUniqueLink } from "@/utils/utils";
+import { headers } from "next/headers";
 
 export async function POST(requst: NextRequest) {
 	const isRateLimitExceeded = await handleRateLimiter();
@@ -22,8 +23,19 @@ export async function POST(requst: NextRequest) {
 
 	await dbConnect();
 
-	const { url, customName, expire }: Partial<CreateRequest> =
+	try {
 		await requst.json();
+	} catch (error) {
+		console.log("BRUH");
+	}
+
+	const { url, customName, expire }: Partial<CreateRequest> = await requst
+		.json()
+		.catch(() => sendWrongInputResponse("Something went wrong!"));
+
+	const ip = headers().get("x-forwarded-for")!;
+
+	console.log(ip);
 
 	if (!url) {
 		return sendWrongInputResponse("No full link provided.");
