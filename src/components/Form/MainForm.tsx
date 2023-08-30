@@ -24,9 +24,10 @@ const MainForm = () => {
 
 		const response = await fetch("/api/urls", {
 			method: "POST",
+			body: JSON.stringify({ fullLink: "https://chat.openai.com/" }),
 		});
 
-		console.log(response);
+		console.log(await response.json());
 	};
 
 	return (

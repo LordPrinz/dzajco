@@ -9,6 +9,20 @@ type Props = {
 	customValue?: string;
 };
 
+export type expireTime =
+	| "7d"
+	| "1d"
+	| "12m"
+	| "6h"
+	| "1h"
+	| "45m"
+	| "30m"
+	| "20m"
+	| "15m"
+	| "10m"
+	| "never"
+	| Date;
+
 const SelectTimeInput = ({
 	value,
 	setValue,
@@ -34,18 +48,18 @@ const SelectTimeInput = ({
 					)}
 					value={value}
 					onChange={handleSelectChange}>
-					<option value="never">Never</option>
 					<option value="custom">Custom</option>
 					<option value="7d">7 days</option>
 					<option value="1d">1 day</option>
 					<option value="12m">12 hours</option>
 					<option value="6h">6 hours</option>
 					<option value="1h">1 hour</option>
-					<option value="45m">45 minuts</option>
-					<option value="30m">30 minuts</option>
-					<option value="20m">20 minuts</option>
-					<option value="15m">15 minuts</option>
-					<option value="10m">10 minuts</option>
+					<option value="45m">45 minutes</option>
+					<option value="30m">30 minutes</option>
+					<option value="20m">20 minutes</option>
+					<option value="15m">15 minutes</option>
+					<option value="10m">10 minutes</option>
+					<option value="never">Never</option>
 				</select>
 
 				<div className="absolute top-4 right-0 flex items-center pr-3 pointer-events-none">
@@ -68,6 +82,7 @@ const SelectTimeInput = ({
 					className="input mt-2.5 pr-6 w-full"
 					type="datetime-local"
 					value={customValue}
+					// TODO: Restrict to current date+
 					onInput={(event) =>
 						setCustomValue!((event.target as HTMLInputElement).value)
 					}
