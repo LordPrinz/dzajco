@@ -5,7 +5,7 @@ import { findLink } from "./db";
 export const sendWrongInputResponse = (message: string) => {
 	return NextResponse.json(
 		{
-			error: message,
+			message,
 		},
 		{
 			status: 422,

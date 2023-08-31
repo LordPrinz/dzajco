@@ -40,7 +40,8 @@ export type LinkType = {
 	id: string;
 	full: string;
 	visits?: number;
-	expire?: string;
+	expire?: string | null;
+	isCustom: boolean;
 };
 
 export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
@@ -49,7 +50,7 @@ export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
 	}
 
 	if (fullLink && (typeof expire === "object" || typeof expire === "string")) {
-		return await linkModel.findOne({ full: fullLink, expire });
+		return await linkModel.findOne({ full: fullLink, expire, isCustom: false });
 	}
 
 	if (fullLink) {
@@ -57,13 +58,14 @@ export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
 	}
 };
 
-export const formLinkModel = ({ id, full, expire }: LinkType) => {
+export const formLinkModel = ({ id, full, expire, isCustom }: LinkType) => {
 	return {
 		id,
 		full,
 		visits: 0,
-		expire,
+		expire: expire === "never" ? null : expire,
 		visitsLocation: [],
+		isCustom,
 	};
 };
 

@@ -54,13 +54,29 @@ export async function POST(requst: NextRequest) {
 		if (error) {
 			return sendWrongInputResponse(error);
 		}
-
 		const encodedCustomName = encodeCustomName(customName);
 
-		const model = formLinkModel({ id: encodedCustomName, full: url, expire });
+		const model = formLinkModel({
+			id: encodedCustomName,
+			full: url,
+			expire,
+			isCustom: true,
+		});
 
 		await saveToDatabase(model);
 		return createLinkResponse(encodedCustomName);
+	}
+
+	if (expire !== "never") {
+		const shortUrl = await generateUniqueLink();
+		const link = formLinkModel({
+			id: shortUrl,
+			full: url,
+			expire,
+			isCustom: false,
+		});
+		await saveToDatabase(link);
+		return createLinkResponse(shortUrl);
 	}
 
 	const existingLink = await findLink({ fullLink: url, expire: null });
@@ -71,7 +87,12 @@ export async function POST(requst: NextRequest) {
 
 	const shortUrl = await generateUniqueLink();
 
-	const link = formLinkModel({ id: shortUrl, full: url, expire });
+	const link = formLinkModel({
+		id: shortUrl,
+		full: url,
+		expire,
+		isCustom: false,
+	});
 
 	await saveToDatabase(link);
 
