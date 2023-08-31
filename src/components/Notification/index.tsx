@@ -7,7 +7,7 @@ export type Promise = {
 	url: string;
 	customName?: string;
 	errorMessage?: string;
-	expiration?: string;
+	expire?: string;
 };
 
 const popupClickHandler = (shortUrl: string) => {
@@ -38,14 +38,14 @@ export default class Notification {
 			...restProps,
 		});
 	}
-	async promise({ url, customName, errorMessage, expiration }: Promise) {
+	async promise({ url, customName, errorMessage, expire }: Promise) {
 		await toast.promise(
 			fetch("/api/urls", {
 				method: "POST",
 				body: JSON.stringify({
 					url,
 					customName,
-					expiration,
+					expire,
 				}),
 				headers: {
 					"Content-Type": "application/json",

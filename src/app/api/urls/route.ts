@@ -33,8 +33,6 @@ export async function POST(requst: NextRequest) {
 	const customName = req.customName;
 	const expire = req.expire;
 
-	console.log(ip);
-
 	if (!url) {
 		return sendWrongInputResponse("No full link provided.");
 	}

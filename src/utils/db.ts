@@ -39,7 +39,7 @@ export type LinkType = {
 	id: string;
 	full: string;
 	visits?: number;
-	expire?: Date | null;
+	expire?: string;
 };
 
 export const findLink = async ({ id, fullLink }: FindLinkType) => {

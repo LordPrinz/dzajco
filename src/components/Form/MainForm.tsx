@@ -94,7 +94,9 @@ const MainForm = () => {
 			}
 		}
 
-		notification.promise({ url: link, customName, expiration: expirationDate });
+		console.log(expirationDate);
+
+		notification.promise({ url: link, customName, expire: expirationDate });
 	};
 
 	return (
