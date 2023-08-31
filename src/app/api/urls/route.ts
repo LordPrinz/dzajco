@@ -14,6 +14,9 @@ import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
 import { generateUniqueLink } from "@/utils/utils";
 import { headers } from "next/headers";
 
+//TODO: Fix error described on discord
+//TODO: Implement dzajco stats
+
 export async function POST(requst: NextRequest) {
 	const isRateLimitExceeded = await handleRateLimiter();
 
