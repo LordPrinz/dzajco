@@ -13,6 +13,8 @@ const isValidUrl = (url: string) => {
 	return urlPattern.test(url);
 };
 
+const notification = new Notification();
+
 const MainForm = () => {
 	const {
 		value: link,
@@ -22,7 +24,13 @@ const MainForm = () => {
 		validate: (val: string) => isValidUrl(val) && val.length > 6,
 	});
 
-	const { value: customName, setValue: setCustomName } = useInput({});
+	const {
+		value: customName,
+		setValue: setCustomName,
+		error: customNameError,
+	} = useInput({
+		validate: (val: string) => val.length <= 25,
+	});
 
 	const { value: expirationValue, setValue: setExpirationValue } = useInput({
 		initialValue: "never",
@@ -36,10 +44,27 @@ const MainForm = () => {
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
-		console.log(Notification);
-
-		if (linkError) {
+		if (!link || !linkError) {
+			return notification.showError("Invalid link provided!");
 		}
+
+		if (customName && !customNameError) {
+			return notification.showError(
+				"Custom name is too long. Length should be not greater than 25!"
+			);
+		}
+
+		let expirationDate = "never";
+
+		if (expirationValue !== "never") {
+			if (expirationDate === "custom") {
+				expirationDate = customExpirationValue;
+			} else {
+				// calculate date from current + time
+			}
+		}
+
+		// sendRequst
 	};
 
 	return (
