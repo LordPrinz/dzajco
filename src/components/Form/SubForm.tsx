@@ -2,11 +2,34 @@
 
 import useInput from "@/hooks/useInput";
 import Input from "./Input";
+import Notification from "../Notification";
+
+const notification = new Notification();
 
 const SubForm = () => {
 	const { value, setValue } = useInput({});
 
-	const submitHandler = () => {};
+	const submitHandler = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+
+		if (!value) {
+			return notification.showError("You have to pass a short link or its code.");
+		}
+
+		let code;
+
+		if (value.match("/")) {
+			code = value.split("/")[3];
+		} else {
+			code = value;
+		}
+
+		const location = window.location.href;
+
+		const destination = `${location}${code}/info`;
+
+		window.location.href = destination;
+	};
 
 	return (
 		<form className="max-w-3xl mx-auto" onSubmit={submitHandler}>
