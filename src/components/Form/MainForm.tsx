@@ -101,7 +101,7 @@ const MainForm = () => {
 
 	return (
 		<form
-			className="overflow-hidden px-1 max-w-3xl my-10 mx-auto py-1"
+			className="overflow-hidden px-1 max-w-3xl my-10 mb-5 mx-auto py-1"
 			onSubmit={submitHandler}>
 			<Input
 				type="submit"
