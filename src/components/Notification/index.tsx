@@ -1,5 +1,6 @@
 import { ToastContent, ToastOptions, toast } from "react-toastify";
 import LinkCopier from "./utils/LinkCopier";
+import "react-toastify/dist/ReactToastify.css";
 
 export const copy = (text: string) => navigator.clipboard.writeText(text);
 
@@ -34,7 +35,7 @@ export default class Notification {
 			type: "success",
 			autoClose: 150000,
 			onClick: popupClickHandler.bind(null, shortUrl),
-			style: { background: "rgb(229 231 235)" },
+			style: { background: "rgb(243 244 246)" },
 			...restProps,
 		});
 	}

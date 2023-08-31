@@ -14,7 +14,6 @@ import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
 import { generateUniqueLink } from "@/utils/db";
 import { headers } from "next/headers";
 
-//TODO: Fix error described on discord
 //TODO: Implement dzajco stats
 
 export async function POST(requst: NextRequest) {

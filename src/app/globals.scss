@@ -23,6 +23,9 @@
 	::selection {
 		@apply bg-jajco-500 text-jajco-50;
 	}
+	.Toastify {
+		@apply col-[full-start/full-end];
+	}
 }
 
 @layer components {
