@@ -1,11 +1,11 @@
 import Notification, { Promise } from ".";
+import LinkCopier from "./utils/LinkCopier";
 
 const notification = new Notification();
 
 export const promiseHandler = async ({
 	url,
 	customName,
-	errorMessage,
 	expiration,
 }: Promise) => {
 	return await fetch("/api/urls", {
@@ -21,9 +21,12 @@ export const promiseHandler = async ({
 	}).then(async (response) => {
 		response.json().then((data) => {
 			if (response.status === 201) {
-				// return  show success
+				return notification.showSuccess(
+					<LinkCopier url={data.shortUrl} />,
+					data.shortUrl
+				);
 			}
-			//return show error
+			notification.showError(data.message);
 		});
 	});
 };
