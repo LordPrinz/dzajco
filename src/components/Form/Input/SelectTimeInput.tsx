@@ -23,6 +23,10 @@ export type expireTime =
 	| "never"
 	| Date;
 
+const currentDateTime = new Date();
+currentDateTime.setMinutes(currentDateTime.getMinutes() + 10);
+const minDateTimeISO = currentDateTime.toISOString().slice(0, 16);
+
 const SelectTimeInput = ({
 	value,
 	setValue,
@@ -82,7 +86,7 @@ const SelectTimeInput = ({
 					className="input mt-2.5 pr-6 w-full"
 					type="datetime-local"
 					value={customValue}
-					// TODO: Restrict to current date+
+					min={minDateTimeISO}
 					onInput={(event) =>
 						setCustomValue!((event.target as HTMLInputElement).value)
 					}

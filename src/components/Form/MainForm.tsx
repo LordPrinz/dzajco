@@ -60,10 +60,20 @@ const MainForm = () => {
 		initialValue: "never",
 	});
 
-	const { value: customExpirationValue, setValue: setCustomExpirationValue } =
-		useInput({
-			initialValue: "",
-		});
+	const {
+		value: customExpirationValue,
+		setValue: setCustomExpirationValue,
+		error: customExpirationDateError,
+	} = useInput({
+		initialValue: "",
+		validate: (val: number) => {
+			const currentDate = new Date();
+			currentDate.setMinutes(currentDate.getMinutes() + 10);
+			const currentDateMilli = currentDate.getTime();
+			const valDateMili = new Date(val).getTime();
+			return currentDateMilli >= valDateMili;
+		},
+	});
 
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -85,6 +95,12 @@ const MainForm = () => {
 				if (!customExpirationValue) {
 					return notification.showError(
 						"You have to specify custom expiration date!"
+					);
+				}
+
+				if (customExpirationDateError) {
+					return notification.showError(
+						"Expiration date should be grater than 10 minutes from current time."
 					);
 				}
 
