@@ -4,8 +4,15 @@ import Input from "./Input";
 import Hidden from "./Hidden";
 import useInput from "@/hooks/useInput";
 import Notification from "../Notification";
+import useLocalStorage from "@/hooks/useLocalStorage";
 
 //? had to repeat cuz of hydration error, idk how to fix
+
+export type linkIn = {
+	url: string;
+	customName: string;
+	expire: string;
+};
 
 const isValidUrl = (url: string) => {
 	const urlPattern =
@@ -38,10 +45,13 @@ const calculateDateInFuture = (interval: string) => {
 const notification = new Notification();
 
 const MainForm = () => {
+	const [links, setLinks] = useLocalStorage("links-history", []);
+
 	const {
 		value: link,
 		setValue: setLink,
 		error: linkError,
+		reset: linkReset,
 	} = useInput({
 		validate: (val: string) => isValidUrl(val) && val.length > 6,
 	});
@@ -50,6 +60,7 @@ const MainForm = () => {
 		value: customName,
 		setValue: setCustomName,
 		error: customNameError,
+		reset: customNameReset,
 	} = useInput({
 		validate: (val: string) => val.length <= 25,
 	});
@@ -62,6 +73,7 @@ const MainForm = () => {
 		value: customExpirationValue,
 		setValue: setCustomExpirationValue,
 		error: customExpirationDateError,
+		reset: customExpirationValueReset,
 	} = useInput({
 		initialValue: "",
 		validate: (val: number) => {
@@ -108,9 +120,23 @@ const MainForm = () => {
 			}
 		}
 
-		console.log(expirationDate);
+		const linkToSave = {
+			url: link,
+			customName,
+			expire: expirationDate,
+		};
 
-		notification.promise({ url: link, customName, expire: expirationDate });
+		setLinks((prevState: linkIn[] | null[]) => [
+			{ createdAt: new Date(), ...linkToSave },
+			...prevState,
+		]);
+
+		notification.promise(linkToSave);
+
+		linkReset();
+		customNameReset();
+		customExpirationValueReset();
+		setExpirationValue("never");
 	};
 
 	return (

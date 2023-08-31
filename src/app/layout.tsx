@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+
 import "./globals.scss";
 import Footer from "../components/Layout/Footer/Footer";
 import { ToastContainer } from "react-toastify";
