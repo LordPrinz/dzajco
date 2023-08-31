@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from "react";
 
-//TODO: Fix Validate Function
-
 interface UseInputProps {
 	initialValue?: string;
-	validate?: (value?: string) => string | null;
+	validate?: (val: any) => boolean;
 }
 
 interface UseInputReturn {
 	value: string;
 	setValue: (value: string) => void;
 	reset: () => void;
-	error: string | null;
+	error: boolean;
 }
 
 const useInput = ({
@@ -21,11 +19,11 @@ const useInput = ({
 	validate,
 }: UseInputProps): UseInputReturn => {
 	const [value, setValue] = useState<string>(initialValue);
-	const [error, setError] = useState<string | null>(null);
+	const [error, setError] = useState<boolean>(false);
 
 	const reset = (): void => {
 		setValue(initialValue);
-		setError(null);
+		setError(false);
 	};
 
 	useEffect(() => {
@@ -33,11 +31,7 @@ const useInput = ({
 			return;
 		}
 
-		const error = validate(value);
-
-		if (error) {
-			setValue(error);
-		}
+		setError(validate(value));
 	}, [value]);
 
 	return {

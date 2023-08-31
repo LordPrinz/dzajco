@@ -1,7 +1,8 @@
 import { ToastContent, ToastOptions, toast } from "react-toastify";
 import { expireTime } from "../Form/Input/SelectTimeInput";
-import { promiseHandler } from "./handlers";
-import { copy } from "@/utils/utils";
+import LinkCopier from "./utils/LinkCopier";
+
+export const copy = (text: string) => navigator.clipboard.writeText(text);
 
 export type Promise = {
 	url: string;
@@ -15,16 +16,6 @@ const popupClickHandler = (shortUrl: string) => {
 };
 
 export default class Notification {
-	async promise({ url, customName, errorMessage, expiration }: Promise) {
-		await toast.promise(
-			promiseHandler({ url, customName, errorMessage, expiration }),
-			{
-				pending: "Loading...",
-				error: errorMessage || "An error has occured",
-			}
-		);
-	}
-
 	showError(title: ToastContent<unknown>, restProps?: ToastOptions<unknown>[]) {
 		toast(title, {
 			autoClose: 5000,
@@ -47,5 +38,34 @@ export default class Notification {
 			style: { background: "rgb(229 231 235)" },
 			...restProps,
 		});
+	}
+	async promise({ url, customName, errorMessage, expiration }: Promise) {
+		await toast.promise(
+			fetch("/api/urls", {
+				method: "POST",
+				body: JSON.stringify({
+					url,
+					customName,
+					expiration,
+				}),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			}).then(async (response) => {
+				response.json().then((data) => {
+					if (response.status === 201) {
+						return this.showSuccess(
+							<LinkCopier url={data.shortUrl} />,
+							data.shortUrl
+						);
+					}
+					this.showError(data.message);
+				});
+			}),
+			{
+				pending: "Loading...",
+				error: errorMessage || "An error has occured",
+			}
+		);
 	}
 }

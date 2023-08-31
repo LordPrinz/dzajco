@@ -1,12 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import Input from "./Input";
 import Hidden from "../shared/Hidden";
 import useInput from "@/hooks/useInput";
+import Notification from "../Notification";
+
+//? had to repeat cuz of hydration error, idk how to fix
+
+const isValidUrl = (url: string) => {
+	const urlPattern =
+		/^(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])/i;
+	return urlPattern.test(url);
+};
 
 const MainForm = () => {
-	const { value: link, setValue: setLink, error } = useInput({});
+	const {
+		value: link,
+		setValue: setLink,
+		error: linkError,
+	} = useInput({
+		validate: (val: string) => isValidUrl(val) && val.length > 6,
+	});
 
 	const { value: customName, setValue: setCustomName } = useInput({});
 
@@ -22,12 +36,10 @@ const MainForm = () => {
 	const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
-		const response = await fetch("/api/urls", {
-			method: "POST",
-			body: JSON.stringify({ fullLink: "https://chat.openai.com/" }),
-		});
+		console.log(Notification);
 
-		console.log(await response.json());
+		if (linkError) {
+		}
 	};
 
 	return (
