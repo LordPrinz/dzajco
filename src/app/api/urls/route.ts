@@ -63,7 +63,7 @@ export async function POST(requst: NextRequest) {
 		return createLinkResponse(encodedCustomName);
 	}
 
-	const existingLink = await findLink({ fullLink: url });
+	const existingLink = await findLink({ fullLink: url, expire: null });
 
 	if (existingLink) {
 		return createLinkResponse(existingLink.id);

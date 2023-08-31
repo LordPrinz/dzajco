@@ -4,7 +4,6 @@ import Input from "./Input";
 import Hidden from "./Hidden";
 import useInput from "@/hooks/useInput";
 import Notification from "../Notification";
-import { expireTime } from "./Input/SelectTimeInput";
 
 //? had to repeat cuz of hydration error, idk how to fix
 
@@ -30,7 +29,6 @@ const calculateDateInFuture = (interval: string) => {
 			currentDate.setMinutes(currentDate.getMinutes() + numericValue);
 			break;
 		default:
-			// Handle invalid interval strings here
 			throw new Error(`Invalid interval: ${interval}`);
 	}
 

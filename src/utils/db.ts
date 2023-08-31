@@ -33,6 +33,7 @@ export default dbConnect;
 export type FindLinkType = {
 	fullLink?: string;
 	id?: string;
+	expire?: string | null;
 };
 
 export type LinkType = {
@@ -42,9 +43,13 @@ export type LinkType = {
 	expire?: string;
 };
 
-export const findLink = async ({ id, fullLink }: FindLinkType) => {
+export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
 	if (id) {
 		return await linkModel.findById(id);
+	}
+
+	if (fullLink && (typeof expire === "object" || typeof expire === "string")) {
+		return await linkModel.findOne({ full: fullLink, expire });
 	}
 
 	if (fullLink) {
