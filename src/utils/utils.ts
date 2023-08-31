@@ -1,5 +1,4 @@
 import { nanoid } from "nanoid";
-import { findLink } from "./db";
 import axios from "axios";
 
 export const generateRandom = (min: number, max: number): number => {
@@ -10,21 +9,6 @@ export const generateRandom = (min: number, max: number): number => {
 
 export const generateLink = () => {
 	return nanoid(generateRandom(3, 10));
-};
-
-export const generateUniqueLink = async () => {
-	let shortUrl: string;
-
-	do {
-		shortUrl = generateLink();
-		const existingLink = await findLink({ id: shortUrl });
-
-		if (existingLink) {
-			continue;
-		}
-
-		return shortUrl;
-	} while (true);
 };
 
 export type Location = {

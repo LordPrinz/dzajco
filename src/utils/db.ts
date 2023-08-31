@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import linkModel from "../models/linkModel";
-import { Location } from "./utils";
+import { Location, generateLink } from "./utils";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -69,4 +69,19 @@ export const saveToDatabase = async (model: LinkType) => {
 	});
 
 	await link.save();
+};
+
+export const generateUniqueLink = async () => {
+	let shortUrl: string;
+
+	do {
+		shortUrl = generateLink();
+		const existingLink = await findLink({ id: shortUrl });
+
+		if (existingLink) {
+			continue;
+		}
+
+		return shortUrl;
+	} while (true);
 };

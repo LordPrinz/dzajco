@@ -11,7 +11,7 @@ import {
 import { NextRequest } from "next/server";
 import { CreateRequest } from "@/types/apiTypes";
 import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
-import { generateUniqueLink } from "@/utils/utils";
+import { generateUniqueLink } from "@/utils/db";
 import { headers } from "next/headers";
 
 //TODO: Fix error described on discord

@@ -1,4 +1,4 @@
-import Header from "@/components/Header/Header";
+import Header from "@/components/Layout/Header";
 import Forms from "./_components/Forms";
 
 export default function Home() {

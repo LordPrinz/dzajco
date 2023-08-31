@@ -1,7 +1,7 @@
 "use client";
 
 import Input from "./Input";
-import Hidden from "../shared/Hidden";
+import Hidden from "./Hidden";
 import useInput from "@/hooks/useInput";
 import Notification from "../Notification";
 import { expireTime } from "./Input/SelectTimeInput";
