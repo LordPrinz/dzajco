@@ -67,3 +67,5 @@ export const getLocationBoundaries = async ({
 
 	return data.data.features[0].geometry.coordinates;
 };
+
+export const copy = (text: string) => navigator.clipboard.writeText(text);
