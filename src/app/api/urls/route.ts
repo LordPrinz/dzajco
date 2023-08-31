@@ -23,17 +23,15 @@ export async function POST(requst: NextRequest) {
 
 	await dbConnect();
 
-	try {
-		await requst.json();
-	} catch (error) {
-		console.log("BRUH");
-	}
-
-	const { url, customName, expire }: Partial<CreateRequest> = await requst
+	const req: Partial<CreateRequest> = await requst
 		.json()
 		.catch(() => sendWrongInputResponse("Something went wrong!"));
 
 	const ip = headers().get("x-forwarded-for")!;
+
+	const url = req.url;
+	const customName = req.customName;
+	const expire = req.expire;
 
 	console.log(ip);
 

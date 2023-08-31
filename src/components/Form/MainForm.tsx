@@ -4,6 +4,7 @@ import Input from "./Input";
 import Hidden from "../shared/Hidden";
 import useInput from "@/hooks/useInput";
 import Notification from "../Notification";
+import { expireTime } from "./Input/SelectTimeInput";
 
 //? had to repeat cuz of hydration error, idk how to fix
 
@@ -11,6 +12,29 @@ const isValidUrl = (url: string) => {
 	const urlPattern =
 		/^(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])/i;
 	return urlPattern.test(url);
+};
+
+const calculateDateInFuture = (interval: string) => {
+	const currentDate = new Date();
+	const numericValue = +interval.slice(0, -1);
+	const unit = interval.slice(-1);
+
+	switch (unit) {
+		case "d":
+			currentDate.setDate(currentDate.getDate() + numericValue);
+			break;
+		case "h":
+			currentDate.setHours(currentDate.getHours() + numericValue);
+			break;
+		case "m":
+			currentDate.setMinutes(currentDate.getMinutes() + numericValue);
+			break;
+		default:
+			// Handle invalid interval strings here
+			throw new Error(`Invalid interval: ${interval}`);
+	}
+
+	return currentDate.toISOString();
 };
 
 const notification = new Notification();
@@ -54,17 +78,23 @@ const MainForm = () => {
 			);
 		}
 
-		let expirationDate = "never";
+		let expirationDate: string = "never";
 
 		if (expirationValue !== "never") {
-			if (expirationDate === "custom") {
+			if (expirationValue === "custom") {
+				if (!customExpirationValue) {
+					return notification.showError(
+						"You have to specify custom expiration date!"
+					);
+				}
+
 				expirationDate = customExpirationValue;
 			} else {
-				// calculate date from current + time
+				expirationDate = calculateDateInFuture(expirationValue);
 			}
 		}
 
-		// sendRequst
+		notification.promise({ url: link, customName, expiration: expirationDate });
 	};
 
 	return (

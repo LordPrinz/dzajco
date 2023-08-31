@@ -12,7 +12,7 @@ type Props = {
 export type expireTime =
 	| "7d"
 	| "1d"
-	| "12m"
+	| "12h"
 	| "6h"
 	| "1h"
 	| "45m"
@@ -51,7 +51,7 @@ const SelectTimeInput = ({
 					<option value="custom">Custom</option>
 					<option value="7d">7 days</option>
 					<option value="1d">1 day</option>
-					<option value="12m">12 hours</option>
+					<option value="12h">12 hours</option>
 					<option value="6h">6 hours</option>
 					<option value="1h">1 hour</option>
 					<option value="45m">45 minutes</option>

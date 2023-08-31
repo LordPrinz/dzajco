@@ -1,5 +1,4 @@
 import { ToastContent, ToastOptions, toast } from "react-toastify";
-import { expireTime } from "../Form/Input/SelectTimeInput";
 import LinkCopier from "./utils/LinkCopier";
 
 export const copy = (text: string) => navigator.clipboard.writeText(text);
@@ -8,7 +7,7 @@ export type Promise = {
 	url: string;
 	customName?: string;
 	errorMessage?: string;
-	expiration?: expireTime;
+	expiration?: string;
 };
 
 const popupClickHandler = (shortUrl: string) => {
