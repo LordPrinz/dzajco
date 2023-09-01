@@ -1,7 +1,7 @@
 import { Location } from "@/utils/utils";
 import mongoose, { Schema, Document } from "mongoose";
 
-type IVisitsLocation = {
+export type IVisitsLocation = {
 	visits: number;
 	_id: string;
 };
