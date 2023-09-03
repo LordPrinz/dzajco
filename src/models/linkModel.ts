@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export type IVisitsLocation = {
 	visits: number;
+	lat: number;
+	lon: number;
 	_id: string;
 };
 
@@ -27,6 +29,8 @@ const LinkSchema = new Schema(
 			{
 				visits: { type: Number },
 				_id: { type: String },
+				lat: { type: Number },
+				lon: { type: Number },
 			},
 		],
 	},
@@ -54,6 +58,8 @@ LinkSchema.methods.incrementVisits = async function (
 ): Promise<void> {
 	const locationPattern = `${location.city}_${location.state}_${location.country}`;
 
+	console.log(location);
+
 	const index = this.visitsLocation.findIndex(
 		(visitLocation: IVisitsLocation) => visitLocation._id === locationPattern
 	);
@@ -63,6 +69,8 @@ LinkSchema.methods.incrementVisits = async function (
 	} else {
 		this.visitsLocation.push({
 			visits: 1,
+			lat: location.location.latitude,
+			lon: location.location.longitude,
 			_id: locationPattern,
 		});
 	}
