@@ -41,8 +41,8 @@ export const getLocationBoundaries = async ({
 	latitude,
 	longitude,
 }: {
-	latitude: string;
-	longitude: string;
+	latitude: number;
+	longitude: number;
 }) => {
 	const data = await axios.get(
 		`https://api.geoapify.com/v1/boundaries/part-of?lon=${longitude}&lat=${latitude}&geometry=geometry_1000&apiKey=${process
