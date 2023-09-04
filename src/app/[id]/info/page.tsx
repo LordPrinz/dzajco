@@ -28,19 +28,19 @@ const Page: NextPage<Props> = async ({ params }) => {
 	}
 
 	return (
-		<main className="grid grid-cols-5 grid-rows-5 gap-2 py-4 col-[center-start/center-end]">
-			<div className="info-panel row-start-1 row-end-3 col-start-1 col-end-3 flex flex-col">
+		<main className="grid grid-cols-5 sm:grid-rows-5 gap-2 py-4 col-[center-start/center-end] grid-rows-7">
+			<div className="info-panel sm:row-start-1 sm:row-end-3 sm:col-start-1 sm:col-end-3 flex flex-col col-[1/-1] row-[1/3]">
 				<h3 className="font-bold text-3xl text-center mt-16">Visits</h3>
 				<Counter
 					visits={link.visits}
-					className="flex-1 flex mt-12 justify-center"
+					className="flex-1 flex my-12 justify-center"
 				/>
 			</div>
-			<div className="info-panel col-start-1 col-end-3 row-start-3 row-end-6 px-10 flex flex-col  items-center">
+			<div className="info-panel sm:col-start-1 sm:col-end-3 sm:row-start-3 sm:row-end-6 px-10 flex flex-col items-center  col-[1/-1] row-[3/5]">
 				<h3 className="font-bold text-3xl text-center mt-16">Top Visitors</h3>
 				<Chart linkId={link.id} />
 			</div>
-			<div className="info-panel col-start-3 col-end-6 row-start-1  row-end-6">
+			<div className="info-panel sm:col-start-3 sm:col-end-6 sm:row-start-1 sm:row-end-6  col-[1/-1] row-[5/7]">
 				<Map pageId={params.id} />
 			</div>
 		</main>
