@@ -36,7 +36,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 					className="flex-1 flex mt-12 justify-center"
 				/>
 			</div>
-			<div className="info-panel col-start-1 col-end-3 row-start-3 row-end-6 px-10">
+			<div className="info-panel col-start-1 col-end-3 row-start-3 row-end-6 px-10 flex flex-col  items-center">
 				<h3 className="font-bold text-3xl text-center mt-16">Top Visitors</h3>
 				<Chart linkId={link.id} />
 			</div>

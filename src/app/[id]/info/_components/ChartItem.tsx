@@ -6,7 +6,16 @@ type Props = {
 };
 
 const ChartItem = ({ location, visits }: Props) => {
-	return <div>ChartItem</div>;
+	const correctForm = visits > 1 ? "visits" : "visit";
+
+	return (
+		<div>
+			<div className=" font-bold">{location}</div>
+			<div className="text-sm  text-jajco-500">
+				{visits} {correctForm}
+			</div>
+		</div>
+	);
 };
 
 export default ChartItem;

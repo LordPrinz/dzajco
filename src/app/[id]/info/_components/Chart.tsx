@@ -26,21 +26,19 @@ const Chart = async ({ linkId }: Props) => {
 		},
 	]).exec();
 
-	console.log(res);
-
 	const topVisitors = res.map((visitor) => {
 		const visitsLocation = visitor.visitsLocation;
 
 		const location = visitsLocation._id.split("_");
 
 		return {
-			visits: visitsLocation.vists,
+			visits: visitsLocation.visits,
 			location: `${location[0]}, ${location[2]}`,
 		};
 	});
 
 	return (
-		<div className="mt-10">
+		<div className="mt-14 space-y-4 ">
 			{topVisitors.map((visitor) => (
 				<ChartItem
 					key={visitor.location}
