@@ -1,4 +1,5 @@
 import LinkModel from "@/models/linkModel";
+import ChartItem from "./ChartItem";
 
 type Props = {
 	linkId: string;
@@ -27,7 +28,28 @@ const Chart = async ({ linkId }: Props) => {
 
 	console.log(res);
 
-	return <div></div>;
+	const topVisitors = res.map((visitor) => {
+		const visitsLocation = visitor.visitsLocation;
+
+		const location = visitsLocation._id.split("_");
+
+		return {
+			visits: visitsLocation.vists,
+			location: `${location[0]}, ${location[2]}`,
+		};
+	});
+
+	return (
+		<div className="mt-10">
+			{topVisitors.map((visitor) => (
+				<ChartItem
+					key={visitor.location}
+					visits={visitor.visits}
+					location={visitor.location}
+				/>
+			))}
+		</div>
+	);
 };
 
 export default Chart;

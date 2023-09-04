@@ -1,6 +1,11 @@
 import React from "react";
 
-const ChartItem = () => {
+type Props = {
+	location: string;
+	visits: number;
+};
+
+const ChartItem = ({ location, visits }: Props) => {
 	return <div>ChartItem</div>;
 };
 
