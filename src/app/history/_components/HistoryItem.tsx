@@ -19,7 +19,7 @@ const HistoryItem = ({ action, data }: Props) => {
 
 				action(data.id);
 			}}>
-			HistoryItem
+			{data.id}
 		</button>
 	);
 };
