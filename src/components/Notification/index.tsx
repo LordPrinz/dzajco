@@ -2,6 +2,7 @@ import { ToastContent, ToastOptions, toast } from "react-toastify";
 import LinkCopier from "./utils/LinkCopier";
 import "react-toastify/dist/ReactToastify.css";
 import { Nunito } from "next/font/google";
+import { Link } from "@/types/localStorage";
 
 const nunito = Nunito({ subsets: ["latin"] });
 export const copy = (text: string) => navigator.clipboard.writeText(text);
@@ -58,34 +59,43 @@ export default class Notification {
 					if (response.status === 201) {
 						const existingData = JSON.parse(
 							window.localStorage.getItem("links-history") || "[]"
+						) as Link[];
+
+						const existingLink = existingData.find(
+							(link) => link.id === data.shortUrl
 						);
 
-						console.log(existingData);
+						if (!existingLink) {
+							const linkToSave = {
+								url,
+								expire: expire!,
+								createdAt: new Date(),
+								id: data.shortUrl as string,
+							};
 
-						const linkToSave = {
-							url,
-							expire,
-							createdAt: new Date(),
-							id: data.shortUrl,
-						};
+							existingData.push(linkToSave);
 
-						existingData.push(linkToSave);
+							window.localStorage.setItem(
+								"links-history",
+								JSON.stringify(existingData)
+							);
 
-						window.localStorage.setItem(
-							"links-history",
-							JSON.stringify(existingData)
-						);
-						return this.showSuccess(
-							<LinkCopier url={data.shortUrl} />,
-							data.shortUrl
-						);
+							return this.showSuccess(
+								<LinkCopier url={data.shortUrl} />,
+								data.shortUrl
+							);
+						} else {
+							// Handle the case where the id already exists
+							// You can show an error message or take any other appropriate action.
+							this.showError("Link with this ID already exists.");
+						}
 					}
 					this.showError(data.message);
 				});
 			}),
 			{
 				pending: "Loading...",
-				error: errorMessage || "An error has occured",
+				error: errorMessage || "An error has occurred",
 			}
 		);
 	}
