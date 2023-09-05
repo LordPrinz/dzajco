@@ -56,6 +56,23 @@ export default class Notification {
 			}).then(async (response) => {
 				response.json().then((data) => {
 					if (response.status === 201) {
+						const existingData = JSON.parse(
+							window.localStorage.getItem("links-history") || "[]"
+						);
+
+						const linkToSave = {
+							url,
+							expire,
+							createdAt: new Date(),
+							id: data.shortUrl,
+						};
+
+						existingData.push(linkToSave);
+
+						window.localStorage.setItem(
+							"links-history",
+							JSON.stringify(existingData)
+						);
 						return this.showSuccess(
 							<LinkCopier url={data.shortUrl} />,
 							data.shortUrl

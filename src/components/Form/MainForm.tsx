@@ -126,10 +126,12 @@ const MainForm = () => {
 			expire: expirationDate,
 		};
 
-		setLinks((prevState: linkIn[] | null[]) => [
-			{ createdAt: new Date(), ...linkToSave },
-			...prevState,
-		]);
+		if (customName) {
+			setLinks((prevState: linkIn[] | null[]) => [
+				{ createdAt: new Date(), ...linkToSave },
+				...prevState,
+			]);
+		}
 
 		notification.promise(linkToSave);
 

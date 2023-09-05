@@ -1,5 +1,6 @@
 import React from "react";
 import History from "./_components/History";
+import { removeItem } from "./_actions/removeItem";
 
 const HistoryPage = () => {
 	return (
@@ -7,7 +8,7 @@ const HistoryPage = () => {
 			<h1 className="text-center mt-14 text-4xl font-bold text-jajco-500">
 				Link History
 			</h1>
-			<History />
+			<History action={removeItem} />
 		</div>
 	);
 };
