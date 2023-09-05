@@ -5,6 +5,7 @@ import Hidden from "./Hidden";
 import useInput from "@/hooks/useInput";
 import Notification from "../Notification";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import { Link } from "@/types/localStorage";
 
 //? had to repeat cuz of hydration error, idk how to fix
 
@@ -127,10 +128,14 @@ const MainForm = () => {
 		};
 
 		if (customName) {
-			setLinks((prevState: linkIn[] | null[]) => [
-				{ createdAt: new Date(), ...linkToSave },
-				...prevState,
-			]);
+			const existingLink = links.find((link: Link) => link.id === customName);
+
+			if (!existingLink) {
+				setLinks((prevState: linkIn[] | null[]) => [
+					{ createdAt: new Date(), id: linkToSave.customName, ...linkToSave },
+					...prevState,
+				]);
+			}
 		}
 
 		notification.promise(linkToSave);

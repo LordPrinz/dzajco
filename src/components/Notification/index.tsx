@@ -79,16 +79,11 @@ export default class Notification {
 								"links-history",
 								JSON.stringify(existingData)
 							);
-
-							return this.showSuccess(
-								<LinkCopier url={data.shortUrl} />,
-								data.shortUrl
-							);
-						} else {
-							// Handle the case where the id already exists
-							// You can show an error message or take any other appropriate action.
-							this.showError("Link with this ID already exists.");
 						}
+						return this.showSuccess(
+							<LinkCopier url={data.shortUrl} />,
+							data.shortUrl
+						);
 					}
 					this.showError(data.message);
 				});
