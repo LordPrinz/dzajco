@@ -60,6 +60,8 @@ export default class Notification {
 							window.localStorage.getItem("links-history") || "[]"
 						);
 
+						console.log(existingData);
+
 						const linkToSave = {
 							url,
 							expire,
