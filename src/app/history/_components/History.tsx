@@ -2,6 +2,8 @@
 
 import useLocalStorage from "@/hooks/useLocalStorage";
 import HistoryItem from "./HistoryItem";
+import { Link } from "@/types/localStorage";
+import { useEffect, useState } from "react";
 
 type Props = {
 	action: (id: string) => Promise<void>;
@@ -10,12 +12,25 @@ type Props = {
 const History = ({ action }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 
-	console.log(storedValue);
+	// Hydration error fix
+	const [domLoaded, setDomLoaded] = useState(false);
+
+	useEffect(() => {
+		setDomLoaded(true);
+	}, []);
 
 	return (
-		<form>
-			<HistoryItem action={action} id="xd" />
-		</form>
+		<>
+			{domLoaded && (
+				<form className="">
+					{storedValue.map((element: Link) => (
+						<div key={`${element.createdAt}-${element.id}`}>
+							<HistoryItem action={action} data={element} />
+						</div>
+					))}
+				</form>
+			)}
+		</>
 	);
 };
 

@@ -85,6 +85,9 @@ export default class Notification {
 							data.shortUrl
 						);
 					}
+					if (response.status === 429) {
+						this.showError("Too many requests");
+					}
 					this.showError(data.message);
 				});
 			}),
