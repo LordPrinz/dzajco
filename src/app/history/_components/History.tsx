@@ -22,11 +22,9 @@ const History = ({ action }: Props) => {
 	return (
 		<>
 			{domLoaded && (
-				<form className="">
+				<form className="mt-16  space-y-6 ">
 					{storedValue.map((element: Link) => (
-						<div key={`${element.createdAt}-${element.id}`}>
-							<HistoryItem action={action} data={element} />
-						</div>
+						<HistoryItem action={action} data={element}  key={`${element.createdAt}-${element.id}`}/>
 					))}
 				</form>
 			)}
