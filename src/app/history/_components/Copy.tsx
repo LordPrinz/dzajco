@@ -14,25 +14,22 @@ const Copy = ({ url }: Props) => {
 
 	const icon = isClicked ? (
 		<AiOutlineCheck
-			size={25}
-			className={`transition hover:text-gray-600 hover:transition absolute right-0 bg-gray-100  z-10`}
+			size={20}
+			className={`transition hover:text-gray-600 hover:transition absolute right-0  z-10`}
 			onClick={copyHandler}
 		/>
 	) : (
 		<AiOutlineCopy
-			size={25}
-			className="transition hover:text-gray-600 hover:transition absolute right-0 bg-gray-100 z-10"
+			size={20}
+			className="transition hover:text-gray-600 hover:transition absolute right-0 z-10"
 			onClick={copyHandler}
 		/>
 	);
 
-	const link = `${window.location.href}${url}`;
-
 	return (
 		<div
-			className="flex items-center justify-between pr-5 h-full relative w-full"
+			className="flex items-center justify-between pr-5 h-full relative"
 			onClick={copyHandler}>
-			<div className="absolute w-full overflow-hidden">{link}</div>
 			{icon}
 		</div>
 	);
