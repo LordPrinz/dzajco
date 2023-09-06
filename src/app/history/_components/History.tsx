@@ -11,7 +11,6 @@ type Props = {
 
 const History = ({ action }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
-	const [triggerer, setTriggerer] = useState(false);
 
 	// Hydration error fix
 	const [domLoaded, setDomLoaded] = useState(false);
@@ -21,16 +20,23 @@ const History = ({ action }: Props) => {
 	}, []);
 
 	const removeItemLocal = (id: string) => {
-		setValue((prevState: Link[]) => prevState.filter(link => link.id !== id))
-	}
+		setValue((prevState: Link[]) => prevState.filter((link) => link.id !== id));
+	};
 
 	return (
 		<>
 			{domLoaded && (
-				<form className="mt-16  space-y-6 ">
-					{storedValue.length === 0 && <div className="text-center text-2xl font-bold">No links found.</div>}
+				<form className="mt-14  space-y-6 pb-7 ">
+					{storedValue.length === 0 && (
+						<div className="text-center text-2xl font-bold">No links found.</div>
+					)}
 					{storedValue.map((element: Link) => (
-						<HistoryItem removeItemLocal={removeItemLocal}  action={action} data={element}  key={`${element.createdAt}-${element.id}`}/>
+						<HistoryItem
+							removeItemLocal={removeItemLocal}
+							action={action}
+							data={element}
+							key={`${element.createdAt}-${element.id}`}
+						/>
 					))}
 				</form>
 			)}

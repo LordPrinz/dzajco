@@ -26,6 +26,17 @@
 	.Toastify {
 		@apply col-[full-start/full-end];
 	}
+	::-webkit-scrollbar {
+		@apply h-2 w-2;
+	}
+
+	::-webkit-scrollbar-thumb {
+		@apply rounded-md bg-gray-300;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		@apply bg-gray-300;
+	}
 }
 
 @layer components {
@@ -55,4 +66,11 @@
 			@apply px-2 py-1 my-2 mx-2 pb-1.5 relative transition hover:transition hover:text-jajco-600 cursor-pointer;
 		}
 	}
+}
+
+.history_item__fullLink {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
 }
