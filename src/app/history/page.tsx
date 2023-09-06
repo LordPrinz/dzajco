@@ -14,7 +14,7 @@ const HistoryPage = () => {
 				<span className="text-lg -translate-y-0.5">Home</span>
 			</Link>
 			<h1 className="text-center mt-14 text-4xl font-bold text-jajco-500">
-				Link History
+				Links History
 			</h1>
 			<History action={removeItem} />
 		</div>
