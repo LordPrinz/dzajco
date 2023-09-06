@@ -35,6 +35,7 @@ export default function RootLayout({
 					draggable
 					pauseOnHover
 				/>
+				<Footer/>
 			</body>
 		</html>
 	);

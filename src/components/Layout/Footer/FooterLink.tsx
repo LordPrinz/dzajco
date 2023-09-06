@@ -9,7 +9,7 @@ export type Props = {
 const FooterLink: FC<Props> = ({ name, url }) => {
 	return (
 		<li className="links__item">
-			<Link href={url} className="links__link">
+			<Link href={url} className="links__link ">
 				{name}
 			</Link>
 		</li>

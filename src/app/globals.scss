@@ -8,7 +8,7 @@
 
 @layer utilities {
 	.gridLayout {
-		@apply grid-cols-mobileLayout sm:grid-cols-smallLayout lg:grid-cols-defaultLayout;
+		@apply grid-cols-mobileLayout sm:grid-cols-smallLayout lg:grid-cols-defaultLayout grid-rows-[1fr,4rem];
 	}
 	.input {
 		@apply py-4 rounded-full px-6 outline-none z-10 shadow;
@@ -52,11 +52,7 @@
 		}
 
 		&__link {
-			@apply px-2 py-1 my-2 mx-2 pb-1.5 relative transition hover:transition hover:text-[#6c74fe] cursor-pointer;
+			@apply px-2 py-1 my-2 mx-2 pb-1.5 relative transition hover:transition hover:text-jajco-600 cursor-pointer;
 		}
-	}
-	.test::after {
-		content: "";
-		@apply w-3/5 h-0.5 bg-slate-600 absolute -bottom-8  ; 
 	}
 }
