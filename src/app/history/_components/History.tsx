@@ -9,6 +9,17 @@ type Props = {
 	action: (id: string) => Promise<void>;
 };
 
+const isExpiredLink = (link: Link) => {
+	if (link.expire === "never") {
+		return false;
+	}
+
+	const currentTime = new Date().getTime();
+	const linkTime = new Date(link as any).getTime();
+	console.log(linkTime);
+	return currentTime >= linkTime;
+};
+
 const History = ({ action }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 
@@ -22,6 +33,12 @@ const History = ({ action }: Props) => {
 	const removeItemLocal = (id: string) => {
 		setValue((prevState: Link[]) => prevState.filter((link) => link.id !== id));
 	};
+
+	useEffect(() => {
+		setValue((prevState: Link[]) =>
+			prevState.filter((link: Link) => !isExpiredLink(link))
+		);
+	}, []);
 
 	return (
 		<>
