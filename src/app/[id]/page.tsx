@@ -1,4 +1,4 @@
-import dbConnect, { findLink } from "@/utils/db";
+import dbConnect, { findLink, incrementVisits } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -29,6 +29,8 @@ const Page: NextPage<Props> = async ({ params }) => {
 	const userLocation = await getUserLocation(
 		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
 	);
+
+	await incrementVisits(userLocation);
 
 	if (!link) {
 		notFound();

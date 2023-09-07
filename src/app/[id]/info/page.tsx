@@ -1,10 +1,11 @@
-import dbConnect, { findLink } from "@/utils/db";
+import dbConnect, { findLink, incrementVisits } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound } from "next/navigation";
 import Counter from "./_components/Counter";
 import Map from "./_components/Map";
 import Chart from "./_components/Chart";
-import StatisticsModel from "@/models/statisticsModel";
+import { headers } from "next/headers";
+import { getUserLocation } from "@/utils/utils";
 
 type Props = {
 	params: { id: string };
@@ -22,6 +23,15 @@ export async function generateMetadata({ params }: Props) {
 
 const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
+
+	const ip = headers().get("x-forwarded-for")!;
+
+	const userLocation = await getUserLocation(
+		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
+	);
+
+	await incrementVisits(userLocation);
+
 	const link = await findLink({ id: params.id });
 
 	if (!link) {

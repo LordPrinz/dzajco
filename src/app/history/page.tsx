@@ -1,8 +1,6 @@
 import React from "react";
 import History from "./_components/History";
 import { removeItem } from "./_actions/removeItem";
-import { GoHomeFill } from "react-icons/go";
-import Link from "next/link";
 import HomeButton from "@/components/shared/HomeButton";
 
 const HistoryPage = () => {

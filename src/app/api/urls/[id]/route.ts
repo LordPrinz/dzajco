@@ -3,7 +3,7 @@ import {
 	handleRateLimiter,
 	sendRateLimitExceededError,
 } from "@/utils/api";
-import dbConnect, { findLink } from "@/utils/db";
+import dbConnect, { findLink, incrementVisits } from "@/utils/db";
 import { getUserLocation } from "@/utils/utils";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -44,6 +44,7 @@ export async function GET(
 	);
 
 	await link.incrementVisits(userLocation);
+	await incrementVisits(userLocation);
 
 	return NextResponse.json({
 		fullLink: link.full,

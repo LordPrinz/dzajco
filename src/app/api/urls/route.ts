@@ -10,11 +10,16 @@ import {
 } from "@/utils/api";
 import { NextRequest } from "next/server";
 import { CreateRequest } from "@/types/apiTypes";
-import dbConnect, { findLink, formLinkModel, saveToDatabase } from "@/utils/db";
+import dbConnect, {
+	findLink,
+	formLinkModel,
+	incrementLinks,
+	incrementVisits,
+	saveToDatabase,
+} from "@/utils/db";
 import { generateUniqueLink } from "@/utils/db";
 import { headers } from "next/headers";
-
-//TODO: Implement dzajco stats
+import { getUserLocation } from "@/utils/utils";
 
 export async function POST(requst: NextRequest) {
 	const isRateLimitExceeded = await handleRateLimiter();
@@ -30,6 +35,12 @@ export async function POST(requst: NextRequest) {
 		.catch(() => sendWrongInputResponse("Something went wrong!"));
 
 	const ip = headers().get("x-forwarded-for")!;
+
+	const userLocation = await getUserLocation(
+		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
+	);
+
+	await incrementVisits(userLocation);
 
 	const url = req.url;
 	const customName = req.customName;
@@ -63,6 +74,7 @@ export async function POST(requst: NextRequest) {
 		});
 
 		await saveToDatabase(model);
+		await incrementLinks();
 		return createLinkResponse(encodedCustomName);
 	}
 
@@ -75,6 +87,7 @@ export async function POST(requst: NextRequest) {
 			isCustom: false,
 		});
 		await saveToDatabase(link);
+		await incrementLinks();
 		return createLinkResponse(shortUrl);
 	}
 
@@ -94,6 +107,6 @@ export async function POST(requst: NextRequest) {
 	});
 
 	await saveToDatabase(link);
-
+	await incrementLinks();
 	return createLinkResponse(shortUrl);
 }
