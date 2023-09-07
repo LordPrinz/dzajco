@@ -1,34 +1,57 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<h1 align="center">Dzajco - Link Shortener</h1>
 
-## Getting Started
+<div align="center">
+The best link shortener you were looking for.</div>
 
-First, run the development server:
+<!-- TABLE OF CONTENTS -->
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+## Table of Contents
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+  - [Built With](#built-with)
+- [Features](#features)
+- [How To Use](#how-to-use)
+- [Contact](#contact)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<!-- OVERVIEW -->
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Overview
 
-## Learn More
+It is a link shortener. This app was created in Next.js with typescript. It uses mongodb as a database system.
 
-To learn more about Next.js, take a look at the following resources:
+### Built With
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+<!-- This section should list any major frameworks that you built your project using. Here are a few examples.-->
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- [TypeScript](https://www.typescriptlang.org/)
+- [Next.js](https://nextjs.org/)
 
-## Deploy on Vercel
+## Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Collects data about how many people visited a shorten link.
+- Easy to use
+- Safe
+- You don't have to sign up
+- No limitation for normal user
+- History
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## How To Use
+
+<!-- Example: -->
+
+- Simplest usecase:
+  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click `Dżajcuj` button. You will get a notification with your shorten link. In order to copy this link you have to click on a copy icon located in a left corner of this notification.
+- Short link with custom name
+  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click on `More options` button (it is located under the `Link` input), type in your custom name you only imagine into the `Custom Name` input (custom name shouldn't be longer than 25 letters), then click `Dżajcuj` button. You will get a notification with your shorten link. In order to copy this link you have to click on a copy icon located in a left corner of this notification.
+- Short link with expiration date
+  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click on `More options` button (it is located under the `Link` input), select expiration date from available options or set you custom expiration date by selecting `Custom` and then providing date to the input that will show up below
+- Check shorten link visits
+  - Go to a website https://www.dzaj.de/, type in your shorten link name or shorten link url into input below `Link statistics` (ex. https://dzaj.de/myLink or myLink), then click `Show Statistics` button. You will be redirected to a page with a counter.
+- Link History
+  - You can check your shorten links history by clicking on a `History` link located in the bottom navigation. You can copy your shorten link again by clicking on the yellow code. You can also delete your link via `History` page.
+
+## Contact
+
+- GitHub [LordPrinz](https://github.com/LordPrinz)
+- Discord [<c2>Lord Prinz ™ 🔥#6396](https://discord.com/users/520676533279522817)
