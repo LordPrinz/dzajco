@@ -1,6 +1,12 @@
 import { Location } from "@/utils/utils";
 import mongoose, { Schema, Document } from "mongoose";
-import { IVisitsLocation } from "./locationModel";
+
+export type IVisitsLocation = {
+	visits: number;
+	lat: number;
+	lon: number;
+	_id: string;
+};
 
 interface ILink extends Document {
 	_id: string;
