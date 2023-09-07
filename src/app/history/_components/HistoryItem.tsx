@@ -20,12 +20,8 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 	return (
 		<div className="flex items-center justify-between relative max-w-2xl w-full mx-auto ">
 			<div className="flex flex-col gap-1">
-				<div
-					className="text-xl text-jajco-500 flex items-center gap-3"
-					onClick={() => {
-						copy(copyLink);
-					}}>
-					{data.id} <Copy url={copyLink} />
+				<div className="text-xl text-jajco-500 flex items-center gap-3">
+					<Copy url={copyLink} code={data.id} />
 				</div>
 				<span className="text-xs text-slate-500 history_item__fullLink pr-2">
 					{data.url}

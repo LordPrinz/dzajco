@@ -15,8 +15,8 @@ const isExpiredLink = (link: Link) => {
 	}
 
 	const currentTime = new Date().getTime();
-	const linkTime = new Date(link as any).getTime();
-	console.log(linkTime);
+	const linkTime = new Date(link.expire).getTime();
+
 	return currentTime >= linkTime;
 };
 
