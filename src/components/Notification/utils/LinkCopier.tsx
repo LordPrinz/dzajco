@@ -26,7 +26,7 @@ const LinkCopier = ({ url }: Props) => {
 		/>
 	);
 
-	const link = `${window.location.href}${url}`;
+	const link = `${window.location.href}${url.replace("%20", " ")}`;
 
 	return (
 		<div
