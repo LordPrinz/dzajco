@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Counter from "./_components/Counter";
 import Map from "./_components/Map";
 import Chart from "./_components/Chart";
+import StatisticsModel from "@/models/statisticsModel";
 
 type Props = {
 	params: { id: string };

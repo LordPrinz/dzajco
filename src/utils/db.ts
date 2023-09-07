@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import linkModel from "../models/linkModel";
 import { Location, generateLink } from "./utils";
+import StatisticsModel from "@/models/statisticsModel";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -91,4 +92,14 @@ export const generateUniqueLink = async () => {
 
 		return shortUrl;
 	} while (true);
+};
+
+export const incrementLinks = async () => {
+	const statistics = await StatisticsModel.findById("dzajcostats");
+	await statistics?.incrementLinks();
+};
+
+export const incrementVisits = async (location: Location) => {
+	const statistics = await StatisticsModel.findById("dzajcostats");
+	await statistics?.incrementVisits(location);
 };
