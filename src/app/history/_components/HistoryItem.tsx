@@ -1,10 +1,11 @@
 "use client";
 
-import { copy } from "@/components/Notification";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { Link } from "@/types/localStorage";
 import { MdDelete } from "react-icons/md";
 import Copy from "./Copy";
+import { cn } from "@/utils/tailwind";
+import { useState } from "react";
 
 type Props = {
 	action: (id: string) => Promise<void>;
@@ -14,6 +15,7 @@ type Props = {
 
 const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
+	const [isVisible, setIsVisible] = useState(false);
 
 	const copyLink = `${window.location.href.replace("history", "")}${data.id}`;
 
@@ -23,7 +25,11 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 				<div className="text-xl text-jajco-500 flex items-center gap-3">
 					<Copy url={copyLink} code={data.id} />
 				</div>
-				<span className="text-xs text-slate-500 history_item__fullLink pr-2">
+				<span
+					className={cn(
+						"text-xs text-slate-500 pr-2",
+						isVisible && "history_item__fullLink"
+					)}>
 					{data.url}
 				</span>
 			</div>
