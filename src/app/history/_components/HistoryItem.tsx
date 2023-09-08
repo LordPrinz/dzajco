@@ -6,6 +6,7 @@ import { MdDelete } from "react-icons/md";
 import Copy from "./Copy";
 import { cn } from "@/utils/tailwind";
 import { useState } from "react";
+import Eye from "./Eye";
 
 type Props = {
 	action: (id: string) => Promise<void>;
@@ -25,6 +26,7 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 				<div className="text-xl text-jajco-500 flex items-center gap-3">
 					<Copy url={copyLink} code={data.id} />
 				</div>
+				<Eye isVisible={isVisible} setIsVisible={setIsVisible} />
 				<span
 					className={cn(
 						"text-xs text-slate-500 pr-2",

@@ -1,18 +1,18 @@
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 
 type Props = {
-	isShow: boolean;
-	setIsShow: (args?: any) => void;
+	isVisible: boolean;
+	setIsVisible: (args?: any) => void;
 };
 
-const ShowLink = ({ isShow, setIsShow }: Props) => {
+const Eye = ({ isVisible, setIsVisible }: Props) => {
 	const toggle = () => {
-		setIsShow((prevState: boolean) => !prevState);
+		setIsVisible((prevState: boolean) => !prevState);
 	};
 
 	return (
 		<>
-			{isShow ? (
+			{isVisible ? (
 				<AiOutlineEye onClick={toggle} />
 			) : (
 				<AiOutlineEyeInvisible onClick={toggle} />
@@ -21,4 +21,4 @@ const ShowLink = ({ isShow, setIsShow }: Props) => {
 	);
 };
 
-export default ShowLink;
+export default Eye;
