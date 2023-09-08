@@ -13,9 +13,9 @@ const Eye = ({ isVisible, setIsVisible }: Props) => {
 	return (
 		<>
 			{isVisible ? (
-				<AiOutlineEye onClick={toggle} />
+				<AiOutlineEye className="cursor-pointer" onClick={toggle} />
 			) : (
-				<AiOutlineEyeInvisible onClick={toggle} />
+				<AiOutlineEyeInvisible onClick={toggle} className="cursor-pointer" />
 			)}
 		</>
 	);

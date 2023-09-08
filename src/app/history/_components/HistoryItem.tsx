@@ -26,14 +26,18 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 				<div className="text-xl text-jajco-500 flex items-center gap-3">
 					<Copy url={copyLink} code={data.id} />
 				</div>
-				<Eye isVisible={isVisible} setIsVisible={setIsVisible} />
-				<span
-					className={cn(
-						"text-xs text-slate-500 pr-2",
-						isVisible && "history_item__fullLink"
-					)}>
-					{data.url}
-				</span>
+				<div className="flex justify-between w-full ">
+					<span className="min-w-[16px]">
+						<Eye isVisible={isVisible} setIsVisible={setIsVisible} />
+					</span>
+					<span
+						className={cn(
+							"text-xs text-slate-500 pr-2 pl-2",
+							!isVisible && "history_item__fullLink max-w-xs"
+						)}>
+						{data.url}
+					</span>
+				</div>
 			</div>
 			<button
 				className="p-1.5 rounded px-2 bg-red-500 text-jajco-50 flex items-center gap-1 text-xs"
