@@ -37,7 +37,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 	}
 
 	await link.incrementVisits(userLocation);
-	redirect(link.full);
+	redirect(link.full.replaceAll("​", ""));
 };
 
 export default Page;

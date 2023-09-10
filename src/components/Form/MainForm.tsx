@@ -54,7 +54,8 @@ const MainForm = () => {
 		error: linkError,
 		reset: linkReset,
 	} = useInput({
-		validate: (val: string) => isValidUrl(val) && val.length > 6,
+		validate: (val: string) =>
+			isValidUrl(val) && val.length > 6 && !val.includes("​"),
 	});
 
 	const {
@@ -63,7 +64,7 @@ const MainForm = () => {
 		error: customNameError,
 		reset: customNameReset,
 	} = useInput({
-		validate: (val: string) => val.length <= 25,
+		validate: (val: string) => val.length <= 25 && !val.includes("​"),
 	});
 
 	const { value: expirationValue, setValue: setExpirationValue } = useInput({
