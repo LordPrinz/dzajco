@@ -55,23 +55,23 @@ const options = [
 		value: "1h",
 	},
 	{
-		name: "45 minuts",
+		name: "45 minutes",
 		value: "45m",
 	},
 	{
-		name: "30 minuts",
+		name: "30 minutes",
 		value: "30m",
 	},
 	{
-		name: "20 minuts",
+		name: "20 minutes",
 		value: "20m",
 	},
 	{
-		name: "15 minuts",
+		name: "15 minutes",
 		value: "15m",
 	},
 	{
-		name: "10 minuts",
+		name: "10 minutes",
 		value: "10m",
 	},
 	{
