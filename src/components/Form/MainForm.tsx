@@ -64,7 +64,7 @@ const MainForm = () => {
 		error: customNameError,
 		reset: customNameReset,
 	} = useInput({
-		validate: (val: string) => val.length <= 25 && !val.includes("​"),
+		validate: (val: string) => val.length <= 25,
 	});
 
 	const { value: expirationValue, setValue: setExpirationValue } = useInput({
@@ -92,6 +92,11 @@ const MainForm = () => {
 
 		if (!link || !linkError) {
 			return notification.showError("Invalid link provided!");
+		}
+
+		if (customName.includes("​")) {
+			return (window.location.href =
+				"https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley");
 		}
 
 		if (customName && !customNameError) {
