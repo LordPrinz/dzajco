@@ -16,6 +16,9 @@
 }
 
 @layer base {
+	html {
+		@apply text-sm md:text-base;
+	}
 	body {
 		font-family: "Open Sans", "Lato", sans-serif;
 		@apply m-0 bg-gray-50 text-gray-900 scroll-smooth;
