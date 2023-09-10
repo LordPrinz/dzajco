@@ -67,6 +67,7 @@ export default class Notification {
 
 						if (!existingLink) {
 							const linkToSave = {
+								isCustom: false,
 								url,
 								expire: expire!,
 								createdAt: new Date(),

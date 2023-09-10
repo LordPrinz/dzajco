@@ -18,6 +18,8 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 	const [isVisible, setIsVisible] = useState(false);
 
+	console.log(data);
+
 	const copyLink = `${window.location.href.replace("history", "")}${data.id}`;
 
 	return (
@@ -39,16 +41,18 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 					</span>
 				</div>
 			</div>
-			<button
-				className="p-1.5 rounded px-2 bg-red-500 text-jajco-50 flex items-center gap-1 text-xs"
-				formAction={() => {
-					const stateToSave = storedValue.filter((val: Link) => val.id !== data.id);
-					setValue(stateToSave);
-					removeItemLocal(data.id);
-					action(data.id);
-				}}>
-				Delete <MdDelete className="text-xs" />
-			</button>
+			{data.isCustom && (
+				<button
+					className="p-1.5 rounded px-2 bg-red-500 text-jajco-50 flex items-center gap-1 text-xs"
+					formAction={() => {
+						const stateToSave = storedValue.filter((val: Link) => val.id !== data.id);
+						setValue(stateToSave);
+						removeItemLocal(data.id);
+						action(data.id);
+					}}>
+					Delete <MdDelete className="text-xs" />
+				</button>
+			)}
 		</div>
 	);
 };

@@ -138,7 +138,12 @@ const MainForm = () => {
 
 			if (!existingLink) {
 				setLinks((prevState: linkIn[] | null[]) => [
-					{ createdAt: new Date(), id: linkToSave.customName, ...linkToSave },
+					{
+						createdAt: new Date(),
+						id: linkToSave.customName,
+						isCustom: true,
+						...linkToSave,
+					},
 					...prevState,
 				]);
 			}
