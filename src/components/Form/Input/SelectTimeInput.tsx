@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/utils/tailwind";
+import Select from "./Select";
 
 type Props = {
 	className?: string;
@@ -27,6 +28,57 @@ const currentDateTime = new Date();
 currentDateTime.setMinutes(currentDateTime.getMinutes() + 10);
 const minDateTimeISO = currentDateTime.toISOString().slice(0, 16);
 
+const options = [
+	{
+		name: "Custom",
+		value: "custom",
+	},
+	{
+		name: "7 days",
+		value: "7d",
+	},
+	{
+		name: "1 day",
+		value: "1d",
+	},
+	{
+		name: "12 hours",
+		value: "12h",
+	},
+	{
+		name: "6 hours",
+		value: "6h",
+	},
+	{
+		name: "1 hour",
+		value: "1h",
+	},
+	{
+		name: "45 minuts",
+		value: "45min",
+	},
+	{
+		name: "30 minuts",
+		value: "30min",
+	},
+	{
+		name: "20 minuts",
+		value: "20min",
+	},
+	{
+		name: "15 minuts",
+		value: "15min",
+	},
+	{
+		name: "10 minuts",
+		value: "10min",
+	},
+	{
+		name: "Never",
+		value: "never",
+	},
+];
+
 const SelectTimeInput = ({
 	value,
 	setValue,
@@ -34,18 +86,24 @@ const SelectTimeInput = ({
 	customValue,
 	setCustomValue,
 }: Props) => {
-	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		const selectedValue = event.target.value;
+	const handleSelectChange = (selectedValue: string) => {
 		setValue(selectedValue);
 	};
 
+	console.log(value);
 	return (
 		<>
 			<div className="relative flex w-full">
 				<div className="h-full shadow bg-jajco-500 px-6 rounded-l-full py-4 text-jajco-50">
 					Expiration
 				</div>
-				<select
+				<Select
+					label="Expiration"
+					onChange={handleSelectChange}
+					values={options}
+					value={value}
+				/>
+				{/* <select
 					className={cn(
 						"input appearance-none !pl-4  z-10 flex-1 !rounded-l-xl cursor-pointer ",
 						className
@@ -64,7 +122,7 @@ const SelectTimeInput = ({
 					<option value="15m">15 minutes</option>
 					<option value="10m">10 minutes</option>
 					<option value="never">Never</option>
-				</select>
+				</select> */}
 
 				<div className="absolute top-4 right-0 flex items-center pr-3 pointer-events-none">
 					<svg

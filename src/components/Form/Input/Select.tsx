@@ -7,11 +7,15 @@ type SelectOptions = {
 	value?: string;
 	onChange: (value: string) => void;
 	label: string;
-	values: string[];
+	values: {
+		name: string;
+		value: string;
+	}[];
 };
 
 export type SelectItemOptions = {
 	value: string;
+	name: string;
 };
 
 const Select = ({ label, onChange, values, value }: SelectOptions) => {
@@ -23,23 +27,20 @@ const Select = ({ label, onChange, values, value }: SelectOptions) => {
 			value={value}>
 			<RadixSelect.Trigger
 				aria-label={label}
-				className="relative w-full rounded-md border  px-4 py-2 text-left text-sm outline-none ">
+				className="relative w-full rounded-r-full   px-4 py-2 text-left text-sm outline-none bg-white shadow">
 				<RadixSelect.Value placeholder={label} />
-				<RadixSelect.Icon className="absolute bottom-0 right-2 top-0 my-auto h-4 w-4">
-					<BsChevronUp />
-				</RadixSelect.Icon>
 			</RadixSelect.Trigger>
 			<RadixSelect.Portal>
-				<RadixSelect.Content className="w-full overflow-hidden rounded border border-slate-200 bg-slate-50">
-					<RadixSelect.ScrollDownButton>
+				<RadixSelect.Content className="w-full overflow-hidden rounded-md border bg-gray-50 z-50">
+					<RadixSelect.ScrollDownButton className="flex h-8 cursor-default items-center justify-center py-2">
 						<BsChevronUp />
 					</RadixSelect.ScrollDownButton>
 					<RadixSelect.Viewport>
 						{values.map((val) => (
-							<SelectItem key={val} value={val} />
+							<SelectItem key={val.value} value={val.value} name={val.name} />
 						))}
 					</RadixSelect.Viewport>
-					<RadixSelect.ScrollDownButton className="flex h-6 cursor-default items-center justify-center bg-white">
+					<RadixSelect.ScrollDownButton className="flex h-8 cursor-default items-center justify-center py-2">
 						<BsChevronDown />
 					</RadixSelect.ScrollDownButton>
 				</RadixSelect.Content>
@@ -48,13 +49,13 @@ const Select = ({ label, onChange, values, value }: SelectOptions) => {
 	);
 };
 
-const SelectItem = ({ value }: SelectItemOptions) => {
+const SelectItem = ({ value, name }: SelectItemOptions) => {
 	return (
 		<RadixSelect.Item
 			value={value}
-			className="relative flex h-9 select-none items-center rounded-sm pl-6 pr-8 text-sm leading-none data-[disabled]:pointer-events-none data-[highlighted]:bg-slate-100 data-[highlighted]:outline-none">
+			className="relative flex h-9 select-none items-center rounded-sm pl-6 pr-8 text-sm leading-none data-[disabled]:pointer-events-none data-[highlighted]:bg-gray-100 data-[highlighted]:outline-none">
 			<RadixSelect.ItemText className="translate-x-3 text-left">
-				{value}
+				{name}
 			</RadixSelect.ItemText>
 			<RadixSelect.ItemIndicator className="absolute right-3 inline-flex w-4 items-center justify-center">
 				<AiOutlineCheck />
