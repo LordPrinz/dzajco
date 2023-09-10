@@ -1,5 +1,6 @@
-import React from "react";
-import { cn } from "@/utils/tailwind";
+"use client";
+
+import React, { useState } from "react";
 import Select from "./Select";
 
 type Props = {
@@ -82,7 +83,6 @@ const options = [
 const SelectTimeInput = ({
 	value,
 	setValue,
-	className,
 	customValue,
 	setCustomValue,
 }: Props) => {
@@ -90,11 +90,14 @@ const SelectTimeInput = ({
 		setValue(selectedValue);
 	};
 
-	console.log(value);
+	const [isOpen, setIsOpen] = useState(false);
+
 	return (
 		<>
 			<div className="relative flex w-full">
-				<div className="h-full shadow bg-jajco-500 px-6 rounded-l-full py-4 text-jajco-50">
+				<div
+					className="h-full shadow bg-jajco-500 select-none cursor-pointer px-6 rounded-l-full py-4 text-jajco-50"
+					onClick={() => setIsOpen((prevState) => !prevState)}>
 					Expiration
 				</div>
 				<Select
@@ -102,27 +105,9 @@ const SelectTimeInput = ({
 					onChange={handleSelectChange}
 					values={options}
 					value={value}
+					open={isOpen}
+					setOpen={setIsOpen}
 				/>
-				{/* <select
-					className={cn(
-						"input appearance-none !pl-4  z-10 flex-1 !rounded-l-xl cursor-pointer ",
-						className
-					)}
-					value={value}
-					onChange={handleSelectChange}>
-					<option value="custom">Custom</option>
-					<option value="7d">7 days</option>
-					<option value="1d">1 day</option>
-					<option value="12h">12 hours</option>
-					<option value="6h">6 hours</option>
-					<option value="1h">1 hour</option>
-					<option value="45m">45 minutes</option>
-					<option value="30m">30 minutes</option>
-					<option value="20m">20 minutes</option>
-					<option value="15m">15 minutes</option>
-					<option value="10m">10 minutes</option>
-					<option value="never">Never</option>
-				</select> */}
 
 				<div className="absolute top-4 right-0 flex items-center pr-3 pointer-events-none">
 					<svg

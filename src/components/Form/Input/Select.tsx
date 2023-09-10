@@ -11,6 +11,8 @@ type SelectOptions = {
 		name: string;
 		value: string;
 	}[];
+	open: boolean;
+	setOpen: (isOpen: boolean) => void;
 };
 
 export type SelectItemOptions = {
@@ -18,9 +20,20 @@ export type SelectItemOptions = {
 	name: string;
 };
 
-const Select = ({ label, onChange, values, value }: SelectOptions) => {
+const Select = ({
+	label,
+	onChange,
+	values,
+	value,
+	open,
+	setOpen,
+}: SelectOptions) => {
 	return (
 		<RadixSelect.Root
+			open={open}
+			onOpenChange={(open) => {
+				setOpen(open);
+			}}
 			onValueChange={(selectedValue) => {
 				onChange(selectedValue);
 			}}
