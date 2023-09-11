@@ -5,7 +5,7 @@ import Footer from "../components/Layout/Footer/Footer";
 import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
-	metadataBase: new URL("https://www.dzaj.de"),
+	metadataBase: new URL("https://dzaj.de"),
 	title: {
 		default: "Dzajco",
 		template: `%s | Dzajco`,
@@ -35,7 +35,7 @@ export default function RootLayout({
 					draggable
 					pauseOnHover
 				/>
-				<Footer/>
+				<Footer />
 			</body>
 		</html>
 	);
