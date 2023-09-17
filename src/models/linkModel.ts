@@ -1,5 +1,6 @@
 import { Location } from "@/utils/utils";
 import mongoose, { Schema, Document } from "mongoose";
+import LocationsModel from "./locationModel";
 
 export type IVisitsLocation = {
 	visits: number;
@@ -28,9 +29,10 @@ const LinkSchema = new Schema(
 		visitsLocation: [
 			{
 				visits: { type: Number },
-				_id: { type: String },
-				lat: { type: Number },
-				lon: { type: Number },
+				location: {
+					type: Schema.Types.ObjectId,
+					ref: "Location",
+				},
 			},
 		],
 	},
@@ -51,6 +53,12 @@ LinkSchema.set("toJSON", {
 	},
 });
 
+LinkSchema.pre(/^find/, async function (next) {
+	await (this as any).populate("visitsLocation.location").execPopulate();
+
+	next();
+});
+
 LinkSchema.set("toObject", { virtuals: true });
 
 LinkSchema.methods.incrementVisits = async function (
@@ -67,10 +75,16 @@ LinkSchema.methods.incrementVisits = async function (
 	if (index !== -1) {
 		this.visitsLocation[index].visits++;
 	} else {
-		this.visitsLocation.push({
-			visits: 1,
+		const loc = new LocationsModel({
 			lat: location.location.latitude,
 			lon: location.location.longitude,
+			_id: locationPattern,
+		});
+
+		await loc.save();
+
+		this.visitsLocation.push({
+			visits: 1,
 			_id: locationPattern,
 		});
 	}
