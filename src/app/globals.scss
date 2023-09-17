@@ -49,7 +49,7 @@
 
 	.links {
 		&__list {
-			@apply mb-1 text-sm text-center;
+			@apply mb-1 text-sm text-center pb-2;
 		}
 		&__item {
 			@apply inline-block relative;
