@@ -90,8 +90,6 @@ export default class Notification {
 
 							existingData.push(linkToSave);
 
-							console.log("FRONT", linkToSave);
-
 							window.localStorage.setItem(
 								"links-history",
 								JSON.stringify(existingData)

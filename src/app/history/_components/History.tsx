@@ -6,7 +6,7 @@ import { Link } from "@/types/localStorage";
 import { useEffect, useState } from "react";
 
 type Props = {
-	action: (id: string) => Promise<void>;
+	action: (id: string, secretKey: string) => Promise<void>;
 };
 
 const isExpiredLink = (link: Link) => {
