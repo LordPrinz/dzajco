@@ -24,20 +24,28 @@ const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
 
-	const ip = headers().get("x-forwarded-for")!;
+	try {
+		const ip = headers().get("x-forwarded-for")!;
 
-	const userLocation = await getUserLocation(
-		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
-	);
+		const userLocation = await getUserLocation(
+			process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
+		);
 
-	await incrementVisits(userLocation);
+		await incrementVisits(userLocation);
 
-	if (!link) {
-		notFound();
+		if (!link) {
+			notFound();
+		}
+
+		await link.incrementVisits(userLocation);
+		redirect(link.full.replaceAll("​", ""));
+	} catch (error) {
+		console.log(error);
+		if (!link) {
+			notFound();
+		}
+		redirect(link.full.replaceAll("​", ""));
 	}
-
-	await link.incrementVisits(userLocation);
-	redirect(link.full.replaceAll("​", ""));
 };
 
 export default Page;
