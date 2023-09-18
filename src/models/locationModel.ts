@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export type IVisitsLocation = {
+export type IVisitsLocationRaw = {
 	lat: number;
 	lon: number;
 	_id: string;

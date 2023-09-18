@@ -1,12 +1,11 @@
 import { Location } from "@/utils/utils";
 import mongoose, { Schema, Document } from "mongoose";
-import LocationsModel from "./locationModel";
+import LocationsModel, { IVisitsLocationRaw } from "./locationModel";
 
 export type IVisitsLocation = {
 	visits: number;
 	lat: number;
 	lon: number;
-	_id: string;
 	location: string;
 };
 
@@ -32,7 +31,7 @@ const LinkSchema = new Schema(
 				visits: { type: Number },
 				location: {
 					type: String,
-					ref: "Location",
+					ref: "locations",
 				},
 			},
 		],
@@ -45,26 +44,38 @@ const LinkSchema = new Schema(
 
 LinkSchema.index({ expire: 1 }, { expireAfterSeconds: 0 });
 
+LinkSchema.pre(/^find/, function (next) {
+	(this as any).populate({
+		path: "visitsLocation.location",
+	});
+	next();
+});
+
 LinkSchema.set("toJSON", {
 	transform: function (doc, ret) {
 		ret.id = ret._id;
 
 		delete ret._id;
-		delete ret._id;
 		delete ret.__v;
 	},
 });
 
-// LinkSchema.pre(/^find/, async function (next) {
-// 	try {
-// 	} catch (err) {
-// 		(this as any).populate("visitsLocation.location");
-// 	}
-
-// 	next();
-// });
-
-LinkSchema.set("toObject", { virtuals: true });
+LinkSchema.set("toObject", {
+	virtuals: true,
+	transform: function (doc, ret) {
+		ret.id = ret._id;
+		ret.visitsLocation = ret.visitsLocation.map(
+			(locationObj: { visits: number; location: IVisitsLocationRaw }) => ({
+				visits: locationObj.visits,
+				location: locationObj.location._id,
+				lat: locationObj.location.lat,
+				lon: locationObj.location.lon,
+			})
+		);
+		delete ret._id;
+		delete ret.__v;
+	},
+});
 
 LinkSchema.methods.incrementVisits = async function (
 	location: Location
