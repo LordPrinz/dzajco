@@ -70,7 +70,6 @@ export default class Notification {
 
 							if (customName) {
 								linkToSave = {
-									isCustom: false,
 									url,
 									secretKey: data.secretKey,
 									expire: expire!,
@@ -79,7 +78,6 @@ export default class Notification {
 								};
 							} else {
 								linkToSave = {
-									isCustom: false,
 									url,
 									secretKey: data.secretKey,
 									expire: expire!,
