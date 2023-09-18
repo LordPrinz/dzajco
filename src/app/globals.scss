@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+	box-sizing: border-box;
+}
+
+@layer utilities {
+	.gridLayout {
+		@apply grid-cols-mobileLayout sm:grid-cols-smallLayout lg:grid-cols-defaultLayout grid-rows-[1fr,4rem];
+	}
+	.input {
+		@apply py-4 rounded-full px-6 outline-none z-10 shadow;
+	}
+}
+
+@layer base {
+	html {
+		@apply text-sm md:text-base;
+	}
+	body {
+		font-family: "Open Sans", "Lato", sans-serif;
+		@apply m-0 bg-gray-50 text-gray-900 scroll-smooth overflow-x-hidden;
+	}
+	::selection {
+		@apply bg-jajco-500 text-jajco-50;
+	}
+	.Toastify {
+		@apply col-[full-start/full-end];
+	}
+	::-webkit-scrollbar {
+		@apply h-2 w-2;
+	}
+
+	::-webkit-scrollbar-thumb {
+		@apply rounded-md bg-gray-300;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		@apply bg-gray-300;
+	}
+}
+
+@layer components {
+	.info-panel {
+		@apply rounded-xl bg-white shadow;
+	}
+
+	.links {
+		&__list {
+			@apply mb-1 text-sm text-center pb-2;
+		}
+		&__item {
+			@apply inline-block relative;
+
+			&:not(:last-child)::after {
+				content: "";
+				position: absolute;
+				top: 0;
+				right: 0px;
+				width: 1px;
+				height: 100%;
+				background-color: #d7d7d7;
+			}
+		}
+
+		&__link {
+			@apply px-2 py-1 my-2 mx-2 pb-1.5 relative transition hover:transition hover:text-jajco-600 cursor-pointer;
+		}
+	}
+}
+
+.history_item__fullLink {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
+}

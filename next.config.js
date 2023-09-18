@@ -1,11 +1,8 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-    reactStrictMode: true,
-    productionBrowserSourceMaps: true,
-    async rewrites() {
-        return [{
-            source: "/robots.txt",
-            destination: "/api/robots",
-        }, ];
-    },
+const nextConfig = {
+	experimental: {
+		serverActions: true,
+	},
 };
+
+module.exports = nextConfig;

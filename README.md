@@ -29,11 +29,12 @@ It is a link shortener. This app was created in Next.js with typescript. It uses
 
 ## Features
 
-- Collects data about how many people clicked on a shorten link.
+- Collects data about how many people visited a shorten link.
 - Easy to use
 - Safe
 - You don't have to sign up
 - No limitation for normal user
+- History
 
 ## How To Use
 
@@ -43,8 +44,12 @@ It is a link shortener. This app was created in Next.js with typescript. It uses
   - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click `Dżajcuj` button. You will get a notification with your shorten link. In order to copy this link you have to click on a copy icon located in a left corner of this notification.
 - Short link with custom name
   - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click on `More options` button (it is located under the `Link` input), type in your custom name you only imagine into the `Custom Name` input (custom name shouldn't be longer than 25 letters), then click `Dżajcuj` button. You will get a notification with your shorten link. In order to copy this link you have to click on a copy icon located in a left corner of this notification.
-- Check shorten link clicks counter
-  - Go to a website https://www.dzaj.de/, click on `More options` button (it is located under the `Link` input), type in your shorten link name or shorten link url (ex. https://dzaj.de/myLink or myLink), then click `Show Counter` button. You will be redirected to a page with a counter.
+- Short link with expiration date
+  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click on `More options` button (it is located under the `Link` input), select expiration date from available options or set you custom expiration date by selecting `Custom` and then providing date to the input that will show up below
+- Check shorten link visits
+  - Go to a website https://www.dzaj.de/, type in your shorten link name or shorten link url into input below `Link statistics` (ex. https://dzaj.de/myLink or myLink), then click `Show Statistics` button. You will be redirected to a page with a counter.
+- Link History
+  - You can check your shorten links history by clicking on a `History` link located in the bottom navigation. You can copy your shorten link again by clicking on the yellow code. You can also delete your link via `History` page.
 
 ## Contact
 
