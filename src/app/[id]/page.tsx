@@ -34,16 +34,14 @@ const Page: NextPage<Props> = async ({ params }) => {
 		await incrementVisits(userLocation);
 
 		if (!link) {
-			notFound();
+			return notFound();
 		}
 
 		await link.incrementVisits(userLocation);
 		redirect(link.full.replaceAll("​", ""));
 	} catch (error) {
-		console.error(error);
-
 		if (!link) {
-			notFound();
+			return notFound();
 		}
 		redirect(link.full.replaceAll("​", ""));
 	}

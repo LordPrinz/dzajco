@@ -7,14 +7,10 @@ import { revalidatePath } from "next/cache";
 export const removeItem = async (id: string, secretKey: string) => {
 	await dbConnect();
 
-	console.log(secretKey);
-
-	const res = await LinkModel.deleteOne({
+	await LinkModel.deleteOne({
 		_id: id,
 		secretKey,
 	});
-
-	console.log(res);
 
 	revalidatePath("/history");
 };

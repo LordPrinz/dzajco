@@ -43,9 +43,7 @@ export async function POST(requst: NextRequest) {
 		);
 
 		await incrementVisits(userLocation);
-	} catch (err) {
-		console.error(err);
-	}
+	} catch (err) {}
 
 	const url = req.url;
 	const customName = req.customName;

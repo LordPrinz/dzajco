@@ -120,9 +120,9 @@ LinkSchema.methods.incrementVisits = async function (
 
 let Link: mongoose.Model<ILink>;
 try {
-	Link = mongoose.model<ILink>("linker");
+	Link = mongoose.model<ILink>("link");
 } catch {
-	Link = mongoose.model<ILink>("linker", LinkSchema);
+	Link = mongoose.model<ILink>("link", LinkSchema);
 }
 
 export default Link;
