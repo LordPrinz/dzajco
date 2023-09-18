@@ -18,8 +18,6 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 	const [isVisible, setIsVisible] = useState(false);
 
-	console.log(data);
-
 	const copyLink = `${window.location.href.replace("history", "")}${data.id}`;
 
 	return (

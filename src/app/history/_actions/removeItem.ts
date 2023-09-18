@@ -11,7 +11,5 @@ export const removeItem = async (id: string) => {
 		_id: id,
 	});
 
-	console.log(res);
-
 	revalidatePath("/history");
 };
