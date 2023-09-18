@@ -15,7 +15,7 @@ interface ILink extends Document {
 	visits: number;
 	expire: Date | null;
 	incrementVisits: (location: Location) => Promise<void>;
-	visitsLocation: IVisitsLocation;
+	visitsLocation: IVisitsLocation[];
 }
 
 const LinkSchema = new Schema(

@@ -15,7 +15,7 @@ interface ILink extends Document {
 	links: number;
 	incrementVisits: (location: Location) => Promise<void>;
 	incrementLinks: () => Promise<void>;
-	visitsLocation: IVisitsLocation;
+	visitsLocation: IVisitsLocation[];
 }
 
 const StatisticsSchema = new Schema(
