@@ -29,7 +29,7 @@ const Chart = async ({ linkId }: Props) => {
 	const topVisitors = res.map((visitor) => {
 		const visitsLocation = visitor.visitsLocation;
 
-		const location = visitsLocation._id.split("_");
+		const location = visitsLocation.location.split("_");
 
 		return {
 			visits: visitsLocation.visits,

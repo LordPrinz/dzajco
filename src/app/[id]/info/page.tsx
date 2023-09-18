@@ -34,8 +34,6 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 	const link = await findLink({ id: params.id });
 
-	console.log(link);
-
 	if (!link) {
 		notFound();
 	}
