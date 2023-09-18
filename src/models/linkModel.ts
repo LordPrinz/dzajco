@@ -26,6 +26,7 @@ const LinkSchema = new Schema(
 		visits: { type: Number, required: true },
 		expire: { type: Date, default: null },
 		isCustom: { type: Boolean, required: true },
+		secretKey: { type: String },
 		visitsLocation: [
 			{
 				visits: { type: Number },
@@ -121,9 +122,9 @@ LinkSchema.methods.incrementVisits = async function (
 
 let Link: mongoose.Model<ILink>;
 try {
-	Link = mongoose.model<ILink>("link");
+	Link = mongoose.model<ILink>("linker");
 } catch {
-	Link = mongoose.model<ILink>("link", LinkSchema);
+	Link = mongoose.model<ILink>("linker", LinkSchema);
 }
 
 export default Link;

@@ -41,6 +41,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 		redirect(link.full.replaceAll("​", ""));
 	} catch (error) {
 		console.error(error);
+
 		if (!link) {
 			notFound();
 		}

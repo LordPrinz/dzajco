@@ -13,11 +13,15 @@ export const sendWrongInputResponse = (message: string) => {
 	);
 };
 
-export const createLinkResponse = (link: string) => {
+export const createLinkResponse = (
+	link: string,
+	secretKey: string | null = null
+) => {
 	return NextResponse.json(
 		{
 			message: "Created",
 			shortUrl: link,
+			secretKey,
 		},
 		{
 			status: 201,

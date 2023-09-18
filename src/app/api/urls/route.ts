@@ -20,6 +20,7 @@ import dbConnect, {
 import { generateUniqueLink } from "@/utils/db";
 import { headers } from "next/headers";
 import { getUserLocation } from "@/utils/utils";
+import { nanoid } from "nanoid";
 
 export async function POST(requst: NextRequest) {
 	const isRateLimitExceeded = await handleRateLimiter();
@@ -70,20 +71,25 @@ export async function POST(requst: NextRequest) {
 		}
 		const encodedCustomName = encodeCustomName(customName);
 
+		const secretKey = nanoid(12);
+
 		const model = formLinkModel({
 			id: encodedCustomName,
 			full: url,
 			expire,
 			isCustom: true,
+			secretKey,
 		});
 
 		await saveToDatabase(model);
 		await incrementLinks();
-		return createLinkResponse(encodedCustomName);
+		return createLinkResponse(encodedCustomName, secretKey);
 	}
 
 	if (expire !== "never") {
 		const shortUrl = await generateUniqueLink();
+		const secretKey = nanoid(12);
+
 		const link = formLinkModel({
 			id: shortUrl,
 			full: url,
@@ -92,7 +98,7 @@ export async function POST(requst: NextRequest) {
 		});
 		await saveToDatabase(link);
 		await incrementLinks();
-		return createLinkResponse(shortUrl);
+		return createLinkResponse(shortUrl, secretKey);
 	}
 
 	const existingLink = await findLink({ fullLink: url, expire: null });
