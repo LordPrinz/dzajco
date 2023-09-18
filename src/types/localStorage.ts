@@ -4,4 +4,5 @@ export type Link = {
 	url: string;
 	expire: string;
 	createdAt: Date;
+	secretKey?: string;
 };

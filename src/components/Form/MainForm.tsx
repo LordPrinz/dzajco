@@ -46,8 +46,6 @@ const calculateDateInFuture = (interval: string) => {
 const notification = new Notification();
 
 const MainForm = () => {
-	const [links, setLinks] = useLocalStorage("links-history", []);
-
 	const {
 		value: link,
 		setValue: setLink,
@@ -132,22 +130,6 @@ const MainForm = () => {
 			customName,
 			expire: expirationDate,
 		};
-
-		if (customName) {
-			const existingLink = links.find((link: Link) => link.id === customName);
-
-			if (!existingLink) {
-				setLinks((prevState: linkIn[] | null[]) => [
-					{
-						createdAt: new Date(),
-						id: linkToSave.customName,
-						isCustom: true,
-						...linkToSave,
-					},
-					...prevState,
-				]);
-			}
-		}
 
 		notification.promise(linkToSave);
 

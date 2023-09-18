@@ -94,6 +94,7 @@ export async function POST(requst: NextRequest) {
 			id: shortUrl,
 			full: url,
 			expire,
+			secretKey,
 			isCustom: false,
 		});
 		await saveToDatabase(link);

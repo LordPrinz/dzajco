@@ -66,15 +66,31 @@ export default class Notification {
 						);
 
 						if (!existingLink) {
-							const linkToSave = {
-								isCustom: false,
-								url,
-								expire: expire!,
-								createdAt: new Date(),
-								id: data.shortUrl as string,
-							};
+							let linkToSave;
+
+							if (customName) {
+								linkToSave = {
+									isCustom: false,
+									url,
+									secretKey: data.secretKey,
+									expire: expire!,
+									createdAt: new Date(),
+									id: data.shortUrl as string,
+								};
+							} else {
+								linkToSave = {
+									isCustom: false,
+									url,
+									secretKey: data.secretKey,
+									expire: expire!,
+									createdAt: new Date(),
+									id: data.shortUrl as string,
+								};
+							}
 
 							existingData.push(linkToSave);
+
+							console.log("FRONT", linkToSave);
 
 							window.localStorage.setItem(
 								"links-history",
