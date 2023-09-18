@@ -52,7 +52,6 @@ export async function GET(
 		fullLink: link.full,
 		visits: link.visits,
 		expire: link.expire,
-		isCustom: link.isCustom,
 		visitsLocation: transformedLink.visitsLocation,
 	});
 }

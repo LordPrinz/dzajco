@@ -15,7 +15,6 @@ interface ILink extends Document {
 	visits: number;
 	expire: Date | null;
 	incrementVisits: (location: Location) => Promise<void>;
-	isCustom: boolean;
 	visitsLocation: IVisitsLocation;
 }
 
@@ -25,7 +24,6 @@ const LinkSchema = new Schema(
 		full: { type: String, required: true },
 		visits: { type: Number, required: true },
 		expire: { type: Date, default: null },
-		isCustom: { type: Boolean, required: true },
 		secretKey: { type: String },
 		visitsLocation: [
 			{

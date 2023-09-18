@@ -42,7 +42,6 @@ export type LinkType = {
 	full: string;
 	visits?: number;
 	expire?: string | null;
-	isCustom: boolean;
 	secretKey?: string;
 };
 
@@ -52,7 +51,7 @@ export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
 	}
 
 	if (fullLink && (typeof expire === "object" || typeof expire === "string")) {
-		return await linkModel.findOne({ full: fullLink, expire, isCustom: false });
+		return await linkModel.findOne({ full: fullLink, expire });
 	}
 
 	if (fullLink) {
@@ -60,20 +59,13 @@ export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
 	}
 };
 
-export const formLinkModel = ({
-	id,
-	full,
-	expire,
-	isCustom,
-	secretKey,
-}: LinkType) => {
+export const formLinkModel = ({ id, full, expire, secretKey }: LinkType) => {
 	return {
 		id,
 		full,
 		visits: 0,
 		expire: expire === "never" ? null : expire,
 		visitsLocation: [],
-		isCustom,
 		secretKey,
 	};
 };

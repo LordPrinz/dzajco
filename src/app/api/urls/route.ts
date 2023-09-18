@@ -77,7 +77,6 @@ export async function POST(requst: NextRequest) {
 			id: encodedCustomName,
 			full: url,
 			expire,
-			isCustom: true,
 			secretKey,
 		});
 
@@ -95,7 +94,6 @@ export async function POST(requst: NextRequest) {
 			full: url,
 			expire,
 			secretKey,
-			isCustom: false,
 		});
 		await saveToDatabase(link);
 		await incrementLinks();
@@ -114,7 +112,6 @@ export async function POST(requst: NextRequest) {
 		id: shortUrl,
 		full: url,
 		expire,
-		isCustom: false,
 	});
 
 	await saveToDatabase(link);
