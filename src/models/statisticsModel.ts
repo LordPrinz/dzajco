@@ -1,11 +1,12 @@
 import { Location } from "@/utils/utils";
 import mongoose, { Schema, Document } from "mongoose";
+import LocationsModel, { IVisitsLocationRaw } from "./locationModel";
 
 export type IVisitsLocation = {
 	visits: number;
 	lat: number;
 	lon: number;
-	_id: string;
+	location: string;
 };
 
 interface ILink extends Document {
@@ -25,16 +26,25 @@ const StatisticsSchema = new Schema(
 		visitsLocation: [
 			{
 				visits: { type: Number },
-				_id: { type: String },
-				lat: { type: Number },
-				lon: { type: Number },
+				location: {
+					type: String,
+					ref: "locations",
+				},
 			},
 		],
 	},
 	{
 		versionKey: false,
+		_id: false,
 	}
 );
+
+StatisticsSchema.pre(/^find/, function (next) {
+	(this as any).populate({
+		path: "visitsLocation.location",
+	});
+	next();
+});
 
 StatisticsSchema.set("toJSON", {
 	transform: function (doc, ret) {
@@ -46,7 +56,22 @@ StatisticsSchema.set("toJSON", {
 	},
 });
 
-StatisticsSchema.set("toObject", { virtuals: true });
+StatisticsSchema.set("toObject", {
+	virtuals: true,
+	transform: function (doc, ret) {
+		ret.id = ret._id;
+		ret.visitsLocation = ret.visitsLocation.map(
+			(locationObj: { visits: number; location: IVisitsLocationRaw }) => ({
+				visits: locationObj.visits,
+				location: locationObj.location._id,
+				lat: locationObj.location.lat,
+				lon: locationObj.location.lon,
+			})
+		);
+		delete ret._id;
+		delete ret.__v;
+	},
+});
 
 StatisticsSchema.methods.incrementVisits = async function (
 	location: Location
@@ -54,18 +79,28 @@ StatisticsSchema.methods.incrementVisits = async function (
 	const locationPattern = `${location.city}_${location.state}_${location.country}`;
 
 	const index = this.visitsLocation.findIndex(
-		(visitLocation: IVisitsLocation) => visitLocation._id === locationPattern
+		(visitLocation: { visits: number; location: IVisitsLocationRaw }) =>
+			visitLocation.location._id === locationPattern
 	);
 
 	if (index !== -1) {
 		this.visitsLocation[index].visits++;
 	} else {
-		this.visitsLocation.push({
-			visits: 1,
-			lat: location.location.latitude,
-			lon: location.location.longitude,
-			_id: locationPattern,
-		});
+		const isLocationSaved = await LocationsModel.findById(locationPattern);
+		if (!isLocationSaved) {
+			const loc = new LocationsModel({
+				lat: location.location.latitude,
+				lon: location.location.longitude,
+				_id: locationPattern,
+			});
+			await loc.save();
+		}
+		try {
+			this.visitsLocation?.push({
+				visits: 1,
+				location: locationPattern,
+			});
+		} catch (err) {}
 	}
 
 	this.visits++;

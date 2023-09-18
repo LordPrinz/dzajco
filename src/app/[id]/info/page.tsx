@@ -24,14 +24,6 @@ export async function generateMetadata({ params }: Props) {
 const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 
-	const ip = headers().get("x-forwarded-for")!;
-
-	const userLocation = await getUserLocation(
-		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
-	);
-
-	// await incrementVisits(userLocation);
-
 	const link = await findLink({ id: params.id });
 
 	if (!link) {

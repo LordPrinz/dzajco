@@ -82,10 +82,9 @@ LinkSchema.methods.incrementVisits = async function (
 ): Promise<void> {
 	const locationPattern = `${location.city}_${location.state}_${location.country}`;
 
-	console.log(location);
-
 	const index = this.visitsLocation.findIndex(
-		(visitLocation: IVisitsLocation) => visitLocation.location === locationPattern
+		(visitLocation: { visits: number; location: IVisitsLocationRaw }) =>
+			visitLocation.location._id === locationPattern
 	);
 
 	if (index !== -1) {
