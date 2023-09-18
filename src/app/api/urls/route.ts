@@ -34,13 +34,17 @@ export async function POST(requst: NextRequest) {
 		.json()
 		.catch(() => sendWrongInputResponse("Something went wrong!"));
 
-	const ip = headers().get("x-forwarded-for")!;
+	try {
+		const ip = headers().get("x-forwarded-for")!;
 
-	const userLocation = await getUserLocation(
-		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
-	);
+		const userLocation = await getUserLocation(
+			process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
+		);
 
-	await incrementVisits(userLocation);
+		await incrementVisits(userLocation);
+	} catch (err) {
+		console.error(err);
+	}
 
 	const url = req.url;
 	const customName = req.customName;
