@@ -30,7 +30,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 		process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
 	);
 
-	await incrementVisits(userLocation);
+	// await incrementVisits(userLocation);
 
 	const link = await findLink({ id: params.id });
 

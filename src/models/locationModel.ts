@@ -14,7 +14,7 @@ interface IVisits extends Document {
 
 const LocationSchema = new Schema(
 	{
-		_id: { type: String },
+		_id: { type: String, required: true },
 		lat: { type: Number },
 		lon: { type: Number },
 	},

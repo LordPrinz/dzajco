@@ -7,6 +7,7 @@ export type IVisitsLocation = {
 	lat: number;
 	lon: number;
 	_id: string;
+	location: string;
 };
 
 interface ILink extends Document {
@@ -30,7 +31,7 @@ const LinkSchema = new Schema(
 			{
 				visits: { type: Number },
 				location: {
-					type: Schema.Types.ObjectId,
+					type: String,
 					ref: "Location",
 				},
 			},
@@ -38,6 +39,7 @@ const LinkSchema = new Schema(
 	},
 	{
 		versionKey: false,
+		_id: false,
 	}
 );
 
@@ -53,11 +55,14 @@ LinkSchema.set("toJSON", {
 	},
 });
 
-LinkSchema.pre(/^find/, async function (next) {
-	await (this as any).populate("visitsLocation.location").execPopulate();
+// LinkSchema.pre(/^find/, async function (next) {
+// 	try {
+// 	} catch (err) {
+// 		(this as any).populate("visitsLocation.location");
+// 	}
 
-	next();
-});
+// 	next();
+// });
 
 LinkSchema.set("toObject", { virtuals: true });
 
@@ -69,24 +74,27 @@ LinkSchema.methods.incrementVisits = async function (
 	console.log(location);
 
 	const index = this.visitsLocation.findIndex(
-		(visitLocation: IVisitsLocation) => visitLocation._id === locationPattern
+		(visitLocation: IVisitsLocation) => visitLocation.location === locationPattern
 	);
 
 	if (index !== -1) {
 		this.visitsLocation[index].visits++;
 	} else {
-		const loc = new LocationsModel({
-			lat: location.location.latitude,
-			lon: location.location.longitude,
-			_id: locationPattern,
-		});
-
-		await loc.save();
-
-		this.visitsLocation.push({
-			visits: 1,
-			_id: locationPattern,
-		});
+		const isLocationSaved = await LocationsModel.findById(locationPattern);
+		if (!isLocationSaved) {
+			const loc = new LocationsModel({
+				lat: location.location.latitude,
+				lon: location.location.longitude,
+				_id: locationPattern,
+			});
+			await loc.save();
+		}
+		try {
+			this.visitsLocation?.push({
+				visits: 1,
+				location: locationPattern,
+			});
+		} catch (err) {}
 	}
 
 	this.visits++;
