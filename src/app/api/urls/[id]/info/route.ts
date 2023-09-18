@@ -45,12 +45,14 @@ export async function GET(
 		);
 	}
 
+	const transformedLink = link.toObject();
+
 	return NextResponse.json({
 		id: link.id,
 		fullLink: link.full,
 		visits: link.visits,
 		expire: link.expire,
 		isCustom: link.isCustom,
-		visitsLocation: link?.visitsLocation,
+		visitsLocation: transformedLink.visitsLocation,
 	});
 }

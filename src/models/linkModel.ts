@@ -52,9 +52,17 @@ LinkSchema.pre(/^find/, function (next) {
 });
 
 LinkSchema.set("toJSON", {
+	virtuals: true,
 	transform: function (doc, ret) {
 		ret.id = ret._id;
-
+		ret.visitsLocation = ret.visitsLocation.map(
+			(locationObj: { visits: number; location: IVisitsLocationRaw }) => ({
+				visits: locationObj.visits,
+				location: locationObj.location._id,
+				lat: locationObj.location.lat,
+				lon: locationObj.location.lon,
+			})
+		);
 		delete ret._id;
 		delete ret.__v;
 	},
