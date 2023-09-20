@@ -26,13 +26,15 @@ const LinkCopier = ({ url }: Props) => {
 		/>
 	);
 
-	const link = `${window.location.href}${url.replace("%20", " ")}`;
+	const link = new URL(`${window.location.href}${url}`);
 
 	return (
 		<div
 			className="flex items-center justify-between pr-5 h-full relative w-full"
 			onClick={copyHandler}>
-			<div className="absolute w-full overflow-hidden">{link}</div>
+			<div className="absolute w-full overflow-hidden">
+				{link.href.replace(".www", "")}
+			</div>
 			{icon}
 		</div>
 	);

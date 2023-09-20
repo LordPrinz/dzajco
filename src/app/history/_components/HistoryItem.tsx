@@ -18,7 +18,9 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 	const [isVisible, setIsVisible] = useState(false);
 
-	const copyLink = `${window.location.href.replace("history", "")}${data.id}`;
+	const copyLink = `${window.location.href
+		.replace("history", "")
+		.replace("www.", "")}${data.id}`;
 
 	return (
 		<div className="flex items-center justify-between relative max-w-2xl w-full mx-auto ">

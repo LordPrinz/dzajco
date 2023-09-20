@@ -24,7 +24,10 @@ const SubForm = () => {
 			code = value;
 		}
 
-		const location = window.location.href;
+		const location = window.location.href.replace(
+			/\.www|\/privacy-policy|\/dzajapi|\/history|\/about/g,
+			""
+		);
 
 		const destination = `${location}${code}/info`;
 
