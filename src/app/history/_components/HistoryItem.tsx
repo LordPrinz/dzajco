@@ -18,15 +18,13 @@ const HistoryItem = ({ action, data, removeItemLocal }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 	const [isVisible, setIsVisible] = useState(false);
 
-	const copyLink = `${window.location.href
-		.replace("history", "")
-		.replace("www.", "")}${data.id}`;
+	const link = `https://www.dzaj.de/${decodeURIComponent(data.id)}`;
 
 	return (
 		<div className="flex items-center justify-between relative max-w-2xl w-full mx-auto ">
 			<div className="flex flex-col gap-1">
 				<div className="text-xl text-jajco-500 flex items-center gap-3">
-					<Copy url={copyLink} code={data.id} />
+					<Copy url={link} code={decodeURIComponent(data.id)} />
 				</div>
 				<div className="flex justify-between w-full ">
 					<span className="min-w-[16px]">

@@ -4,7 +4,7 @@ import { AiOutlineCheck, AiOutlineCopy } from "react-icons/ai";
 
 type Props = {
 	url: string;
-	code: string;
+	code?: string;
 };
 
 const Copy = ({ url, code }: Props) => {
@@ -41,7 +41,7 @@ const Copy = ({ url, code }: Props) => {
 		<div
 			className="flex items-center justify-between pr-5 h-full relative hover:text-jajco-600 transition hover:transition"
 			onClick={copyHandler}>
-			<span className="mr-2 cursor-pointer ">{code}</span>
+			<span className="mr-2 cursor-pointer">{code}</span>
 			{icon}
 		</div>
 	);

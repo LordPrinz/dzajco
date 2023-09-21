@@ -26,15 +26,13 @@ const LinkCopier = ({ url }: Props) => {
 		/>
 	);
 
-	const link = new URL(`${window.location.href}${url}`);
+	const link = `https://dzaj.de/${decodeURIComponent(url)}`;
 
 	return (
 		<div
 			className="flex items-center justify-between pr-5 h-full relative w-full"
 			onClick={copyHandler}>
-			<div className="absolute w-full overflow-hidden">
-				{link.href.replace(".www", "")}
-			</div>
+			<div className="absolute w-full overflow-hidden">{link}</div>
 			{icon}
 		</div>
 	);
