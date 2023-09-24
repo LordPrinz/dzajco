@@ -17,11 +17,11 @@
 
 @layer base {
 	html {
-		@apply text-sm md:text-base;
+		@apply text-sm md:text-base h-full;
 	}
 	body {
 		font-family: "Open Sans", "Lato", sans-serif;
-		@apply m-0 bg-gray-50 text-gray-900 scroll-smooth overflow-x-hidden;
+		@apply m-0 bg-gray-50 text-gray-900 scroll-smooth overflow-x-hidden h-full;
 	}
 	::selection {
 		@apply bg-jajco-500 text-jajco-50;

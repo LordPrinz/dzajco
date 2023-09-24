@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en">
-			<body className="grid h-screen gridLayout">
+			<body className="grid h-full gridLayout overflow-x-hidden">
 				{children}
 				<ToastContainer
 					position="bottom-right"
