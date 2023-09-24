@@ -98,6 +98,10 @@ export const getPageStats = async () => {
 	return await StatisticsModel.findById("dzajcostats");
 };
 
+export const getLinksAmount = async () => {
+	return await linkModel.count();
+};
+
 export const incrementLinks = async () => {
 	const statistics = await getPageStats();
 	await statistics?.incrementLinks();
