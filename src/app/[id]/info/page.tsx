@@ -4,8 +4,6 @@ import { notFound } from "next/navigation";
 import Counter from "./_components/Counter";
 import Map from "./_components/Map";
 import Chart from "./_components/Chart";
-import { headers } from "next/headers";
-import { getUserLocation } from "@/utils/utils";
 
 type Props = {
 	params: { id: string };
