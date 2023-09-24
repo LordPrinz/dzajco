@@ -4,6 +4,8 @@ import Map from "./_components/Map";
 import LocationsScoreboard from "./_components/LocationsScoreboard";
 import HomeButton from "@/components/shared/HomeButton";
 
+export const dynamic = "force-dynamic";
+
 const AboutPage = async () => {
 	await dbConnect();
 
