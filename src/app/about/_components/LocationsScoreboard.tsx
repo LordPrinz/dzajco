@@ -21,7 +21,7 @@ const LocationsScoreboard = async () => {
 			},
 		},
 		{
-			$limit: 5, // Limit the results to the top 5
+			$limit: 8, // Limit the results to the top 5
 		},
 	]).exec();
 
@@ -36,7 +36,7 @@ const LocationsScoreboard = async () => {
 		};
 	});
 	return (
-		<div className="my-10">
+		<div className="my-10 mt-14 grid  grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 px-10 ">
 			{topVisitors.map((location) => (
 				<div key={location.location} className="flex flex-col items-center">
 					<div>{location.location}</div>
