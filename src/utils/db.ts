@@ -94,12 +94,16 @@ export const generateUniqueLink = async () => {
 	} while (true);
 };
 
+export const getPageStats = async () => {
+	return await StatisticsModel.findById("dzajcostats");
+};
+
 export const incrementLinks = async () => {
-	const statistics = await StatisticsModel.findById("dzajcostats");
+	const statistics = await getPageStats();
 	await statistics?.incrementLinks();
 };
 
 export const incrementVisits = async (location: Location) => {
-	const statistics = await StatisticsModel.findById("dzajcostats");
+	const statistics = await getPageStats();
 	await statistics?.incrementVisits(location);
 };
