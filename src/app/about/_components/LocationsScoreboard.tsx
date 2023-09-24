@@ -1,4 +1,5 @@
 import StatisticModel, { IVisitsLocation } from "@/models/statisticsModel";
+import LocationItem from "./LocationItem";
 
 type Props = {
 	locations: IVisitsLocation[];
@@ -36,12 +37,13 @@ const LocationsScoreboard = async () => {
 		};
 	});
 	return (
-		<div className="my-10 mt-14 grid  grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 px-10 ">
+		<div className="my-10 mt-14 grid gap-y-7 grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 px-10 ">
 			{topVisitors.map((location) => (
-				<div key={location.location} className="flex flex-col items-center">
-					<div>{location.location}</div>
-					<div>{location.visits}</div>
-				</div>
+				<LocationItem
+					key={location.location}
+					location={location.location}
+					visits={location.visits}
+				/>
 			))}
 		</div>
 	);

@@ -2,6 +2,7 @@ import Counter from "../[id]/info/_components/Counter";
 import dbConnect, { getLinksAmount, getPageStats } from "@/utils/db";
 import Map from "./_components/Map";
 import LocationsScoreboard from "./_components/LocationsScoreboard";
+import HomeButton from "@/components/shared/HomeButton";
 
 const AboutPage = async () => {
 	await dbConnect();
@@ -13,8 +14,8 @@ const AboutPage = async () => {
 	const activeLinksAmount = await getLinksAmount();
 
 	return (
-		<div className="col-[center-start/center-end] ">
-			{/* <HomeButton /> */}
+		<div className="col-[center-start/center-end] mt-4">
+			<HomeButton />
 			<section className="grid gap-2 sm:grid-cols-2 grid-rows-2 mt-12">
 				<div className="info-panel py-4">
 					<h3 className="font-bold text-3xl text-center mt-12">Shorten Links</h3>
