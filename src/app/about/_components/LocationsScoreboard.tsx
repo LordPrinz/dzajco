@@ -37,7 +37,7 @@ const LocationsScoreboard = async () => {
 		};
 	});
 	return (
-		<div className="my-10 mt-14 grid gap-y-7 grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 px-10 ">
+		<div className="my-10 mt-14 grid gap-y-2 grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-1 px-10 ">
 			{topVisitors.map((location) => (
 				<LocationItem
 					key={location.location}
