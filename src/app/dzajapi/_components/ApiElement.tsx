@@ -10,12 +10,12 @@ type Props = {
 
 const ApiElement = ({ name, endpoint, method, children }: Props) => {
 	return (
-		<div className="w-full">
-			<p>{name}</p>
-			<div>
-				<div>
+		<div className="w-full flex flex-col text-xl">
+			<p className="text-xl text-gray-800 text-left">{name}</p>
+			<div className="mt-1.5">
+				<div className="rounded-md flex items-center gap-4 bg-gray-100">
 					<ApiMethod method={method} />
-					<div>{endpoint}</div>
+					<div className="text-gray-500">{endpoint}</div>
 				</div>
 				<div>{children}</div>
 			</div>

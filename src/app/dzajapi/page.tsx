@@ -5,7 +5,8 @@ const Page = () => {
 	return (
 		<main className="col-[center-start/center-end] text-jajco-500 text-4xl text-center mt-16">
 			<HomeButton />
-			<section>
+			<h1>Dzajco API v2.0.0</h1>
+			<section className="mt-20">
 				<ApiElement
 					endpoint="/api/urls/{shortUrl}"
 					method="GET"
