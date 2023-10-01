@@ -18,9 +18,9 @@ const ApiResponseSuccess = ({ status = 200, data }: Props) => {
 			<pre className="text-gray-600 text-left p-4">
 				{"{\n"}
 				{data.map((d) => {
-					return `  "${d.filed}": ${d.type}`;
+					return `  "${d.filed}": ${d.type}\n`;
 				})}
-				{"\n}"}
+				{"}"}
 			</pre>
 		</div>
 	);
