@@ -16,7 +16,7 @@ const AboutPage = async () => {
 	const activeLinksAmount = await getLinksAmount();
 
 	return (
-		<div className="col-[center-start/center-end] mt-4">
+		<main className="col-[center-start/center-end] mt-4">
 			<HomeButton />
 			<section className="grid gap-2 sm:grid-cols-2 grid-rows-2 mt-12">
 				<div className="info-panel py-4">
@@ -55,7 +55,7 @@ const AboutPage = async () => {
 					<Map />
 				</div>
 			</section>
-		</div>
+		</main>
 	);
 };
 

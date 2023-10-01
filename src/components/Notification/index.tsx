@@ -16,7 +16,7 @@ export type Promise = {
 
 const popupClickHandler = (shortUrl: string) => {
 	const link = `https://www.dzaj.de/${decodeURIComponent(shortUrl)}`;
-	copy(link);
+	copy(link.replaceAll(" ", "%20"));
 };
 
 export default class Notification {

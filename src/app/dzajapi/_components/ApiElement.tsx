@@ -1,7 +1,7 @@
 import React from "react";
 
-const apiElement = () => {
-	return <div>apiElement</div>;
+const ApiElement = () => {
+	return <div>ApiElement</div>;
 };
 
-export default apiElement;
+export default ApiElement;

@@ -3,7 +3,7 @@ import React from "react";
 
 const PrivacyPolicy = () => {
 	return (
-		<div className="mt-8 p-8 col-[center-start/center-end]">
+		<main className="mt-8 p-8 col-[center-start/center-end]">
 			<HomeButton />
 			<div className="max-w-2xl mx-auto">
 				<h1 className="text-4xl font-semibold mb-4 text-jajco-500">
@@ -64,7 +64,7 @@ const PrivacyPolicy = () => {
 
 				<p className="mt-2">Last Updated: 07.09.2023</p>
 			</div>
-		</div>
+		</main>
 	);
 };
 
