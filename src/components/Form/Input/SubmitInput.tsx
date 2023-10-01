@@ -25,7 +25,7 @@ const SubmitInput = ({
 			/>
 			<input
 				type="submit"
-				className="bg-jajco-500 text-jajco-50 pl-10 pr-6 rounded-r-full -translate-x-6 cursor-pointer shadow"
+				className="bg-jajco-500 text-jajco-50 pl-10 pr-6 rounded-r-full -translate-x-6 cursor-pointer shadow [text-shadow:_1px_1px_1px_rgb(0_0_0_/_14%)]"
 				value={title}
 			/>
 		</div>
