@@ -1,5 +1,6 @@
 import HomeButton from "@/components/shared/HomeButton";
 import ApiElement from "./_components/ApiElement";
+import ApiResponseSuccess from "./_components/ApiResponseSuccess";
 
 const Page = () => {
 	return (
@@ -11,7 +12,15 @@ const Page = () => {
 					endpoint="/api/urls/{shortUrl}"
 					method="GET"
 					name="Get Redirect URL">
-					XD
+					<ApiResponseSuccess
+						status={200}
+						data={[
+							{
+								filed: "fullLink",
+								type: "string",
+							},
+						]}
+					/>
 				</ApiElement>
 			</section>
 		</main>

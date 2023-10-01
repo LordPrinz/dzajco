@@ -17,7 +17,7 @@ const ApiElement = ({ name, endpoint, method, children }: Props) => {
 					<ApiMethod method={method} />
 					<div className="text-gray-500">{endpoint}</div>
 				</div>
-				<div className="p-2 text-lg">
+				<div className="p-2 text-lg space-y-3">
 					<p className="text-gray-600 mt-2 text-left">Response</p>
 					{children}
 				</div>
