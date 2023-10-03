@@ -14,7 +14,10 @@ export async function generateMetadata({ params }: Props) {
 		title: "Link info",
 		description: "Number of visits on the link",
 		alternates: {
-			canonical: `https://www.dzaj.de/${params.id}/info`,
+			canonical: `/${params.id}/info`,
+			languages: {
+				"en-US": `/${params.id}/info`,
+			},
 		},
 	};
 }

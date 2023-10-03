@@ -16,6 +16,12 @@ export async function generateMetadata({ params }: Props) {
 		return {
 			title: "Not Found",
 			description: "The link you were looking for doesn't exist.",
+			alternates: {
+				canonical: `/${params.id}`,
+				languages: {
+					"en-US": `/${params.id}`,
+				},
+			},
 		};
 	}
 }
