@@ -2,6 +2,18 @@ import React from "react";
 import History from "./_components/History";
 import { removeItem } from "./_actions/removeItem";
 import HomeButton from "@/components/shared/HomeButton";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "History",
+	description: "A links history page",
+	alternates: {
+		canonical: `/history`,
+		languages: {
+			"en-US": `/history`,
+		},
+	},
+};
 
 const HistoryPage = () => {
 	return (

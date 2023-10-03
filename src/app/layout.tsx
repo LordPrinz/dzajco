@@ -10,7 +10,44 @@ export const metadata: Metadata = {
 		default: "Dzajco",
 		template: `%s | Dzajco`,
 	},
+	authors: [
+		{
+			name: "Oskar Płaziński",
+			url: "https://github.com/LordPrinz",
+		},
+		{
+			name: "Dzajlopment",
+			url: "https://github.com/Lord-Prinz-Team",
+		},
+	],
+	keywords: [
+		"Dzajco",
+		"Jajco",
+		"dzaj.co",
+		"dzaj.de",
+		"dzaj de",
+		"dzaj co",
+		"dzajlopment",
+		"Dzajlopment",
+		"Oskar Płaziński",
+		"oskar płaziński",
+		"link shortener",
+		"link",
+		"shortener",
+	],
+	openGraph: {
+		siteName: "Dzajde",
+		url: "https://dzaj.de",
+		description:
+			"Free link shortener created by Dzajlopment. It allows to set custom names on links, counts how many times someone entered your short link.",
 
+		type: "website",
+		images: "/opengraph-image.jpg",
+	},
+	applicationName: "Dzajde",
+	publisher: "Oskar Płaziński",
+
+	creator: "Oskar Płaziński",
 	description:
 		"Free link shortener created by Dzajlopment. It allows to set custom names on links, counts how many times someone entered your short link.",
 };

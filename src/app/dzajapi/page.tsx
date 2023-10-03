@@ -3,6 +3,18 @@ import ApiElement from "./_components/ApiElement";
 import ApiResponseSuccess from "./_components/ApiResponseSuccess";
 import ApiResponseError from "./_components/ApiResponseError";
 import ApiQuery from "./_components/ApiQuery";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Dzaj API",
+	description: "An API documentation",
+	alternates: {
+		canonical: `/dzajapi`,
+		languages: {
+			"en-US": `/dzajapi`,
+		},
+	},
+};
 
 const Page = () => {
 	return (

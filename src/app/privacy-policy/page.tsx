@@ -1,5 +1,17 @@
 import HomeButton from "@/components/shared/HomeButton";
+import { Metadata } from "next";
 import React from "react";
+
+export const metadata: Metadata = {
+	title: "Privacy Policy",
+	description: "A Privacy Policy",
+	alternates: {
+		canonical: `/privacy-policy`,
+		languages: {
+			"en-US": `/privacy-policy`,
+		},
+	},
+};
 
 const PrivacyPolicy = () => {
 	return (

@@ -2,7 +2,6 @@ import HomeButton from "@/components/shared/HomeButton";
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { GoHomeFill } from "react-icons/go";
 
 export const metadata: Metadata = {
 	title: "Not Found",

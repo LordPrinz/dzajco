@@ -3,8 +3,20 @@ import dbConnect, { getLinksAmount, getPageStats } from "@/utils/db";
 import Map from "./_components/Map";
 import LocationsScoreboard from "./_components/LocationsScoreboard";
 import HomeButton from "@/components/shared/HomeButton";
+import { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+	title: "About",
+	description: "An About Page with statistics",
+	alternates: {
+		canonical: `/about`,
+		languages: {
+			"en-US": `/about`,
+		},
+	},
+};
 
 const AboutPage = async () => {
 	await dbConnect();
