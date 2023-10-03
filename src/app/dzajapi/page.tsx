@@ -2,6 +2,7 @@ import HomeButton from "@/components/shared/HomeButton";
 import ApiElement from "./_components/ApiElement";
 import ApiResponseSuccess from "./_components/ApiResponseSuccess";
 import ApiResponseError from "./_components/ApiResponseError";
+import ApiQuery from "./_components/ApiQuery";
 
 const Page = () => {
 	return (
@@ -13,6 +14,7 @@ const Page = () => {
 					endpoint="/api/urls/{shortUrl}"
 					method="GET"
 					name="Get Redirect URL">
+					<p className="text-gray-600 mt-2 text-left">Response</p>
 					<ApiResponseSuccess
 						status={200}
 						data={[
@@ -35,6 +37,7 @@ const Page = () => {
 					endpoint="/api/urls/{shortUrl}/info"
 					method="GET"
 					name="Get URL info">
+					<p className="text-gray-600 mt-2 text-left">Response</p>
 					<ApiResponseSuccess
 						status={200}
 						data={[
@@ -58,6 +61,43 @@ const Page = () => {
 								filed: "visitsLocation",
 								type:
 									'{\n    "visits": number\n    "location": string\n    "lat": number\n    "lon": number\n  }',
+							},
+						]}
+					/>
+					<ApiResponseError
+						status={404}
+						data={[{ filed: "error", type: "string" }]}
+					/>
+					<ApiResponseError
+						status={429}
+						data={[{ filed: "error", type: "string" }]}
+					/>
+				</ApiElement>
+				<ApiElement endpoint="/api/urls" method="POST" name="Create Shorten URL">
+					<p className="text-gray-600 mt-2 text-left">Body</p>
+					<ApiQuery
+						data={[
+							{
+								filed: "url",
+								type: "string",
+							},
+							{
+								filed: "customName",
+								type: "string",
+							},
+							{
+								filed: "expire",
+								type: "Date | null",
+							},
+						]}
+					/>
+					<p className="text-gray-600 mt-2 text-left">Response</p>
+					<ApiResponseSuccess
+						status={201}
+						data={[
+							{
+								filed: "fullLink",
+								type: "string",
 							},
 						]}
 					/>
