@@ -96,13 +96,21 @@ const Page = () => {
 						status={201}
 						data={[
 							{
-								filed: "fullLink",
+								filed: "message",
 								type: "string",
+							},
+							{
+								filed: "shortUrl",
+								type: "string",
+							},
+							{
+								filed: "secretKey",
+								type: "string | null",
 							},
 						]}
 					/>
 					<ApiResponseError
-						status={404}
+						status={422}
 						data={[{ filed: "error", type: "string" }]}
 					/>
 					<ApiResponseError
