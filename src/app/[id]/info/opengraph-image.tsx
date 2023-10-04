@@ -34,11 +34,9 @@ export default async function og({ params }: Props) {
 		);
 	}
 
-	const isCustom = !(!link.secretKey && !link.expire);
+	const isCustom = !!link.secretKey;
 
-	console.log(isCustom);
-
-	const text = isCustom ? "Custom generated name" : "Auto generated name";
+	const text = isCustom ? "Custom generated" : "Auto generated";
 
 	return new ImageResponse(
 		(
