@@ -50,14 +50,14 @@ export default async function og({ params }: Props) {
 								<strong tw="font-bold">{id}</strong>
 							</div>
 							<div
-								tw="text-gray-600  text-lg "
+								tw="text-gray-600  text-lg mt-2 "
 								style={{
 									fontWeight: "bold",
 								}}>
 								{text}
 							</div>
 							<div
-								tw="flex text-xs absolute top-full text-gray-500"
+								tw="flex text-xs absolute top-full text-gray-500 mt-2"
 								style={{
 									maxWidth: "400px",
 								}}>
@@ -65,10 +65,10 @@ export default async function og({ params }: Props) {
 							</div>
 						</div>
 						<div tw="flex right-0 ">
-							<img src="https://dzaj.de/logo.png" width={80} height={80} alt="logo" />
+							<img src="https://dzaj.de/logo.png" width={90} height={90} alt="logo" />
 						</div>
 					</div>
-					<div tw="flex items-center h-full text-gray-600 mt-3">
+					<div tw="flex items-center h-full text-gray-600 top-10">
 						<div tw="flex ">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -98,8 +98,8 @@ export default async function og({ params }: Props) {
 			</div>
 		),
 		{
-			height: 315,
-			width: 631,
+			height: 375,
+			width: 625,
 		}
 	);
 }
