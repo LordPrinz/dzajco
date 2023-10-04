@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://dzaj.de"),
+	
 	title: {
 		default: "Dzajde",
 		template: `%s | Dzajde`,
