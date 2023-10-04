@@ -21,7 +21,18 @@ export default async function og({ params }: Props) {
 
 	if (!link) {
 		return new ImageResponse(
-			<div tw="relative flex w-full h-full">Not found!</div>
+			(
+				<div tw="relative flex w-full flex-col h-full items-center justify-center">
+					<div tw="flex w-3/8">
+						<img src="https://www.dzaj.de/404.svg" alt="404 image" />
+					</div>
+					<div tw="flex mt-8">
+						<h1 tw="flex text-5xl">
+							No i co? <div tw="text-[#ffcc00] ml-5">Dżajco</div>
+						</h1>
+					</div>
+				</div>
+			)
 		);
 	}
 
