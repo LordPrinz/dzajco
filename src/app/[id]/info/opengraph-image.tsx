@@ -1,7 +1,7 @@
 import React from "react";
 import { Props } from "./page";
 import { ImageResponse } from "next/server";
-import dbConnect, { findLink, findNotDetailedLink } from "@/utils/db";
+import dbConnect, { findNotDetailedLink } from "@/utils/db";
 
 export const size = {
 	width: 900,
