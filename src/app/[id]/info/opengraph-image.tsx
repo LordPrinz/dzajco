@@ -45,7 +45,7 @@ export default async function og({ params }: Props) {
 				<div tw="flex p-10 flex-col w-full">
 					<div tw="flex w-full ">
 						<div tw="flex flex-col flex-1">
-							<div tw="flex text-6xl mt-9 text-gray-800">
+							<div tw="flex text-6xl text-gray-800">
 								Dzajco/
 								<strong tw="font-bold">{id}</strong>
 							</div>
@@ -67,8 +67,8 @@ export default async function og({ params }: Props) {
 						<div tw="flex right-0 ">
 							<img
 								src="https://dzaj.de/logo.png"
-								width={200}
-								height={200}
+								width={150}
+								height={150}
 								alt="logo"
 							/>
 						</div>
@@ -103,8 +103,8 @@ export default async function og({ params }: Props) {
 			</div>
 		),
 		{
-			height: 460,
-			width: 900,
+			height: 500,
+			width: 1140,
 		}
 	);
 }
