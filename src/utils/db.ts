@@ -45,6 +45,11 @@ export type LinkType = {
 	secretKey?: string;
 };
 
+export const findNotDetailedLink = async (id: string) => {
+	console.log("BRRRRRRRRRRRRUH");
+	return await linkModel.findById(id).select("-visitsLocation");
+};
+
 export const findLink = async ({ id, fullLink, expire }: FindLinkType) => {
 	if (id) {
 		return await linkModel.findById(id);

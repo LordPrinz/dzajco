@@ -14,6 +14,7 @@ interface ILink extends Document {
 	full: string;
 	visits: number;
 	expire: Date | null;
+	secretKey: string | null;
 	incrementVisits: (location: Location) => Promise<void>;
 	visitsLocation: IVisitsLocation[];
 }
@@ -71,6 +72,13 @@ LinkSchema.set("toObject", {
 	virtuals: true,
 	transform: function (doc, ret) {
 		ret.id = ret._id;
+
+		delete ret._id;
+		delete ret.__v;
+
+		if (!ret.visitsLocation) {
+			return;
+		}
 		ret.visitsLocation = ret.visitsLocation.map(
 			(locationObj: { visits: number; location: IVisitsLocationRaw }) => ({
 				visits: locationObj.visits,
@@ -79,8 +87,6 @@ LinkSchema.set("toObject", {
 				lon: locationObj.location.lon,
 			})
 		);
-		delete ret._id;
-		delete ret.__v;
 	},
 });
 
