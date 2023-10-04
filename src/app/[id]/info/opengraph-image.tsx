@@ -59,7 +59,7 @@ export default async function og({ params }: Props) {
 							<div
 								tw="flex text-xs absolute top-[88%] text-gray-500"
 								style={{
-									maxWidth: "600px",
+									maxWidth: "500px",
 								}}>
 								{link.full}
 							</div>
