@@ -68,7 +68,7 @@ export default async function og({ params }: Props) {
 							<img src="https://dzaj.de/logo.png" width={80} height={80} alt="logo" />
 						</div>
 					</div>
-					<div tw="flex items-center h-full text-gray-600">
+					<div tw="flex items-center h-full text-gray-600 mt-3">
 						<div tw="flex ">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
