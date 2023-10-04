@@ -10,7 +10,7 @@ const ChartItem = ({ location, visits }: Props) => {
 
 	return (
 		<div>
-			<div className=" font-bold">{location}</div>
+			<div className="font-bold">{location}</div>
 			<div className="text-sm  text-jajco-500">
 				{visits} {correctForm}
 			</div>
