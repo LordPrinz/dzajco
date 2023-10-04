@@ -74,7 +74,7 @@ export default async function og({ params }: Props) {
 						</div>
 					</div>
 					<div tw="flex items-center h-full text-gray-600">
-						<div tw="flex -mt-5">
+						<div tw="flex -mt-24">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
@@ -103,7 +103,7 @@ export default async function og({ params }: Props) {
 			</div>
 		),
 		{
-			height: 530,
+			height: 460,
 			width: 900,
 		}
 	);
