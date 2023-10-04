@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props) {
 			},
 		};
 	}
+	redirect(link.full.replaceAll("​", ""));
 }
 
 const Page: NextPage<Props> = async ({ params }) => {
