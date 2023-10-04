@@ -60,6 +60,7 @@ export default async function og({ params }: Props) {
 								tw="flex text-xs absolute top-full text-gray-500 mt-2"
 								style={{
 									maxWidth: "400px",
+									overflow: "hidden",
 								}}>
 								{link.full}
 							</div>
