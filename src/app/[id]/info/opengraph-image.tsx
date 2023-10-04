@@ -41,40 +41,35 @@ export default async function og({ params }: Props) {
 	return new ImageResponse(
 		(
 			<div tw="relative w-full h-full flex bg-[#f2f2f2]">
-				<div tw="absolute w-full h-6 flex bg-[#f79a2c] bottom-0"></div>
+				<div tw="absolute w-full h-3.5 flex bg-[#f79a2c] bottom-0"></div>
 				<div tw="flex p-10 flex-col w-full">
 					<div tw="flex w-full ">
 						<div tw="flex flex-col flex-1">
-							<div tw="flex text-6xl text-gray-800">
+							<div tw="flex text-4xl text-gray-800">
 								Dzajco/
 								<strong tw="font-bold">{id}</strong>
 							</div>
 							<div
-								tw="text-gray-600 mt-3 text-2xl "
+								tw="text-gray-600  text-lg "
 								style={{
 									fontWeight: "bold",
 								}}>
 								{text}
 							</div>
 							<div
-								tw="flex text-xs absolute top-[88%] text-gray-500"
+								tw="flex text-xs absolute top-full text-gray-500"
 								style={{
-									maxWidth: "500px",
+									maxWidth: "400px",
 								}}>
 								{link.full}
 							</div>
 						</div>
 						<div tw="flex right-0 ">
-							<img
-								src="https://dzaj.de/logo.png"
-								width={150}
-								height={150}
-								alt="logo"
-							/>
+							<img src="https://dzaj.de/logo.png" width={80} height={80} alt="logo" />
 						</div>
 					</div>
 					<div tw="flex items-center h-full text-gray-600">
-						<div tw="flex -mt-24">
+						<div tw="flex ">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
@@ -82,8 +77,8 @@ export default async function og({ params }: Props) {
 								stroke-width="1.5"
 								stroke="currentColor"
 								style={{
-									width: "32px",
-									height: "30px",
+									width: "26px",
+									height: "22px",
 								}}>
 								<path
 									stroke-linecap="round"
@@ -91,9 +86,9 @@ export default async function og({ params }: Props) {
 									d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"
 								/>
 							</svg>
-							<div tw="flex flex-col justify-center ml-3">
-								<div tw="gray-800 flex text-lg">{link.visits}</div>
-								<span tw="text-base -mt-1.5">
+							<div tw="flex flex-col justify-center ml-2">
+								<div tw="gray-800 flex text-sm">{link.visits}</div>
+								<span tw="text-sm -mt-1.5">
 									{link.visits === 1 ? "visit" : "visits"}
 								</span>
 							</div>
@@ -103,8 +98,8 @@ export default async function og({ params }: Props) {
 			</div>
 		),
 		{
-			height: 500,
-			width: 1140,
+			height: 315,
+			width: 631,
 		}
 	);
 }
