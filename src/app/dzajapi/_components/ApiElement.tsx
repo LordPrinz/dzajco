@@ -6,7 +6,7 @@ import ApiMethod from "./ApiMethod";
 type Props = {
 	name: string;
 	endpoint: string;
-	method: "GET" | "POST";
+	method: "GET" | "POST" | "DELETE";
 	children: React.ReactNode;
 };
 

@@ -1,7 +1,7 @@
 import React from "react";
 
 type Props = {
-	method: "GET" | "POST";
+	method: "GET" | "POST" | "DELETE";
 };
 
 const ApiMethod = ({ method }: Props) => {

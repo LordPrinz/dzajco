@@ -130,6 +130,34 @@ const Page = () => {
 						data={[{ filed: "error", type: "string" }]}
 					/>
 				</ApiElement>
+				<ApiElement
+					endpoint="/api/urls/{shortUrl}"
+					method="DELETE"
+					name="Delete Shorten URL">
+					<p className="text-gray-600 mt-2 text-left">Body</p>
+					<ApiQuery
+						data={[
+							{
+								filed: "secretKey",
+								type: "string",
+							},
+						]}
+					/>
+					<p className="text-gray-600 mt-2 text-left">Response</p>
+					<ApiResponseSuccess
+						status={200}
+						data={[
+							{
+								filed: "message",
+								type: "string",
+							},
+						]}
+					/>
+					<ApiResponseError
+						status={422}
+						data={[{ filed: "error", type: "string" }]}
+					/>
+				</ApiElement>
 			</section>
 		</main>
 	);
