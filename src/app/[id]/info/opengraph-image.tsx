@@ -8,7 +8,7 @@ export const size = {
 	height: 530,
 };
 
-export const contentType = "image/png";
+export const contentType = "image/jpg";
 
 export default async function og({ params }: Props) {
 	const { id } = params;
@@ -17,12 +17,10 @@ export default async function og({ params }: Props) {
 
 	const link = await findNotDetailedLink(params.id);
 
-	console.log(link);
-
 	if (!link) {
 		return new ImageResponse(
 			(
-				<div tw="relative flex w-full flex-col h-full items-center justify-center">
+				<div tw="relative flex w-full flex-col h-full items-center justify-center bg-[#f2f2f2]">
 					<div tw="flex w-3/8">
 						<img src="https://www.dzaj.de/404.svg" alt="404 image" />
 					</div>
@@ -44,7 +42,7 @@ export default async function og({ params }: Props) {
 
 	return new ImageResponse(
 		(
-			<div tw="relative w-full h-full flex ">
+			<div tw="relative w-full h-full flex bg-[#f2f2f2]">
 				<div tw="absolute w-full h-6 flex bg-[#f79a2c] bottom-0"></div>
 				<div tw="flex p-16 flex-col w-full">
 					<div tw="flex w-full ">
@@ -53,8 +51,14 @@ export default async function og({ params }: Props) {
 								Dzajco/
 								<strong tw="font-bold">{id}</strong>
 							</div>
-							<div tw="text-gray-600 mt-4 text-2xl">{text}</div>
-							<div tw="flex text-xs absolute top-[90%] text-gray-500">{link.full}</div>
+							<div
+								tw="text-gray-600 mt-3 text-2xl "
+								style={{
+									fontWeight: "bold",
+								}}>
+								{text}
+							</div>
+							<div tw="flex text-xs absolute top-[88%] text-gray-500">{link.full}</div>
 						</div>
 						<div tw="flex right-10 ">
 							<img
