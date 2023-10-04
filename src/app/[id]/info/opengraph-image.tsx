@@ -42,7 +42,7 @@ export default async function og({ params }: Props) {
 		(
 			<div tw="relative w-full h-full flex bg-[#f2f2f2]">
 				<div tw="absolute w-full h-6 flex bg-[#f79a2c] bottom-0"></div>
-				<div tw="flex p-16 flex-col w-full">
+				<div tw="flex p-10 flex-col w-full">
 					<div tw="flex w-full ">
 						<div tw="flex flex-col flex-1">
 							<div tw="flex text-6xl mt-9 text-gray-800">
@@ -56,9 +56,15 @@ export default async function og({ params }: Props) {
 								}}>
 								{text}
 							</div>
-							<div tw="flex text-xs absolute top-[88%] text-gray-500">{link.full}</div>
+							<div
+								tw="flex text-xs absolute top-[88%] text-gray-500"
+								style={{
+									maxWidth: "600px",
+								}}>
+								{link.full}
+							</div>
 						</div>
-						<div tw="flex right-10 ">
+						<div tw="flex right-0 ">
 							<img
 								src="https://dzaj.de/logo.png"
 								width={200}
@@ -68,7 +74,7 @@ export default async function og({ params }: Props) {
 						</div>
 					</div>
 					<div tw="flex items-center h-full text-gray-600">
-						<div tw="flex mt-10">
+						<div tw="flex -mt-5">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
@@ -76,8 +82,8 @@ export default async function og({ params }: Props) {
 								stroke-width="1.5"
 								stroke="currentColor"
 								style={{
-									width: "40px",
-									height: "40px",
+									width: "32px",
+									height: "30px",
 								}}>
 								<path
 									stroke-linecap="round"
@@ -85,14 +91,20 @@ export default async function og({ params }: Props) {
 									d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"
 								/>
 							</svg>
-							<div tw="flex flex-col justify-center ml-3 mt-1.5">
+							<div tw="flex flex-col justify-center ml-3">
 								<div tw="gray-800 flex text-lg">{link.visits}</div>
-								<span>{link.visits === 1 ? "Visit" : "Visits"}</span>
+								<span tw="text-base -mt-1.5">
+									{link.visits === 1 ? "visit" : "visits"}
+								</span>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		)
+		),
+		{
+			height: 530,
+			width: 900,
+		}
 	);
 }
