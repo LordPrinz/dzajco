@@ -46,7 +46,6 @@ export type LinkType = {
 };
 
 export const findNotDetailedLink = async (id: string) => {
-	console.log("BRRRRRRRRRRRRUH");
 	return await linkModel.findById(id).select("-visitsLocation");
 };
 

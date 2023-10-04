@@ -5,7 +5,11 @@ import {
 	sendRateLimitExceededError,
 	sendWrongInputResponse,
 } from "@/utils/api";
-import dbConnect, { findLink, incrementVisits } from "@/utils/db";
+import dbConnect, {
+	findLink,
+	findNotDetailedLink,
+	incrementVisits,
+} from "@/utils/db";
 import { getUserLocation } from "@/utils/utils";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -26,7 +30,7 @@ export async function GET(
 
 	const shortLink = encodeCustomName(id);
 
-	const link = await findLink({ id: shortLink });
+	const link = await findNotDetailedLink(shortLink);
 
 	if (!link) {
 		return NextResponse.json(
