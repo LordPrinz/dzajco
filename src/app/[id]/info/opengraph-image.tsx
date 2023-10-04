@@ -42,7 +42,7 @@ export default async function og({ params }: Props) {
 		(
 			<div tw="relative w-full h-full flex bg-[#f2f2f2]">
 				<div tw="absolute w-full h-3.5 flex bg-[#f79a2c] bottom-0"></div>
-				<div tw="flex p-10 flex-col w-full">
+				<div tw="flex p-10 px-7 flex-col w-full">
 					<div tw="flex w-full ">
 						<div tw="flex flex-col flex-1">
 							<div tw="flex text-4xl text-gray-800">
