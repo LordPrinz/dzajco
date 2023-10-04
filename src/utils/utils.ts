@@ -23,8 +23,9 @@ export type Location = {
 
 export const getUserLocation = async (ip: string) => {
 	const data = await axios.get(
-		`https://api.geoapify.com/v1/ipinfo?&apiKey=${process.env
-			.GEOAPIFY_KEY!}&ip=${ip}`
+		`https://api.geoapify.com/v1/ipinfo?&apiKey=${process.env.GEOAPIFY_KEY!}&ip=${
+			process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip // If mode is set to development, use hardcoded IP
+		}`
 	);
 
 	const { city, country, location, state } = data.data;

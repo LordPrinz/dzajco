@@ -38,9 +38,7 @@ export async function POST(requst: NextRequest) {
 	try {
 		const ip = headers().get("x-forwarded-for")!;
 
-		const userLocation = await getUserLocation(
-			process.env.NODE_ENV === "development" ? process.env.TEST_IP! : ip
-		);
+		const userLocation = await getUserLocation(ip);
 
 		await incrementVisits(userLocation);
 	} catch (err) {}
