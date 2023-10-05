@@ -48,7 +48,7 @@ export const metadata: Metadata = {
 	applicationName: "Dzajde",
 	publisher: "Oskar Płaziński",
 	verification: {
-		google: "google3e9900e5e049e579",
+		google: "gisuHn0S23HuiluoHkLO5S3g5JmDAZn4BamBY41gOr0",
 	},
 	creator: "Oskar Płaziński",
 	description:
