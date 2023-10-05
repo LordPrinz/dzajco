@@ -1,38 +1,27 @@
-import LinkModel from "@/models/linkModel";
+import LinkModel, { IVisitsLocation } from "@/models/linkModel";
 import ChartItem from "./ChartItem";
 
 type Props = {
-	linkId: string;
+	locations: IVisitsLocation[];
 };
 
-const Chart = async ({ linkId }: Props) => {
-	const res = await LinkModel.aggregate([
-		{ $match: { _id: linkId } }, // Match the document by _id
-		{
-			$project: {
-				visitsLocation: 1, // Include the visitsLocation array
-			},
-		},
-		{
-			$unwind: "$visitsLocation", // Unwind the visitsLocation array
-		},
-		{
-			$sort: {
-				"visitsLocation.visits": -1, // Sort in descending order by visits
-			},
-		},
-		{
-			$limit: 5, // Limit the results to the top 5
-		},
-	]).exec();
+type TransformedLocation = IVisitsLocation & {
+	location: {
+		_id: string;
+	};
+};
 
-	const topVisitors = res.map((visitor) => {
-		const visitsLocation = visitor.visitsLocation;
+const Chart = async ({ locations }: Props) => {
+	const topLocations = locations
+		.slice()
+		.sort((a, b) => b.visits - a.visits)
+		.slice(0, 5);
 
-		const location = visitsLocation.location.split("_");
+	const topVisitors = topLocations.map((visitor: any) => {
+		const location = (visitor as TransformedLocation).location._id.split("_");
 
 		return {
-			visits: visitsLocation.visits,
+			visits: visitor.visits,
 			location: `${location[0]}, ${location[2]}`,
 		};
 	});

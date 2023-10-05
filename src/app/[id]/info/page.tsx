@@ -37,8 +37,6 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 	const link = await findLink({ id: params.id });
 
-	console.log(link);
-
 	if (!link) {
 		notFound();
 	}
@@ -54,7 +52,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 			</div>
 			<div className="info-panel sm:col-start-1 sm:col-end-3 sm:row-start-3 sm:row-end-6 px-10 flex flex-col items-center  col-[1/-1] row-[3/5] py-8">
 				<h3 className="font-bold text-3xl text-center mt-5">Top Visitors</h3>
-				<Chart linkId={link.id} />
+				<Chart locations={link.visitsLocation} />
 			</div>
 			<div className="info-panel sm:col-start-3 sm:col-end-6 sm:row-start-1 sm:row-end-6  col-[1/-1] row-[5/7] py-6 sm:py-0">
 				<Map

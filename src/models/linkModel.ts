@@ -4,9 +4,11 @@ import LocationsModel, { IVisitsLocationRaw } from "./locationModel";
 
 export type IVisitsLocation = {
 	visits: number;
-	lat: number;
-	lon: number;
-	location: string;
+	location: {
+		lat: number;
+		lon: number;
+		location: string;
+	};
 };
 
 interface ILink extends Document {
@@ -93,7 +95,6 @@ LinkSchema.set("toObject", {
 LinkSchema.methods.incrementVisits = async function (
 	location: Location
 ): Promise<void> {
-
 	const locationPattern = `${location.city}_${location.state}_${location.country}`;
 
 	const index = this.visitsLocation.findIndex(
