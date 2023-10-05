@@ -17,6 +17,7 @@
 		"eslint": "8.44.0",
 		"eslint-config-next": "13.4.8",
 		"ipdata": "^2.2.4",
+		"leaflet": "^1.9.4",
 		"limiter": "^2.1.0",
 		"mongoose": "^7.3.1",
 		"nanoid": "^4.0.2",

@@ -1,29 +1,26 @@
 "use client";
 
+import { MapContainer, TileLayer } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import { IVisitsLocation } from "@/models/linkModel";
-import { useEffect } from "react";
+import { cn } from "@/utils/tailwind";
 
 type Props = {
-	pageId: string;
+	locations: IVisitsLocation[];
+	className?: string;
 };
 
-const getVisitsData = async (pageId: string) => {
-	return await fetch(`/api/urls/${pageId}/info`).then((res) => res.json());
-};
-
-const Map = ({ pageId }: Props) => {
-	useEffect(() => {
-		getVisitsData(pageId).then((data) => {
-			const visitsLocation = data.visitsLocation as IVisitsLocation[];
-			visitsLocation.forEach(async (visit) => {
-				const { lat, lon } = visit;
-			});
-		});
-	}, []);
+const Map = ({ locations, className }: Props) => {
+	console.log(locations);
 
 	return (
-		<div className="h-full flex items-center justify-center text-4xl ">
-			Coming soon...
+		<div className={cn("overflow-hidden", className)}>
+			<MapContainer
+				className="h-full w-full"
+				center={[40.3808, 18.3435264]}
+				zoom={16}>
+				<TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
+			</MapContainer>
 		</div>
 	);
 };
