@@ -1,9 +1,5 @@
-import StatisticModel, { IVisitsLocation } from "@/models/statisticsModel";
+import StatisticModel from "@/models/statisticsModel";
 import LocationItem from "./LocationItem";
-
-type Props = {
-	locations: IVisitsLocation[];
-};
 
 const LocationsScoreboard = async () => {
 	const res = await StatisticModel.aggregate([
