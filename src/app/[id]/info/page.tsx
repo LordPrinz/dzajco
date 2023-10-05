@@ -2,7 +2,7 @@ import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound } from "next/navigation";
 import Counter from "./_components/Counter";
-import Map from "./_components/Map";
+import Map from "../../../components/shared/Map/Map";
 import Chart from "./_components/Chart";
 
 export type Props = {
