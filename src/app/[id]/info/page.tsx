@@ -37,6 +37,8 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 	const link = await findLink({ id: params.id });
 
+	console.log(link);
+
 	if (!link) {
 		notFound();
 	}
@@ -55,8 +57,10 @@ const Page: NextPage<Props> = async ({ params }) => {
 				<Chart linkId={link.id} />
 			</div>
 			<div className="info-panel sm:col-start-3 sm:col-end-6 sm:row-start-1 sm:row-end-6  col-[1/-1] row-[5/7] py-6 sm:py-0">
-				{/* <Map locations={link.visitsLocation} className="h-full rounded-xl " /> */}
-				<Map className="h-full rounded-xl " />
+				<Map
+					locations={JSON.stringify(link.visitsLocation)}
+					className="h-full rounded-xl "
+				/>
 			</div>
 		</main>
 	);

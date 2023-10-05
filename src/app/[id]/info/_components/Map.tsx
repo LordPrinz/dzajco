@@ -6,12 +6,12 @@ import { IVisitsLocation } from "@/models/linkModel";
 import { cn } from "@/utils/tailwind";
 
 type Props = {
-	locations: IVisitsLocation[];
+	locations: string;
 	className?: string;
 };
 
 const Map = ({ locations, className }: Props) => {
-	console.log(locations);
+	const parsedLocations = JSON.parse(locations) as IVisitsLocation[];
 
 	return (
 		<div className={cn("overflow-hidden", className)}>
