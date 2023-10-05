@@ -93,6 +93,7 @@ LinkSchema.set("toObject", {
 LinkSchema.methods.incrementVisits = async function (
 	location: Location
 ): Promise<void> {
+
 	const locationPattern = `${location.city}_${location.state}_${location.country}`;
 
 	const index = this.visitsLocation.findIndex(

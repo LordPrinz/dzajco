@@ -7,7 +7,6 @@ import {
 } from "@/utils/api";
 import dbConnect, {
 	findLink,
-	findNotDetailedLink,
 	incrementVisits,
 } from "@/utils/db";
 import { getUserLocation } from "@/utils/utils";
@@ -30,7 +29,7 @@ export async function GET(
 
 	const shortLink = encodeCustomName(id);
 
-	const link = await findNotDetailedLink(shortLink);
+	const link = await findLink({id:shortLink});
 
 	if (!link) {
 		return NextResponse.json(
