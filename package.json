@@ -19,7 +19,7 @@
 		"ipdata": "^2.2.4",
 		"leaflet": "^1.9.4",
 		"limiter": "^2.1.0",
-		"mongoose": "^7.3.1",
+		"mongoose": "^7.3.3",
 		"nanoid": "^4.0.2",
 		"next": "13.4.8",
 		"postcss": "8.4.24",
