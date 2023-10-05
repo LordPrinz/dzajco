@@ -26,6 +26,8 @@ const Map = ({ locations, className }: Props) => {
 		}
 	);
 
+	console.log(parsedLocations);
+
 	return (
 		<div className={cn("overflow-hidden", className)}>
 			<MapContainer
@@ -36,7 +38,7 @@ const Map = ({ locations, className }: Props) => {
 					mostPopularLocation.location.lat ?? 0,
 					mostPopularLocation.location.lon ?? 0,
 				]}
-				zoom={11}>
+				zoom={12}>
 				<TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 			</MapContainer>
 		</div>

@@ -38,17 +38,20 @@ export const getUserLocation = async (ip: string) => {
 	} as Location;
 };
 
-export const getLocationBoundaries = async ({
-	latitude,
-	longitude,
-}: {
-	latitude: number;
-	longitude: number;
-}) => {
-	const data = await axios.get(
-		`https://api.geoapify.com/v1/boundaries/part-of?lon=${longitude}&lat=${latitude}&geometry=geometry_1000&apiKey=${process
-			.env.GEOAPIFY_KEY!}`
-	);
+// export const getLocationBoundaries = async ({
+// 	latitude,
+// 	longitude,
+// }: {
+// 	latitude: number;
+// 	longitude: number;
+// }) => {
+// 	const data = await axios.get(
+// 		`https://api.geoapify.com/v1/boundaries/part-of?lon=${longitude}&lat=${latitude}&geometry=geometry_1000&apiKey=${process
+// 			.env.GEOAPIFY_KEY!}`
+// 	);
 
-	return data.data.features[0].geometry.coordinates;
-};
+// 	return data.data.features[0].geometry.coordinates.map((el: any) => [
+// 		el[1],
+// 		el[0],
+// 	]);
+// };
