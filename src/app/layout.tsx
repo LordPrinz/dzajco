@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://dzaj.de"),
-	
+
 	title: {
 		default: "Dzajde",
 		template: `%s | Dzajde`,
@@ -47,7 +47,9 @@ export const metadata: Metadata = {
 	},
 	applicationName: "Dzajde",
 	publisher: "Oskar Płaziński",
-
+	verification: {
+		google: "google3e9900e5e049e579",
+	},
 	creator: "Oskar Płaziński",
 	description:
 		"Free link shortener created by Dzajlopment. It allows to set custom names on links, counts how many times someone entered your short link.",
