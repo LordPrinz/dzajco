@@ -54,4 +54,4 @@ It is a link shortener. This app was created in Next.js with typescript. It uses
 ## Contact
 
 - GitHub [LordPrinz](https://github.com/LordPrinz)
-- Discord [<c2>Lord Prinz ™ 🔥#6396](https://discord.com/users/520676533279522817)
+- Discord [lordprinz1](https://discord.com/users/520676533279522817)
