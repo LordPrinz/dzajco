@@ -4,10 +4,6 @@ import Input from "./Input";
 import Hidden from "./Hidden";
 import useInput from "@/hooks/useInput";
 import Notification from "../Notification";
-import useLocalStorage from "@/hooks/useLocalStorage";
-import { Link } from "@/types/localStorage";
-
-//? had to repeat cuz of hydration error, idk how to fix
 
 export type linkIn = {
 	url: string;

@@ -23,7 +23,6 @@ const isExpiredLink = (link: Link) => {
 const History = ({ action }: Props) => {
 	const [storedValue, setValue] = useLocalStorage("links-history", []);
 
-	// Hydration error fix
 	const [domLoaded, setDomLoaded] = useState(false);
 
 	useEffect(() => {
