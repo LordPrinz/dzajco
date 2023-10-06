@@ -2,12 +2,18 @@ import dbConnect, { findLink } from "@/utils/db";
 import { NextPage } from "next";
 import { notFound } from "next/navigation";
 import Counter from "./_components/Counter";
-import Map from "../../../components/shared/Map/Map";
+
 import Chart from "./_components/Chart";
+import dynamic from "next/dynamic";
 
 export type Props = {
 	params: { id: string };
 };
+
+const LocationsMap = dynamic(
+	() => import("../../../components/shared/Map/Map"),
+	{ ssr: false }
+);
 
 export async function generateMetadata({ params }: Props) {
 	return {
@@ -55,7 +61,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 				<Chart locations={link.visitsLocation} />
 			</div>
 			<div className="info-panel sm:col-start-3 sm:col-end-6 sm:row-start-1 sm:row-end-6  col-[1/-1] row-[5/7]">
-				<Map
+				<LocationsMap
 					locations={JSON.stringify(link.visitsLocation)}
 					className="h-full rounded-xl min-h-[500px]"
 				/>

@@ -21,18 +21,16 @@ const Map = ({ locations, className }: Props) => {
 		return null;
 	}
 
-
 	let mostPopularLocation = null;
 
-	if(parsedLocations.length !== 0) {
+	if (parsedLocations.length !== 0) {
 		mostPopularLocation = parsedLocations?.reduce((mostPopular, location) => {
 			if (!mostPopular || location.visits > mostPopular.visits) {
 				return location;
 			}
 			return mostPopular;
-		});	}
-
-
+		});
+	}
 
 	const highlights = parsedLocations?.map((location) => {
 		const calcSize = 5 * location.visits;

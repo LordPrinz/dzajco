@@ -47,7 +47,7 @@ const AboutPage = async () => {
 				</div>
 				<div className="info-panel py-4 col-[1/-1]">
 					<h3 className="font-bold text-3xl text-center mt-12">Top Locations</h3>
-					<LocationsScoreboard />
+					<LocationsScoreboard locations={locations as any} />
 				</div>
 
 				<div className="info-panel py-4">
