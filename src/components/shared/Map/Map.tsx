@@ -21,14 +21,20 @@ const Map = ({ locations, className }: Props) => {
 		return null;
 	}
 
-	const mostPopularLocation = parsedLocations.reduce((mostPopular, location) => {
-		if (!mostPopular || location.visits > mostPopular.visits) {
-			return location;
-		}
-		return mostPopular;
-	});
 
-	const highlights = parsedLocations.map((location) => {
+	let mostPopularLocation = null;
+
+	if(parsedLocations.length !== 0) {
+		mostPopularLocation = parsedLocations?.reduce((mostPopular, location) => {
+			if (!mostPopular || location.visits > mostPopular.visits) {
+				return location;
+			}
+			return mostPopular;
+		});	}
+
+
+
+	const highlights = parsedLocations?.map((location) => {
 		const calcSize = 5 * location.visits;
 
 		return (
@@ -51,10 +57,10 @@ const Map = ({ locations, className }: Props) => {
 				zoomControl={false}
 				className="h-full w-full"
 				center={[
-					mostPopularLocation.location.lat ?? 0,
-					mostPopularLocation.location.lon ?? 0,
+					mostPopularLocation?.location?.lat ?? 50.3885677,
+					mostPopularLocation?.location?.lon ?? 18.4258586,
 				]}
-				zoom={12}>
+				zoom={mostPopularLocation?.location ? 12 : 15}>
 				<TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 				{highlights}
 			</MapContainer>

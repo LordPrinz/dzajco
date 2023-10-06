@@ -1,4 +1,4 @@
-import LinkModel, { IVisitsLocation } from "@/models/linkModel";
+import { IVisitsLocation } from "@/models/linkModel";
 import ChartItem from "./ChartItem";
 
 type Props = {
@@ -27,8 +27,9 @@ const Chart = async ({ locations }: Props) => {
 	});
 
 	return (
-		<div className="mt-14 space-y-4 ">
-			{topVisitors.map((visitor) => (
+		<div className="mt-14 space-y-4">
+			{topVisitors?.length === 0 ? <p className="text-2xl font-bold">No Visitors</p> : null}
+			{topVisitors?.map((visitor) => (
 				<ChartItem
 					key={visitor.location}
 					visits={visitor.visits}
