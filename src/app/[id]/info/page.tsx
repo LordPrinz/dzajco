@@ -54,10 +54,10 @@ const Page: NextPage<Props> = async ({ params }) => {
 				<h3 className="font-bold text-3xl text-center mt-5">Top Visitors</h3>
 				<Chart locations={link.visitsLocation} />
 			</div>
-			<div className="info-panel sm:col-start-3 sm:col-end-6 sm:row-start-1 sm:row-end-6  col-[1/-1] row-[5/7] py-6 sm:py-0">
+			<div className="info-panel sm:col-start-3 sm:col-end-6 sm:row-start-1 sm:row-end-6  col-[1/-1] row-[5/7]">
 				<Map
 					locations={JSON.stringify(link.visitsLocation)}
-					className="h-full rounded-xl "
+					className="h-full rounded-xl min-h-[500px]"
 				/>
 			</div>
 		</main>
