@@ -1,9 +1,11 @@
-import React from "react";
+import ConffetiContainer from "./ConffetiContainer";
 
 const EventWrapper = () => {
 	let event = null;
 
-	return <> event </>;
+	event = <ConffetiContainer />;
+
+	return <> {event} </>;
 };
 
 export default EventWrapper;
