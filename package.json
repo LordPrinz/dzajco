@@ -9,6 +9,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
+		"@fireworks-js/react": "^2.10.7",
 		"@radix-ui/react-select": "^1.2.2",
 		"@types/node": "20.3.3",
 		"@types/react": "18.2.14",
