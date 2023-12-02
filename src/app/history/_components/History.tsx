@@ -37,6 +37,7 @@ const History = ({ action }: Props) => {
 		setValue((prevState: Link[]) =>
 			prevState.filter((link: Link) => !isExpiredLink(link))
 		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (

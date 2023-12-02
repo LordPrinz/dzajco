@@ -21,6 +21,7 @@ const Copy = ({ url, code }: Props) => {
 	const copyHandler = useCallback(() => {
 		copy(url);
 		setIsClicked(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const icon = isClicked ? (

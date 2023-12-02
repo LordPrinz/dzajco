@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { Props } from "./page";
-import { ImageResponse } from "next/server";
+import { ImageResponse } from "next/og";
 import dbConnect, { findNotDetailedLink } from "@/utils/db";
 
 export const size = {

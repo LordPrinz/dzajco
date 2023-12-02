@@ -32,6 +32,7 @@ const useInput = ({
 		}
 
 		setError(validate(value));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [value]);
 
 	return {
