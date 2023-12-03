@@ -13,8 +13,6 @@ const EventWrapper = () => {
 		const currentMonth = currentDate.getMonth() + 1;
 		const currentDay = currentDate.getDate();
 
-		console.log(currentDate);
-
 		const isBetween = (
 			day: number,
 			month: number,
