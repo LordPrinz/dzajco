@@ -3,7 +3,7 @@ import dbConnect, { getLinksAmount, getPageStats } from "@/utils/db";
 import LocationsScoreboard from "./_components/LocationsScoreboard";
 import HomeButton from "@/components/shared/HomeButton";
 import { Metadata } from "next";
-import Map from "@/components/shared/Map/Map";
+import dynamicImport from "next/dynamic";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,11 @@ export const metadata: Metadata = {
 		},
 	},
 };
+
+const LocationsMap = dynamicImport(
+	() => import("../../components/shared/Map/Map"),
+	{ ssr: false }
+);
 
 const AboutPage = async () => {
 	await dbConnect();
@@ -65,7 +70,7 @@ const AboutPage = async () => {
 					/>
 				</div>
 				<div className="info-panel col-[1/-1]">
-					<Map
+					<LocationsMap
 						locations={JSON.stringify(locations)}
 						className="h-full rounded-xl min-h-[500px]"
 					/>
