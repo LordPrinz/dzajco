@@ -4,6 +4,7 @@ import "./globals.scss";
 import Footer from "../components/Layout/Footer/Footer";
 import { ToastContainer } from "react-toastify";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
 	metadataBase: new URL("https://dzaj.de"),
 
@@ -77,6 +78,7 @@ export default function RootLayout({
 				/>
 				<Footer />
 				<Analytics />
+				<SpeedInsights />
 			</body>
 		</html>
 	);
