@@ -11,7 +11,13 @@ type AdBannerProps = {
 	className?: string;
 };
 
-const AdBanner = (props: AdBannerProps) => {
+const AdBanner = ({
+	slot,
+	format,
+	layout,
+	className,
+	...props
+}: AdBannerProps) => {
 	useEffect(() => {
 		try {
 			((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
@@ -19,8 +25,6 @@ const AdBanner = (props: AdBannerProps) => {
 			console.log(err);
 		}
 	}, []);
-
-	const { slot, format, layout, className } = props;
 
 	return (
 		<ins
