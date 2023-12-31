@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/utils/tailwind";
 import { ReactNode, useEffect } from "react";
 
 type AdBannerProps = {
@@ -7,6 +8,7 @@ type AdBannerProps = {
 	format?: string;
 	layout?: string;
 	children?: ReactNode;
+	className?: string;
 };
 
 const AdBanner = (props: AdBannerProps) => {
@@ -18,11 +20,11 @@ const AdBanner = (props: AdBannerProps) => {
 		}
 	}, []);
 
-	const { slot, format, layout } = props;
+	const { slot, format, layout, className } = props;
 
 	return (
 		<ins
-			className="adsbygoogle adbanner-customize"
+			className={cn("adsbygoogle adbanner-customize", className)}
 			style={{
 				display: "block",
 				overflow: "hidden",
