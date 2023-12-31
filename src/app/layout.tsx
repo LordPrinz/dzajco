@@ -77,6 +77,7 @@ export default function RootLayout({
 					pauseOnHover
 				/>
 				<Footer />
+
 				<Analytics />
 				<SpeedInsights />
 			</body>
