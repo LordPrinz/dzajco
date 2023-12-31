@@ -5,6 +5,7 @@ import Footer from "../components/Layout/Footer/Footer";
 import { ToastContainer } from "react-toastify";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script";
 export const metadata: Metadata = {
 	metadataBase: new URL("https://dzaj.de"),
 
@@ -79,6 +80,12 @@ export default function RootLayout({
 				<Footer />
 				<Analytics />
 				<SpeedInsights />
+				<Script
+					id="adsbygoogle-init"
+					strategy="afterInteractive"
+					crossOrigin="anonymous"
+					src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3650224334123434"
+				/>
 			</body>
 		</html>
 	);
