@@ -84,13 +84,13 @@ export default function RootLayout({
 					draggable
 					pauseOnHover
 				/>
-				<Footer />
 				<AdBanner
 					slot="8933882351"
 					format="auto"
 					data-full-width-responsive
 					className="col-[center-start/center-end]"
 				/>
+				<Footer />
 				<Analytics />
 				<SpeedInsights />
 			</body>
