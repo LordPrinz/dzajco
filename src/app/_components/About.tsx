@@ -11,7 +11,7 @@ import {
 
 const About = () => {
 	return (
-		<section className="mt-52 flex flex-col">
+		<section className="mt-40 flex flex-col">
 			<h3 className="text-3xl  font-bold text-gray-00 text-center border-b pb-0 mb-12 max-w-3xl self-center w-full">
 				<div className="translate-y-4 bg-light-bg-primary inline-block px-3 ">
 					Why you should use <span className="text-jajco-500"> Dzajco</span>
