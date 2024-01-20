@@ -11,7 +11,12 @@ export default function Home() {
 			<main className="col-[center-start/center-end] z-10">
 				<Header />
 				<Forms />
-				<AdBanner slot="3847126497" format="auto" data-full-width-responsive />
+				<AdBanner
+					slot="3847126497"
+					format="auto"
+					data-full-width-responsive
+					className="mb-16"
+				/>
 				<About />
 			</main>
 		</>
