@@ -8,7 +8,7 @@ export default function Home() {
 	return (
 		<>
 			<EventWrapper />
-			<main className="col-[center-start/center-end] z-10">
+			<main className="col-[center-start/center-end] z-10 mb-16">
 				<Header />
 				<Forms />
 				<AdBanner

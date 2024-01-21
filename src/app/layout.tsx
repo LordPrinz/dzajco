@@ -63,8 +63,8 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
-			<body className="grid h-full gridLayout overflow-x-hidden">
+		<html lang="en" className="h-full">
+			<body className="grid h-full gridLayout overflow-x-hidden pb-10">
 				<Script
 					async
 					src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADS_CLIENT_ID}`}
