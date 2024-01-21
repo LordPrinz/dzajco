@@ -5,7 +5,6 @@ import Footer from "../components/Layout/Footer/Footer";
 import { ToastContainer } from "react-toastify";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import AdBanner from "@/components/ads/AdBanner";
 import Script from "next/script";
 export const metadata: Metadata = {
 	metadataBase: new URL("https://dzaj.de"),
@@ -84,12 +83,7 @@ export default function RootLayout({
 					draggable
 					pauseOnHover
 				/>
-				<AdBanner
-					slot="8933882351"
-					format="auto"
-					data-full-width-responsive
-					className="col-[center-start/center-end]"
-				/>
+
 				<Footer />
 				<Analytics />
 				<SpeedInsights />

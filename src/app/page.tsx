@@ -18,6 +18,7 @@ export default function Home() {
 					className="mb-16"
 				/>
 				<About />
+				<AdBanner slot="8933882351" format="auto" data-full-width-responsive />
 			</main>
 		</>
 	);
