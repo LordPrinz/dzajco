@@ -1,8 +1,7 @@
 import Header from "@/components/Layout/Header";
 import Forms from "./_components/Forms";
 import EventWrapper from "@/components/Events/EventWrapper";
-import About from "./about/_components/About";
-import AdBanner from "@/components/ads/AdBanner";
+// import AdBanner from "@/components/ads/AdBanner";
 
 export default function Home() {
 	return (

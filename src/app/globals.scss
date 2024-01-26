@@ -40,6 +40,9 @@
 	::-webkit-scrollbar-thumb:hover {
 		@apply bg-gray-300;
 	}
+	.Toastify__toast {
+		z-index: 9999;
+	}
 }
 
 @layer components {
