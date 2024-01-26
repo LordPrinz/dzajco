@@ -26,7 +26,7 @@ const LinkCopier = ({ url }: Props) => {
 		/>
 	);
 
-	const link = `https://dzaj.de/${decodeURIComponent(url)}`;
+	const link = `https://www.dzaj.de/${decodeURIComponent(url)}`;
 
 	return (
 		<div
