@@ -5,7 +5,7 @@ import Footer from "../components/Layout/Footer/Footer";
 import { ToastContainer } from "react-toastify";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import Script from "next/script";
+// import Script from "next/script";
 export const metadata: Metadata = {
 	metadataBase: new URL("https://dzaj.de"),
 
@@ -65,12 +65,12 @@ export default function RootLayout({
 	return (
 		<html lang="en" className="h-full">
 			<body className="grid h-full gridLayout overflow-x-hidden pb-10">
-				<Script
+				{/* <Script
 					async
 					src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADS_CLIENT_ID}`}
 					strategy="lazyOnload"
 					crossOrigin="anonymous"
-				/>
+				/> */}
 				{children}
 				<ToastContainer
 					position="bottom-right"
