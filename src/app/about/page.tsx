@@ -4,6 +4,7 @@ import LocationsScoreboard from "./_components/LocationsScoreboard";
 import HomeButton from "@/components/shared/HomeButton";
 import { Metadata } from "next";
 import dynamicImport from "next/dynamic";
+import About from "./_components/About";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +34,10 @@ const AboutPage = async () => {
 	const activeLinksAmount = await getLinksAmount();
 
 	return (
-		<main className="col-[center-start/center-end] mt-4 mb-16">
+		<main className="col-[center-start/center-end]  mb-16">
 			<HomeButton />
-			<section className="grid gap-2 sm:grid-cols-2  mt-12 grid-rows-[min-content,min-content,min-content,1fr]">
+			<About />
+			<section className="grid gap-2 sm:grid-cols-2 mt-10  grid-rows-[min-content,min-content,min-content,1fr]">
 				<div className="info-panel py-4 flex flex-col items-center justify-center h-full">
 					<h3 className="font-bold text-3xl text-center mt-12">Shorten Links</h3>
 					<Counter
