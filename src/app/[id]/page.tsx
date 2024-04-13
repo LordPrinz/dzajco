@@ -82,7 +82,7 @@ const Page: NextPage<Props> = async ({ params }) => {
 	await dbConnect();
 	const link = await findLink({ id: params.id });
 
-	const fullLink = link!.full.replaceAll("​", "");
+	const fullLink = link?.full?.replaceAll("​", "");
 
 	try {
 		const ip = headers().get("x-forwarded-for")!;
@@ -97,19 +97,19 @@ const Page: NextPage<Props> = async ({ params }) => {
 
 		await link.incrementVisits(userLocation);
 
-		if (fullLink.length > 256) {
-			return <RedirectPage redirectUrl={fullLink} />;
+		if (fullLink!.length > 256) {
+			return <RedirectPage redirectUrl={fullLink!} />;
 		}
 
-		redirect(fullLink);
+		redirect(fullLink!);
 	} catch (error) {
 		if (!link) {
 			return notFound();
 		}
-		if (fullLink.length > 256) {
-			return <RedirectPage redirectUrl={fullLink} />;
+		if (fullLink!.length > 256) {
+			return <RedirectPage redirectUrl={fullLink!} />;
 		}
-		redirect(fullLink);
+		redirect(fullLink!);
 	}
 };
 
