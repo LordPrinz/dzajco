@@ -3,7 +3,7 @@ import dbConnect, {
 	findNotDetailedLink,
 	incrementVisits,
 } from "@/utils/db";
-import { NextPage } from "next";
+import { Metadata, NextPage } from "next";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getUserLocation } from "@/utils/utils";
@@ -44,16 +44,35 @@ export async function generateMetadata({ params }: Props) {
 
 		const title = $("title").text();
 		const description = $('meta[name="description"]').attr("content");
+
 		let image = $('meta[property="og:image"]').attr("content");
+
 		if (!image) {
 			image = $("img").first().attr("src");
 		}
+		let siteName = $('meta[property="og:site_name"]').attr("content");
+		if (!siteName) {
+			siteName = $('meta[name="og:site_name"]').attr("content");
+		}
+		if (!siteName) {
+			siteName = $('meta[name="twitter:site"]').attr("content");
+		}
+		let openGraphType = $('meta[property="og:type"]').attr("content");
+
+		if (!openGraphType) {
+			openGraphType = "website";
+		}
 		return {
 			title: title || "No Title",
+			openGraph: {
+				siteName,
+				type: openGraphType,
+				description: description || "No Description",
+				images: image,
+			},
+			applicationName: siteName,
 			description: description || "No Description",
-			image: image || null,
-			// Add other metadata fields here
-		};
+		} as Metadata;
 	} catch (error) {
 		console.error(error);
 	}
