@@ -57,6 +57,9 @@ const About = () => {
 					description="Keep your link management organized and secure with our comprehensive link history. Easily revisit, revise, or delete links as needed, knowing your content is in safe hands."
 				/>
 			</div>
+
+			<iframe src="https://github.com/sponsors/LordPrinz/button" title="Sponsor LordPrinz" height="32" width="114" style="border: 0;margin: -25px auto 10px auto;border-radius: 6px;"></iframe>
+			
 		</section>
 	);
 };
