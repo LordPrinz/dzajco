@@ -74,6 +74,7 @@ const en = {
 	"stats.last30d": "Last 30 days",
 	"stats.timeline": "Clicks over time",
 	"stats.map": "Where the clicks came from",
+	"stats.countriesMap": "Clicks by country",
 	"stats.topCountries": "Top countries",
 	"stats.topCities": "Top cities",
 	"stats.referrers": "Referrers",
@@ -138,6 +139,15 @@ const en = {
 	"dashboard.signedInAs": "Signed in as {name}",
 
 	"login.title": "Sign in",
+	"login.createTitle": "Create an account",
+	"login.email": "E-mail",
+	"login.password": "Password",
+	"login.passwordHint": "At least 8 characters.",
+	"login.submit": "Sign in",
+	"login.createSubmit": "Create account",
+	"login.toRegister": "No account yet? Create one",
+	"login.toLogin": "Already have an account? Sign in",
+	"login.or": "or",
 	"login.body":
 		"An account keeps your links in one place across devices and unlocks UTM campaign reporting.",
 	"login.github": "Continue with GitHub",
@@ -177,6 +187,11 @@ const en = {
 	"error.expiry_before_start": "The expiration must come after the start date.",
 	"error.forbidden": "That owner key does not match this link.",
 	"error.not_found": "Link not found.",
+	"error.bad_login": "Wrong e-mail or password.",
+	"error.email_taken": "That e-mail is already registered.",
+	"error.bad_credentials":
+		"Enter a valid e-mail and a password of at least 8 characters.",
+	"error.auth_unconfigured": "Sign-in is not configured on this deployment.",
 
 	"common.optional": "optional",
 	"common.cancel": "Cancel",
@@ -247,6 +262,7 @@ const pl: Record<MessageKey, string> = {
 	"stats.last30d": "Ostatnie 30 dni",
 	"stats.timeline": "Kliknięcia w czasie",
 	"stats.map": "Skąd pochodziły kliknięcia",
+	"stats.countriesMap": "Kliknięcia według krajów",
 	"stats.topCountries": "Najczęstsze kraje",
 	"stats.topCities": "Najczęstsze miejscowości",
 	"stats.referrers": "Źródła wejść",
@@ -313,6 +329,15 @@ const pl: Record<MessageKey, string> = {
 	"dashboard.signedInAs": "Zalogowano jako {name}",
 
 	"login.title": "Zaloguj się",
+	"login.createTitle": "Załóż konto",
+	"login.email": "E-mail",
+	"login.password": "Hasło",
+	"login.passwordHint": "Co najmniej 8 znaków.",
+	"login.submit": "Zaloguj się",
+	"login.createSubmit": "Załóż konto",
+	"login.toRegister": "Nie masz konta? Załóż je",
+	"login.toLogin": "Masz już konto? Zaloguj się",
+	"login.or": "lub",
 	"login.body":
 		"Konto trzyma Twoje linki w jednym miejscu na wszystkich urządzeniach i odblokowuje raporty kampanii UTM.",
 	"login.github": "Kontynuuj przez GitHub",
@@ -353,6 +378,11 @@ const pl: Record<MessageKey, string> = {
 	"error.expiry_before_start": "Wygaśnięcie musi nastąpić po dacie startu.",
 	"error.forbidden": "Ten klucz właściciela nie pasuje do tego linku.",
 	"error.not_found": "Nie znaleziono linku.",
+	"error.bad_login": "Błędny e-mail lub hasło.",
+	"error.email_taken": "Ten e-mail jest już zarejestrowany.",
+	"error.bad_credentials":
+		"Podaj poprawny e-mail i hasło o długości co najmniej 8 znaków.",
+	"error.auth_unconfigured": "Logowanie nie jest skonfigurowane w tym wdrożeniu.",
 
 	"common.optional": "opcjonalne",
 	"common.cancel": "Anuluj",
@@ -371,9 +401,12 @@ function initialLang(): Lang {
 		const saved = localStorage.getItem(STORAGE_KEY);
 		if (saved === "pl" || saved === "en") return saved;
 	} catch {
-		// Storage unavailable; fall back to the browser preference.
+		// Storage unavailable; the default below still applies.
 	}
-	return navigator.language?.toLowerCase().startsWith("pl") ? "pl" : "en";
+	// English is the default interface language regardless of the browser's
+	// locale; Polish is opt-in through the header toggle. The brand words
+	// ("dzajco", "Dżajcuj") stay Polish in both.
+	return "en";
 }
 
 export type Translate = (

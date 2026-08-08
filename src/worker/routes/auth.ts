@@ -8,7 +8,9 @@ import {
 	issueOAuthState,
 } from "../lib/session";
 import { isRateLimited, limiterKey } from "../lib/ratelimit";
-import { fail, tooManyRequests } from "../lib/responses";
+import { fail, readJson, tooManyRequests } from "../lib/responses";
+import { hashPassword, verifyPassword } from "../lib/crypto";
+import { verifyTurnstile } from "../lib/turnstile";
 
 const auth = new Hono<AppContext>();
 
@@ -31,8 +33,14 @@ function credentials(env: Env, provider: Provider) {
 		: { id: env.GOOGLE_CLIENT_ID, secret: env.GOOGLE_CLIENT_SECRET };
 }
 
-function configuredProviders(env: Env): Provider[] {
-	const out: Provider[] = [];
+/**
+ * Which sign-in methods this deployment can actually offer. Email + password
+ * needs nothing but a session secret, so it is the baseline; the OAuth
+ * providers appear only once their credentials are set.
+ */
+function configuredProviders(env: Env): string[] {
+	const out: string[] = [];
+	if (env.SESSION_SECRET) out.push("password");
 	if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) out.push("github");
 	if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) out.push("google");
 	return out;
@@ -85,6 +93,124 @@ auth.get("/me", async (c) => {
 
 auth.post("/logout", (c) => {
 	clearSession(c);
+	return c.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ *
+ * Email + password
+ * ------------------------------------------------------------------ */
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD = 8;
+const MAX_PASSWORD = 200;
+
+function readCredentials(
+	body: { email?: string; password?: string } | null
+): { email: string; password: string } | null {
+	const email = body?.email?.trim().toLowerCase() ?? "";
+	const password = body?.password ?? "";
+
+	if (!email || email.length > 254 || !EMAIL_RE.test(email)) return null;
+	if (password.length < MIN_PASSWORD || password.length > MAX_PASSWORD) return null;
+
+	return { email, password };
+}
+
+auth.post("/register", async (c) => {
+	if (await isRateLimited(c.env, "auth", await limiterKey(c.req.raw, null))) {
+		return tooManyRequests(c);
+	}
+	if (!c.env.SESSION_SECRET) {
+		return fail(c, 500, "auth_unconfigured", "Sign-up is not configured.");
+	}
+
+	const body = await readJson<{
+		email?: string;
+		password?: string;
+		turnstileToken?: string;
+	}>(c);
+
+	// Registration is an anonymous, account-creating endpoint — the same bot
+	// check that guards link creation applies.
+	if (!(await verifyTurnstile(c.env, body?.turnstileToken, c.req.raw))) {
+		return fail(c, 403, "captcha_failed", "Bot check failed. Please retry.");
+	}
+
+	const credentials = readCredentials(body);
+	if (!credentials) {
+		return fail(
+			c,
+			400,
+			"bad_credentials",
+			`Enter a valid e-mail and a password of at least ${MIN_PASSWORD} characters.`
+		);
+	}
+
+	const now = Math.floor(Date.now() / 1000);
+	const id = crypto.randomUUID();
+	const passwordHash = await hashPassword(credentials.password);
+
+	try {
+		await c.env.DB.prepare(
+			`INSERT INTO users
+			   (id, provider, provider_id, email, name, avatar_url,
+			    password_hash, created_at, last_login_at)
+			 VALUES (?1, 'password', ?2, ?2, NULL, NULL, ?3, ?4, ?4)`
+		)
+			.bind(id, credentials.email, passwordHash, now)
+			.run();
+	} catch (error) {
+		if (String(error).includes("UNIQUE")) {
+			return fail(c, 409, "email_taken", "That e-mail is already registered.");
+		}
+		throw error;
+	}
+
+	await createSession(c, id);
+	return c.json({ ok: true }, 201);
+});
+
+auth.post("/login", async (c) => {
+	if (await isRateLimited(c.env, "auth", await limiterKey(c.req.raw, null))) {
+		return tooManyRequests(c);
+	}
+	if (!c.env.SESSION_SECRET) {
+		return fail(c, 500, "auth_unconfigured", "Sign-in is not configured.");
+	}
+
+	const credentials = readCredentials(
+		await readJson<{ email?: string; password?: string }>(c)
+	);
+
+	// A malformed address and a wrong password get the same answer, so this
+	// endpoint cannot be used to enumerate registered e-mails.
+	if (!credentials) {
+		return fail(c, 401, "bad_login", "Wrong e-mail or password.");
+	}
+
+	const row = await c.env.DB.prepare(
+		`SELECT id, password_hash FROM users
+		 WHERE provider = 'password' AND provider_id = ?1`
+	)
+		.bind(credentials.email)
+		.first<{ id: string; password_hash: string | null }>();
+
+	if (!row?.password_hash) {
+		// Spend comparable time on an unknown address so response timing does
+		// not reveal whether the account exists.
+		await hashPassword(credentials.password);
+		return fail(c, 401, "bad_login", "Wrong e-mail or password.");
+	}
+
+	if (!(await verifyPassword(credentials.password, row.password_hash))) {
+		return fail(c, 401, "bad_login", "Wrong e-mail or password.");
+	}
+
+	await c.env.DB.prepare("UPDATE users SET last_login_at = ?2 WHERE id = ?1")
+		.bind(row.id, Math.floor(Date.now() / 1000))
+		.run();
+
+	await createSession(c, row.id);
 	return c.json({ ok: true });
 });
 

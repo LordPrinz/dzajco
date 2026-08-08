@@ -25,6 +25,17 @@
 		 */
 		--chart-mark: 166 106 2;
 		--chart-grid: 229 231 235;
+
+		/*
+		 * Sequential ramp for the choropleth: one hue, light to dark, so more
+		 * clicks always read as more ink. Never a rainbow.
+		 */
+		--choro-0: 243 244 246;
+		--choro-1: 255 248 134;
+		--choro-2: 255 236 65;
+		--choro-3: 255 219 13;
+		--choro-4: 209 149 0;
+		--choro-5: 137 83 10;
 	}
 
 	.dark {
@@ -38,6 +49,14 @@
 
 		--chart-mark: 255 219 13;
 		--chart-grid: 47 52 62;
+
+		/* Dark mode runs the same hue dim to bright against the dark surface. */
+		--choro-0: 32 36 44;
+		--choro-1: 68 35 4;
+		--choro-2: 116 67 15;
+		--choro-3: 166 106 2;
+		--choro-4: 209 149 0;
+		--choro-5: 255 219 13;
 	}
 
 	* {

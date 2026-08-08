@@ -17,14 +17,15 @@ KV as a redirect cache.
 - **Scheduling** — a start date (the link 425s before it), an expiry date, and
   an optional hard click limit.
 - **Password protection** with a prompt before the redirect.
-- **Click statistics** — totals, a 30-day timeline, countries and cities on a
-  map, referrers, devices and browsers, plus CSV export.
+- **Click statistics** — totals, a 30-day timeline, a world choropleth by
+  country, a city-level map, referrers, devices and browsers, plus CSV export.
 - **UTM campaign reporting** for signed-in users.
 - **Owner keys** — links created without an account return a secret once. It
   proves ownership (full statistics, edit, delete), is stored only as a hash
   server-side, and lives in the browser's local storage. The profile can be
   exported to a JSON file and imported on another device.
-- **Accounts** via GitHub or Google OAuth, with a dashboard across devices.
+- **Accounts** with e-mail and password (GitHub/Google OAuth optional), and a
+  dashboard that follows you across devices.
 - **English and Polish**, light and dark.
 
 ## Stack
@@ -37,6 +38,7 @@ KV as a redirect cache.
 | Cache | Workers KV | Read-through cache for the redirect hot path |
 | Frontend | React + Vite, served as Workers Static Assets | One deployment artifact, no separate host |
 | Geo | `request.cf` | No geo-IP API key, no extra latency, IP never leaves the request |
+| Maps | Baked SVG world paths + Leaflet/OSM | Choropleth needs no network; the city map uses OSM tiles |
 | Anti-bot | Turnstile + Workers rate limiting | Both free and unmetered |
 
 Next.js was dropped: the app is a handful of pages plus an API, and a plain
@@ -72,11 +74,11 @@ port 8787 — run both when working on the frontend.
 ## Deploy
 
 ```bash
-npx wrangler secret put SESSION_SECRET
+npx wrangler secret put SESSION_SECRET           # required — sessions and sign-in
 npx wrangler secret put TURNSTILE_SECRET_KEY     # optional but recommended
-npx wrangler secret put GITHUB_CLIENT_ID         # optional
+npx wrangler secret put GITHUB_CLIENT_ID         # optional, enables GitHub sign-in
 npx wrangler secret put GITHUB_CLIENT_SECRET
-npx wrangler secret put GOOGLE_CLIENT_ID         # optional
+npx wrangler secret put GOOGLE_CLIENT_ID         # optional, enables Google sign-in
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 
 npm run db:remote
@@ -86,6 +88,38 @@ npm run deploy
 Set `APP_URL` and `TURNSTILE_SITE_KEY` (the public one) in `wrangler.toml`
 under `[vars]`. OAuth callback URLs are
 `https://<your-domain>/api/auth/<provider>/callback`.
+
+## Accounts
+
+E-mail and password is the built-in method and needs no third-party setup —
+only `SESSION_SECRET`. Passwords are hashed with PBKDF2-SHA256 (100k
+iterations) via WebCrypto; sign-in and registration share the strict auth rate
+limit, registration additionally goes through Turnstile, and a wrong password
+and an unknown address return the same message after comparable work, so the
+endpoint cannot be used to enumerate registered e-mails.
+
+GitHub and Google OAuth are also implemented and appear on the sign-in page
+automatically once their credentials are set. Both methods write into the same
+`users` table.
+
+Sessions are signed, `HttpOnly` cookies rather than database rows — on the free
+plan a session lookup on every request would be the hottest query in the app.
+The trade-off is that signing out is client-side and a cookie stays valid until
+it expires (30 days).
+
+## Maps
+
+The country choropleth uses SVG paths baked into the source
+(`src/client/components/charts/worldPaths.ts`, ~73KB, lazy-loaded), generated
+from Natural Earth 110m data. That keeps the map working with no CDN and no CSP
+exception. Regenerate after changing the projection or simplification:
+
+```bash
+node scripts/gen-world.mjs
+```
+
+The city-level map is Leaflet with OpenStreetMap tiles, in its own lazy chunk so
+the landing page never pays for it.
 
 ## How the data is stored
 
@@ -138,6 +172,10 @@ Documented in the app at `/api-docs`. Briefly:
 | `GET` | `/api/stats` | Site-wide counters |
 | `GET` | `/api/resolve/:code` | Why a link did not redirect |
 | `POST` | `/api/resolve/:code/unlock` | Exchange a password for the target |
+| `POST` | `/api/auth/register` | Create an account |
+| `POST` | `/api/auth/login` | Sign in |
+| `POST` | `/api/auth/logout` | Clear the session |
+| `GET` | `/api/auth/me` | Current user, sign-in methods, Turnstile key |
 
 Ownership is proved with the `x-dzajco-secret` header (or `?secret=`) for
 anonymous links, and with the session cookie for account-owned ones.

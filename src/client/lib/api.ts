@@ -56,6 +56,18 @@ export const api = {
 
 	logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
 
+	register: (email: string, password: string, turnstileToken?: string) =>
+		request<{ ok: boolean }>("/auth/register", {
+			method: "POST",
+			body: JSON.stringify({ email, password, turnstileToken }),
+		}),
+
+	login: (email: string, password: string) =>
+		request<{ ok: boolean }>("/auth/login", {
+			method: "POST",
+			body: JSON.stringify({ email, password }),
+		}),
+
 	createLink: (body: CreateLinkRequest) =>
 		request<CreateLinkResponse>("/links", {
 			method: "POST",

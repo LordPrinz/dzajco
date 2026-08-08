@@ -10,8 +10,10 @@ import BarList, { type BarRow } from "@/components/charts/BarList";
 import Timeline from "@/components/charts/Timeline";
 import { DownloadIcon, LockIcon } from "@/components/Icons";
 
-// Leaflet is a large dependency and only this page needs it.
+// Leaflet, and the baked world geometry, are large and only this page needs
+// them — both stay out of the landing-page bundle.
 const GeoMap = lazy(() => import("@/components/charts/GeoMap"));
+const Choropleth = lazy(() => import("@/components/charts/Choropleth"));
 
 const STATUS_STYLES: Record<string, string> = {
 	active: "text-emerald-700 dark:text-emerald-400",
@@ -210,6 +212,13 @@ export default function Stats() {
 					<Timeline points={data.timeline} days={30} />
 				</section>
 			)}
+
+			<section className="panel p-5 sm:p-6">
+				<h2 className="mb-4 font-bold text-ink">{t("stats.countriesMap")}</h2>
+				<Suspense fallback={<div className="skeleton h-[300px] rounded-2xl" />}>
+					<Choropleth countries={data.countries} />
+				</Suspense>
+			</section>
 
 			<section className="panel overflow-hidden">
 				<h2 className="px-5 pb-3 pt-5 font-bold text-ink sm:px-6">

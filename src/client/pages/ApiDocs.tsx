@@ -103,6 +103,36 @@ const ENDPOINTS: Endpoint[] = [
 		auth: "None",
 		response: `{ "links": 1204, "clicks": 91043, "countries": [...] }`,
 	},
+	{
+		method: "POST",
+		path: "/api/auth/register",
+		summary:
+			"Create an account. Sets an HttpOnly session cookie on success.",
+		auth: "None (Turnstile token when configured)",
+		body: `{ "email": "you@example.com", "password": "at least 8 chars" }`,
+		response: `{ "ok": true }`,
+	},
+	{
+		method: "POST",
+		path: "/api/auth/login",
+		summary:
+			"Sign in. A wrong password and an unknown address return the same error, so this cannot be used to enumerate accounts.",
+		auth: "None",
+		body: `{ "email": "you@example.com", "password": "..." }`,
+		response: `{ "ok": true }`,
+	},
+	{
+		method: "GET",
+		path: "/api/auth/me",
+		summary:
+			"The current user, the sign-in methods this deployment offers, and the public Turnstile key.",
+		auth: "Optional session cookie",
+		response: `{
+  "user": { "id": "...", "email": "you@example.com", "provider": "password" },
+  "providers": ["password", "github"],
+  "turnstileSiteKey": "0x4AAA..."
+}`,
+	},
 ];
 
 export default function ApiDocs() {

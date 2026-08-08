@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import type { GlobalStats } from "@shared/types";
 import { countryFlag, countryName } from "@shared/format";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import StatTile from "@/components/charts/StatTile";
 import BarList, { type BarRow } from "@/components/charts/BarList";
+
+const Choropleth = lazy(() => import("@/components/charts/Choropleth"));
 
 export default function About() {
 	const { t } = useI18n();
@@ -58,7 +60,12 @@ export default function About() {
 
 			<section className="panel mt-3 p-5 sm:p-6">
 				<h2 className="mb-4 font-bold text-ink">{t("about.topCountries")}</h2>
-				<BarList rows={rows} limit={10} />
+				<Suspense fallback={<div className="skeleton h-[300px] rounded-2xl" />}>
+					<Choropleth countries={stats?.countries ?? []} />
+				</Suspense>
+				<div className="mt-6 border-t border-edge pt-5">
+					<BarList rows={rows} limit={10} />
+				</div>
 			</section>
 		</div>
 	);
