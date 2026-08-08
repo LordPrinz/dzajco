@@ -1,0 +1,40 @@
+{
+	"name": "dzajco",
+	"version": "3.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"dev:worker": "wrangler dev",
+		"build": "tsc --noEmit && vite build",
+		"preview": "npm run build && wrangler dev",
+		"deploy": "npm run build && wrangler deploy",
+		"db:local": "wrangler d1 migrations apply dzajco --local",
+		"db:remote": "wrangler d1 migrations apply dzajco --remote",
+		"typecheck": "tsc --noEmit",
+		"cf-typegen": "wrangler types"
+	},
+	"dependencies": {
+		"hono": "^4.6.14",
+		"leaflet": "^1.9.4",
+		"qrcode": "^1.5.4",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"react-leaflet": "^4.2.1",
+		"react-router-dom": "^6.28.0"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250109.0",
+		"@types/leaflet": "^1.9.15",
+		"@types/qrcode": "^1.5.5",
+		"@types/react": "^18.3.12",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"autoprefixer": "^10.4.20",
+		"postcss": "^8.4.49",
+		"tailwindcss": "^3.4.17",
+		"typescript": "^5.7.2",
+		"vite": "^5.4.11",
+		"wrangler": "^3.99.0"
+	}
+}

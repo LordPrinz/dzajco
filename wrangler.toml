@@ -1,0 +1,55 @@
+name = "dzajco"
+main = "src/worker/index.ts"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+# Static assets (the built React SPA).
+# `not_found_handling = "none"` is deliberate: unmatched paths must fall through
+# to the Worker so that `/:code` can be resolved as a short link. The Worker
+# serves index.html itself for real app routes.
+[assets]
+directory = "./dist/client"
+binding = "ASSETS"
+not_found_handling = "none"
+
+[observability]
+enabled = true
+
+[vars]
+APP_URL = "https://dzaj.de"
+# Set TURNSTILE_SITE_KEY here (public). Secrets go through `wrangler secret put`:
+#   TURNSTILE_SECRET_KEY, SESSION_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET,
+#   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+TURNSTILE_SITE_KEY = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dzajco"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# Cached hot-path link lookups. Free plan allows 1k writes/day, so this is a
+# read-through cache only: it is written on redirect misses and invalidated on
+# edit/delete. The D1 row stays the source of truth.
+[[kv_namespaces]]
+binding = "LINK_CACHE"
+id = "00000000000000000000000000000000"
+
+# Native, storage-free sliding-window rate limiters.
+[[unsafe.bindings]]
+name = "RL_CREATE"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 20, period = 60 }
+
+[[unsafe.bindings]]
+name = "RL_READ"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 120, period = 60 }
+
+[[unsafe.bindings]]
+name = "RL_AUTH"
+type = "ratelimit"
+namespace_id = "1003"
+simple = { limit = 10, period = 60 }

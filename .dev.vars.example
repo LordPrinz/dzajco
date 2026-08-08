@@ -1,0 +1,18 @@
+# Copy to `.dev.vars` for local development (`.dev.vars` is gitignored).
+# In production these are set with `wrangler secret put <NAME>`.
+
+# Required for sign-in and for signing session cookies.
+# Generate one with: openssl rand -base64 32
+SESSION_SECRET=""
+
+# Anti-bot on anonymous link creation. Leave empty to disable the check locally;
+# link creation is still rate limited.
+TURNSTILE_SECRET_KEY=""
+
+# OAuth. Callback URLs:
+#   https://<your-domain>/api/auth/github/callback
+#   https://<your-domain>/api/auth/google/callback
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""

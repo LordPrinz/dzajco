@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Palette tokens. The light values are the original site's: a near-white
+ * canvas, white cards, gray-900 text. Dark mode is a new addition and keeps the
+ * same yellow accent, which stays legible on both.
+ */
+@layer base {
+	:root {
+		--canvas: 249 250 251;
+		--surface: 255 255 255;
+		--sunken: 243 244 246;
+		--edge: 229 231 235;
+		--ink: 17 24 39;
+		--muted: 107 114 128;
+		--faint: 156 163 175;
+
+		/*
+		 * Chart marks are a darker step of the brand ramp than the UI accent.
+		 * jajco-500 sits at 1.6:1 against this canvas — fine for a button with a
+		 * label on it, too weak for a bar that carries the value on its own.
+		 * jajco-700 clears 3:1; dark mode can go back up the ramp.
+		 */
+		--chart-mark: 166 106 2;
+		--chart-grid: 229 231 235;
+	}
+
+	.dark {
+		--canvas: 15 17 21;
+		--surface: 24 27 33;
+		--sunken: 32 36 44;
+		--edge: 47 52 62;
+		--ink: 241 243 245;
+		--muted: 156 163 175;
+		--faint: 107 114 128;
+
+		--chart-mark: 255 219 13;
+		--chart-grid: 47 52 62;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	html {
+		@apply text-sm md:text-base h-full;
+	}
+
+	body {
+		@apply m-0 h-full bg-canvas text-ink scroll-smooth overflow-x-hidden antialiased;
+	}
+
+	::selection {
+		@apply bg-jajco-500 text-jajco-950;
+	}
+
+	::-webkit-scrollbar {
+		@apply h-2 w-2;
+	}
+
+	::-webkit-scrollbar-thumb {
+		@apply rounded-md bg-edge;
+	}
+
+	:focus-visible {
+		@apply outline-none ring-2 ring-jajco-500 ring-offset-2 ring-offset-canvas;
+	}
+}
+
+@layer components {
+	/* The original grid: a centred 8-column track with responsive gutters. */
+	.gridLayout {
+		@apply grid grid-cols-mobileLayout sm:grid-cols-smallLayout lg:grid-cols-defaultLayout;
+	}
+
+	.center {
+		@apply col-[center-start/center-end];
+	}
+
+	/* The signature pill input. */
+	.input {
+		@apply w-full rounded-full border border-edge bg-surface px-6 py-4 text-ink
+			shadow-pill outline-none transition
+			placeholder:text-faint
+			focus:border-jajco-400 focus:ring-2 focus:ring-jajco-300/50;
+	}
+
+	.input-sm {
+		@apply w-full rounded-2xl border border-edge bg-surface px-4 py-2.5 text-ink
+			shadow-sm outline-none transition
+			placeholder:text-faint
+			focus:border-jajco-400 focus:ring-2 focus:ring-jajco-300/50;
+	}
+
+	.panel {
+		@apply rounded-2xl border border-edge bg-surface shadow-lift;
+	}
+
+	.btn {
+		@apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3
+			font-bold transition disabled:cursor-not-allowed disabled:opacity-50;
+	}
+
+	.btn-primary {
+		@apply btn bg-jajco-400 text-jajco-950 hover:bg-jajco-300 active:bg-jajco-500;
+	}
+
+	.btn-ghost {
+		@apply btn border border-edge bg-surface text-ink hover:border-jajco-400 hover:text-jajco-700 dark:hover:text-jajco-300;
+	}
+
+	.btn-quiet {
+		@apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs
+			font-semibold text-muted transition hover:bg-sunken hover:text-ink;
+	}
+
+	.chip {
+		@apply inline-flex items-center gap-1.5 rounded-full border border-edge
+			bg-sunken px-3 py-1 text-xs font-semibold text-muted;
+	}
+
+	.label {
+		@apply mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted;
+	}
+
+	/* Divider with centred caption — the "Link statistics" rule from v2. */
+	.rule {
+		@apply relative mb-7 w-full border-b border-edge text-center text-sm text-muted;
+	}
+	.rule > span {
+		@apply relative inline-block translate-y-1/2 bg-canvas px-3;
+	}
+}
+
+@layer utilities {
+	.clamp-1 {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 1;
+		overflow: hidden;
+	}
+
+	.skeleton {
+		@apply relative overflow-hidden bg-sunken;
+	}
+	.skeleton::after {
+		content: "";
+		@apply absolute inset-0 -translate-x-full animate-shimmer;
+		background-image: linear-gradient(
+			90deg,
+			transparent,
+			rgb(255 255 255 / 0.25),
+			transparent
+		);
+	}
+}
+
+/* Leaflet renders its own chrome; nudge it toward the app's surfaces. */
+.leaflet-container {
+	@apply bg-sunken font-sans;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	@apply bg-surface text-ink;
+}
+.dark .leaflet-tile {
+	filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9);
+}
