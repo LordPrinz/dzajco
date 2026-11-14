@@ -5,11 +5,10 @@ import { deleteIfExpired, getLinkRecord, type LinkRecord } from "../db/queries";
 import { isBot } from "../domain/bots";
 import { isReserved } from "../domain/ids";
 import { reportAbuseLink } from "../lib/abuse";
+import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
 import { escapeHtml } from "../lib/html";
 import { rateLimit } from "../middleware/rate-limit";
-
-type Env = { Bindings: Cloudflare.Env };
 
 /**
  * Lookup ids are looser than new custom names: names imported from v2 may contain spaces and other
@@ -46,7 +45,7 @@ export async function purgeLinkCache(id: string): Promise<void> {
   await caches.default.delete(linkCacheKey(id));
 }
 
-function parseId(raw: string): string | null {
+export function parseId(raw: string): string | null {
   const id = raw.normalize("NFC");
   return LOOKUP_ID.test(id) && !isReserved(id) ? id : null;
 }
@@ -74,7 +73,12 @@ function cacheSeconds(record: LinkRecord, now: number): number {
   return Math.max(0, Math.min(MAX_CACHE_SECONDS, Math.floor((record.expiresAt - now) / 1000)));
 }
 
-async function loadRecord(c: Context<Env>, id: string, now: number): Promise<LinkRecord | null> {
+/** The link record from the colo cache, else from D1 (then cached). Shared with `GET /api/v1/links/:id`. */
+export async function loadRecord(
+  c: Context<AppEnv>,
+  id: string,
+  now: number,
+): Promise<LinkRecord | null> {
   const cached = await readCached(id);
   if (cached) return cached;
   const record = await getLinkRecord(c.env.DB, id);
@@ -89,6 +93,19 @@ async function loadRecord(c: Context<Env>, id: string, now: number): Promise<Lin
   return record;
 }
 
+export function isExpired(record: LinkRecord, now: number): boolean {
+  return record.expiresAt !== null && record.expiresAt <= now;
+}
+
+/** Deletes an expired link and its cache entry after the response is sent. */
+export function deleteLazily(c: Context<AppEnv>, id: string, now: number): void {
+  c.executionCtx.waitUntil(
+    deleteIfExpired(c.env.DB, id, now)
+      .then(() => purgeLinkCache(id))
+      .catch(() => console.warn("lazy delete failed")),
+  );
+}
+
 async function writeVisit(sink: VisitSink, point: ReturnType<typeof visitPoint>): Promise<void> {
   try {
     await sink.write(point);
@@ -97,7 +114,7 @@ async function writeVisit(sink: VisitSink, point: ReturnType<typeof visitPoint>)
   }
 }
 
-function notFound(c: Context<Env>): Response {
+function notFound(c: Context<AppEnv>): Response {
   return c.html(page(c.env, "Not found", "Link not found"), 404, PAGE_HEADERS);
 }
 
@@ -108,7 +125,7 @@ export interface RedirectOptions {
 /** `GET|HEAD /:id` plus the legacy 301s. Mount after every static route: `/:id` matches any segment. */
 export function redirectRoutes(options: RedirectOptions = {}) {
   const makeSink = options.sink ?? ((env: Cloudflare.Env) => aeSink(env.VISITS));
-  const app = new Hono<Env>();
+  const app = new Hono<AppEnv>();
 
   app.get("/dzajapi", (c) => c.redirect("/docs/api", 301));
 
@@ -120,7 +137,7 @@ export function redirectRoutes(options: RedirectOptions = {}) {
 
   app.get(
     "/:id",
-    rateLimit<Env>("RL_REDIRECT", (c) => clientIpKey(c.req.raw), {
+    rateLimit<AppEnv>("RL_REDIRECT", (c) => clientIpKey(c.req.raw), {
       onLimited: (c) => c.text("Too many requests", 429, { "Cache-Control": "no-store" }),
     }),
     async (c) => {
@@ -130,12 +147,8 @@ export function redirectRoutes(options: RedirectOptions = {}) {
       const record = await loadRecord(c, id, now);
       if (!record) return notFound(c);
 
-      if (record.expiresAt !== null && record.expiresAt <= now) {
-        c.executionCtx.waitUntil(
-          deleteIfExpired(c.env.DB, id, now)
-            .then(() => purgeLinkCache(id))
-            .catch(() => console.warn("redirect: lazy delete failed")),
-        );
+      if (isExpired(record, now)) {
+        deleteLazily(c, id, now);
         return c.html(page(c.env, "Link expired", "This link has expired", id), 410, PAGE_HEADERS);
       }
       if (record.blocked)

@@ -1,4 +1,5 @@
 import type { Context, MiddlewareHandler } from "hono";
+import { apiError } from "./errors";
 
 type RateLimitBinding = {
   [K in keyof Cloudflare.Env]: Cloudflare.Env[K] extends RateLimit ? K : never;
@@ -28,7 +29,7 @@ export function rateLimit<E extends { Bindings: Cloudflare.Env }>(
       if (!success) {
         const res = options.onLimited
           ? await options.onLimited(c)
-          : c.json({ error: { code: "rate_limited", message: "Too many requests" } }, 429);
+          : apiError(c, 429, "rate_limited", "Too many requests");
         if (!res.headers.has("Retry-After")) {
           res.headers.set("Retry-After", String(RETRY_AFTER_SECONDS));
         }
