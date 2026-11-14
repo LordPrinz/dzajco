@@ -24,6 +24,7 @@
   "vars": {
     "PUBLIC_ORIGIN": "http://localhost:8787",
     "ROLLUP_MAX_PAGES": "10",
-    "AE_FRESH_TTL": "300"
+    "AE_FRESH_TTL": "300",
+    "SECRET_PEPPER_VERSION": "1"
   }
 }
