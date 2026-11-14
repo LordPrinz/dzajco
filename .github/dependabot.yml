@@ -23,3 +23,20 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+  - package-ecosystem: docker
+    directory: /
+    target-branch: v3.0
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "[DZAJ-15] build"
+      include: scope
+
+  - package-ecosystem: docker-compose
+    directory: /infra
+    target-branch: v3.0
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "[DZAJ-15] build"
+      include: scope

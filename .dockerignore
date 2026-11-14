@@ -1,0 +1,20 @@
+# An allowlist: only what `bun install`, the client build and `wrangler dev` need goes into the build context.
+*
+!package.json
+!bun.lock
+!bunfig.toml
+!tsconfig*.json
+!wrangler.jsonc
+!worker-configuration.d.ts
+!src/
+!public/
+!migrations/
+!infra/entrypoint.sh
+**/node_modules
+**/.wrangler
+**/.env*
+**/.dev.vars*
+**/dist
+**/coverage
+public/assets
+**/.DS_Store

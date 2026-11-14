@@ -26,7 +26,9 @@
     "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
     "admin:block": "bun scripts/admin/block.ts",
     "build:client": "bun build src/client/*.ts --outdir public/assets --minify --splitting --target browser",
-    "check:size": "bun scripts/ci/size.ts"
+    "check:size": "bun scripts/ci/size.ts",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d --build",
+    "infra:down": "docker compose -f infra/docker-compose.yml down"
   },
   "dependencies": {
     "hono": "4.13.18",

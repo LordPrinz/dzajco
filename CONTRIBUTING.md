@@ -85,6 +85,22 @@ bun run typecheck
 Put code with no workerd dependency in `src/domain` so `bun test` can run it
 ([ADR 0006](docs/adr/0006-one-package-two-test-runners.md)). Do not commit `.skip` or `.only`.
 
+## CI
+
+| Job          | Runs                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------ |
+| Conventions  | branch name and PR title                                                             |
+| Lint         | `biome ci .`                                                                         |
+| Typecheck    | `bun run typecheck`                                                                  |
+| Test         | `bun test` with coverage, then the `src/domain` line coverage threshold              |
+| Worker tests | `bun run test:worker`                                                                |
+| Build        | client bundle, `check:size`, `wrangler deploy --dry-run` (no credentials)            |
+| Image        | `docker.yml`, only when Docker, `src`, `infra` or similar files change: build, smoke |
+
+Required checks: Conventions, Lint, Typecheck, Test, Worker tests, Build. Image is path-filtered, so it is
+not required. To run it locally: `bun run infra:up`, `bun scripts/ci/smoke.ts http://localhost:8787`,
+`bun run infra:down`.
+
 ## Git hooks (Husky)
 
 | Hook                 | Runs                                           |
