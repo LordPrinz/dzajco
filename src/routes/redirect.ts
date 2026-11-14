@@ -7,8 +7,8 @@ import { isReserved } from "../domain/ids";
 import { reportAbuseLink } from "../lib/abuse";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
-import { escapeHtml } from "../lib/html";
 import { rateLimit } from "../middleware/rate-limit";
+import { LinkError, type LinkErrorKind } from "../views/LinkError";
 
 /**
  * Lookup ids are looser than new custom names: names imported from v2 may contain spaces and other
@@ -22,18 +22,11 @@ const MAX_CACHE_SECONDS = 60;
  */
 const CACHE_ORIGIN = "https://link-cache.internal";
 
-const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
+export const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 
-/** Static page; the only dynamic part is the report link, whose href is escaped. */
-function page(
-  env: Cloudflare.Env,
-  title: "Not found" | "Link expired" | "Link disabled",
-  heading: "Link not found" | "This link has expired" | "This link has been disabled",
-  linkId?: string,
-): string {
-  const href = reportAbuseLink(env, { linkId });
-  const report = href ? `<p><a href="${escapeHtml(href)}">Report abuse</a></p>` : "";
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><title>${title}</title><h1>${heading}</h1>${report}</html>`;
+export function errorPage(c: Context<AppEnv>, kind: LinkErrorKind, linkId?: string): string {
+  const reportHref = reportAbuseLink(c.env, { linkId });
+  return `<!doctype html>${LinkError({ nonce: c.var.nonce, kind, reportHref })}`;
 }
 
 export function linkCacheKey(id: string): Request {
@@ -115,7 +108,7 @@ async function writeVisit(sink: VisitSink, point: ReturnType<typeof visitPoint>)
 }
 
 function notFound(c: Context<AppEnv>): Response {
-  return c.html(page(c.env, "Not found", "Link not found"), 404, PAGE_HEADERS);
+  return c.html(errorPage(c, "not_found"), 404, PAGE_HEADERS);
 }
 
 export interface RedirectOptions {
@@ -149,14 +142,9 @@ export function redirectRoutes(options: RedirectOptions = {}) {
 
       if (isExpired(record, now)) {
         deleteLazily(c, id, now);
-        return c.html(page(c.env, "Link expired", "This link has expired", id), 410, PAGE_HEADERS);
+        return c.html(errorPage(c, "expired", id), 410, PAGE_HEADERS);
       }
-      if (record.blocked)
-        return c.html(
-          page(c.env, "Link disabled", "This link has been disabled", id),
-          410,
-          PAGE_HEADERS,
-        );
+      if (record.blocked) return c.html(errorPage(c, "disabled", id), 410, PAGE_HEADERS);
       const location = safeLocation(record.target);
       if (!location) {
         console.warn("redirect: stored target is not an http(s) URL");

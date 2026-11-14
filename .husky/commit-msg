@@ -1,0 +1,1 @@
+bun scripts/git/commit-msg.ts "$1"

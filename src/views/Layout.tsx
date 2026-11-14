@@ -9,18 +9,23 @@ const NAV = [
   { href: "/about", label: "O nas" },
   { href: "/history", label: "Historia" },
   { href: "/docs/api", label: "API" },
-  { href: "/privacy", label: "Prywatność" },
+  { href: "/privacy-policy", label: "Prywatność" },
 ];
+
+/** Stylesheets under `/css` that pages may add; a closed list keeps the `<link>` paths constant. */
+export type PageStylesheet = "pages.css" | "stats.css";
 
 export interface LayoutProps {
   nonce: string;
   title?: string;
   /** Module scripts under `/assets`, e.g. `form.js`. */
   scripts?: readonly string[];
+  /** Extra stylesheets under `/css` (`pages.css`, `stats.css`), loaded after `app.css`. */
+  styles?: readonly PageStylesheet[];
   children?: Child;
 }
 
-export function Layout({ nonce, title, scripts = [], children }: LayoutProps) {
+export function Layout({ nonce, title, scripts = [], styles = [], children }: LayoutProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   return (
     <html lang="pl">
@@ -45,6 +50,9 @@ export function Layout({ nonce, title, scripts = [], children }: LayoutProps) {
           crossorigin=""
         />
         <link rel="stylesheet" href="/css/app.css" />
+        {styles.map((href) => (
+          <link rel="stylesheet" href={`/css/${href}`} />
+        ))}
       </head>
       <body>
         <main class="page">{children}</main>
