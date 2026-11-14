@@ -79,6 +79,16 @@ export function Privacy({ nonce, contactHref }: PrivacyProps) {
           <p>Serwis nie ustawia plików cookie.</p>
         </section>
 
+        <section class="doc__section" aria-labelledby="p-map">
+          <h2 id="p-map">Mapa na stronie statystyk</h2>
+          <p>
+            Mapa miast w statystykach właściciela linku pobiera kafelki z OpenStreetMap
+            (tile.openstreetmap.org). Przeglądarka wysyła wtedy do OpenStreetMap swój adres IP i
+            fragment mapy, który wyświetla, ale nie adres linku. Mapa ładuje się dopiero po jej
+            otwarciu.
+          </p>
+        </section>
+
         <section class="doc__section" aria-labelledby="p-contact">
           <h2 id="p-contact">Kontakt</h2>
           <p>
