@@ -4,6 +4,7 @@ import type { AppEnv } from "./lib/app-env";
 import { notFound, onError } from "./middleware/errors";
 import { requestId } from "./middleware/request-id";
 import { securityHeaders } from "./middleware/security-headers";
+import { siteExtras } from "./middleware/site-extras";
 import { apiRoutes } from "./routes/api";
 import { infoPageRoutes } from "./routes/info-pages";
 import { pageRoutes } from "./routes/pages";
@@ -13,7 +14,7 @@ import { statsPageRoutes } from "./routes/stats-page";
 
 const app = new Hono<AppEnv>();
 
-app.use("*", requestId(), securityHeaders());
+app.use("*", requestId(), securityHeaders(), siteExtras());
 app.onError(onError);
 app.notFound(notFound);
 
