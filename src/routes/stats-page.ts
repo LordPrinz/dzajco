@@ -5,10 +5,10 @@ import { clientIpKey } from "../lib/client-ip";
 import { rateLimit } from "../middleware/rate-limit";
 import { loadPublicStats } from "../services/stats";
 import { Stats } from "../views/Stats";
-import { deleteLazily, isExpired, loadRecord, PAGE_HEADERS, page, parseId } from "./redirect";
+import { deleteLazily, errorPage, isExpired, loadRecord, PAGE_HEADERS, parseId } from "./redirect";
 
 function missing(c: Context<AppEnv>): Response {
-  return c.html(page(c.env, "Not found", "Link not found"), 404, PAGE_HEADERS);
+  return c.html(errorPage(c, "not_found"), 404, PAGE_HEADERS);
 }
 
 /** `GET /:id/stats`: the public stats page. Mount before the redirect routes. */
@@ -28,14 +28,10 @@ export function statsPageRoutes() {
       if (!record) return missing(c);
       if (isExpired(record, now)) {
         deleteLazily(c, id, now);
-        return c.html(page(c.env, "Link expired", "This link has expired", id), 410, PAGE_HEADERS);
+        return c.html(errorPage(c, "expired", id), 410, PAGE_HEADERS);
       }
       if (record.blocked) {
-        return c.html(
-          page(c.env, "Link disabled", "This link has been disabled", id),
-          410,
-          PAGE_HEADERS,
-        );
+        return c.html(errorPage(c, "disabled", id), 410, PAGE_HEADERS);
       }
 
       const stats = await loadPublicStats(c.env, id, now);

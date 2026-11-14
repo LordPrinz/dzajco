@@ -127,7 +127,7 @@ describe("GET /:id/stats", () => {
   it("answers 404 for an unknown id", async () => {
     const res = await call(`/${freshId()}/stats`);
     expect(res.status).toBe(404);
-    expect(await res.text()).toContain("Link not found");
+    expect(await res.text()).toContain("Nie znaleziono linku");
   });
 
   it("answers 410 for an expired link", async () => {
@@ -135,7 +135,7 @@ describe("GET /:id/stats", () => {
     await seed(id, { expiresAt: Date.now() - 1000 });
     const res = await call(`/${id}/stats`);
     expect(res.status).toBe(410);
-    expect(await res.text()).toContain("This link has expired");
+    expect(await res.text()).toContain("Ten link wygasł");
   });
 
   it("answers 410 for a blocked link", async () => {
@@ -145,7 +145,7 @@ describe("GET /:id/stats", () => {
     try {
       const res = await call(`/${id}/stats`);
       expect(res.status).toBe(410);
-      expect(await res.text()).toContain("This link has been disabled");
+      expect(await res.text()).toContain("Ten link został wyłączony");
     } finally {
       await env.DB.prepare("DELETE FROM blocked_hosts WHERE host = 'example.com'").run();
     }

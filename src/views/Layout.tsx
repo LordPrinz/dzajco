@@ -9,16 +9,19 @@ const NAV = [
   { href: "/about", label: "O nas" },
   { href: "/history", label: "Historia" },
   { href: "/docs/api", label: "API" },
-  { href: "/privacy", label: "Prywatność" },
+  { href: "/privacy-policy", label: "Prywatność" },
 ];
+
+/** Stylesheets under `/css` that pages may add; a closed list keeps the `<link>` paths constant. */
+export type PageStylesheet = "pages.css" | "stats.css";
 
 export interface LayoutProps {
   nonce: string;
   title?: string;
   /** Module scripts under `/assets`, e.g. `form.js`. */
   scripts?: readonly string[];
-  /** Extra stylesheets under `/css`, e.g. `stats.css`, loaded after `app.css`. */
-  styles?: readonly string[];
+  /** Extra stylesheets under `/css` (`pages.css`, `stats.css`), loaded after `app.css`. */
+  styles?: readonly PageStylesheet[];
   children?: Child;
 }
 

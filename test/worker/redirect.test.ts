@@ -242,7 +242,7 @@ describe("GET /:id", () => {
       DB: failingDb,
     });
     expect(res.status).toBe(410);
-    expect(await res.text()).toContain("<h1>This link has been disabled</h1>");
+    expect(await res.text()).toContain("Ten link został wyłączony");
   });
 
   it("returns 410 'link disabled' for a target on a blocked host", async () => {
@@ -253,7 +253,7 @@ describe("GET /:id", () => {
     const sink = new RecordingSink();
     const res = await run(appWith(sink), request(`/${id}`));
     expect(res.status).toBe(410);
-    expect(await res.text()).toContain("<h1>This link has been disabled</h1>");
+    expect(await res.text()).toContain("Ten link został wyłączony");
     expect(sink.points).toHaveLength(0);
   });
 
@@ -270,7 +270,7 @@ describe("GET /:id", () => {
     await purgeLinkCache(id);
     const res = await run(app, request(`/${id}`));
     expect(res.status).toBe(410);
-    expect(await res.text()).toContain("This link has been disabled");
+    expect(await res.text()).toContain("Ten link został wyłączony");
   });
 
   it("shows an escaped report-abuse link on 404 and 410 pages only when ABUSE_EMAIL is set", async () => {
@@ -399,7 +399,7 @@ describe("mounted worker", () => {
   });
 
   it("does not treat reserved names as link ids", async () => {
-    const res = await exports.default.fetch("https://dzaj.co/history");
+    const res = await exports.default.fetch("https://dzaj.co/api");
     expect(res.status).toBe(404);
   });
 });
