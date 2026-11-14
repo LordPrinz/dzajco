@@ -30,6 +30,8 @@
     // Account id for the Analytics Engine SQL API; set per deployment (docs/DEPLOYMENT.md).
     "CF_ACCOUNT_ID": "",
     // Address shown as a "Report abuse" mailto link on 404/410 pages. Empty hides the link.
-    "ABUSE_EMAIL": ""
+    "ABUSE_EMAIL": "",
+    // Cloudflare Web Analytics token (32 hex chars or a dashed UUID). Empty omits the beacon script entirely.
+    "CF_ANALYTICS_TOKEN": ""
   }
 }
