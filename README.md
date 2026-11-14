@@ -1,57 +1,39 @@
-<h1 align="center">Dzajco - Link Shortener</h1>
+# dzajco
 
-<div align="center">
-The best link shortener you were looking for.</div>
+A small URL shortener running as a single Cloudflare Worker: Hono + Hono JSX, D1 for links, Analytics Engine for visit statistics. Bun is the toolchain.
 
-<!-- TABLE OF CONTENTS -->
+## Requirements
 
-## Table of Contents
+- Bun 1.4.4
+- Node.js (wrangler, workerd and vitest run on it)
 
-- [Table of Contents](#table-of-contents)
-- [Overview](#overview)
-  - [Built With](#built-with)
-- [Features](#features)
-- [How To Use](#how-to-use)
-- [Contact](#contact)
+If you manage Node with Volta, the `workerd` postinstall fails under the Volta shim (`bun install` exits with 126). Put a real Node first on `PATH` instead:
 
-<!-- OVERVIEW -->
+```sh
+PATH="$HOME/.volta/tools/image/node/<version>/bin:$PATH" bun install
+```
 
-## Overview
+Local secrets come only from `.dev.vars` (see `.env.example`). `.env` files are not loaded into the Worker.
 
-It is a link shortener. This app was created in Next.js with typescript. It uses mongodb as a database system.
+## Getting started
 
-### Built With
+```sh
+bun install
+bun run db:migrate:local
+bun run dev
+```
 
-<!-- This section should list any major frameworks that you built your project using. Here are a few examples.-->
+The Worker listens on http://localhost:8787. `GET /healthz` returns `{"ok":true}`.
 
-- [TypeScript](https://www.typescriptlang.org/)
-- [Next.js](https://nextjs.org/)
+## Scripts
 
-## Features
-
-- Collects data about how many people visited a shorten link.
-- Easy to use
-- Safe
-- You don't have to sign up
-- No limitation for normal user
-- History
-
-## How To Use
-
-<!-- Example: -->
-
-- Simplest usecase:
-  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click `Dżajcuj` button. You will get a notification with your shorten link. In order to copy this link you have to click on a copy icon located in a left corner of this notification.
-- Short link with custom name
-  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click on `More options` button (it is located under the `Link` input), type in your custom name you only imagine into the `Custom Name` input (custom name shouldn't be longer than 25 letters), then click `Dżajcuj` button. You will get a notification with your shorten link. In order to copy this link you have to click on a copy icon located in a left corner of this notification.
-- Short link with expiration date
-  - Go to a website https://www.dzaj.de/, paste your link into `Link` input, click on `More options` button (it is located under the `Link` input), select expiration date from available options or set you custom expiration date by selecting `Custom` and then providing date to the input that will show up below
-- Check shorten link visits
-  - Go to a website https://www.dzaj.de/, type in your shorten link name or shorten link url into input below `Link statistics` (ex. https://dzaj.de/myLink or myLink), then click `Show Statistics` button. You will be redirected to a page with a counter.
-- Link History
-  - You can check your shorten links history by clicking on a `History` link located in the bottom navigation. You can copy your shorten link again by clicking on the yellow code. You can also delete your link via `History` page.
-
-## Contact
-
-- GitHub [LordPrinz](https://github.com/LordPrinz)
-- Discord [lordprinz1](https://discord.com/users/520676533279522817)
+| Script                                           | What it does                                              |
+| ------------------------------------------------ | --------------------------------------------------------- |
+| `bun run dev`                                    | Start `wrangler dev`                                      |
+| `bun run check` / `check:fix`                    | Biome lint and format check / apply fixes                 |
+| `bun run typecheck`                              | Type-check Worker code and Bun code (scripts, unit tests) |
+| `bun run test`                                   | Unit tests with `bun test` (`src`, `scripts`)             |
+| `bun run test:worker`                            | Worker tests in the Workers runtime with Vitest           |
+| `bun run types`                                  | Regenerate `worker-configuration.d.ts`                    |
+| `bun run db:migrate:local` / `db:migrate:remote` | Apply D1 migrations                                       |
+| `bun run deploy`                                 | Run all checks, then `wrangler deploy`                    |
