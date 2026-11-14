@@ -9,7 +9,7 @@ export class IdTakenError extends Error {
 
 const CURSOR_KEY = "rollup_cursor";
 const MAX_EXPIRED_BATCH = 1000;
-const MAX_BLOCK_SUFFIXES = 10;
+const MAX_HOST_LENGTH = 253;
 
 function normalizeHostname(hostname: string): string {
   return hostname.toLowerCase().replace(/\.+$/, "");
@@ -18,7 +18,7 @@ function normalizeHostname(hostname: string): string {
 /** Normalises a bare host the same way `insertLink` stores `target_host` (punycode, lowercase, no trailing dot). */
 function normalizeHost(input: string): string {
   const trimmed = input.trim();
-  if (trimmed === "" || /[\s/:@?#\\]/.test(trimmed)) {
+  if (trimmed === "" || trimmed.length > MAX_HOST_LENGTH || /[\s/:@?#\\]/.test(trimmed)) {
     throw new Error(`Not a bare host: ${input}`);
   }
   return normalizeHostname(new URL(`http://${trimmed}`).hostname);
@@ -329,16 +329,17 @@ export async function blockHost(
 }
 
 /**
- * True when `suffixes` (from `hostSuffixes`) contains a blocked host. Only the 10 shortest are
- * checked, to stay under D1's bound-parameter limit. Callers must treat a thrown error as blocked.
+ * True when the host, or any parent domain of it, is in `blocked_hosts`. Throws on input that is
+ * not a bare host (or longer than 253 characters); callers must treat an error as blocked.
  */
-export async function isHostBlocked(db: D1Database, suffixes: readonly string[]): Promise<boolean> {
-  const checked = suffixes.slice(-MAX_BLOCK_SUFFIXES);
-  if (checked.length === 0) return false;
-  const marks = checked.map(() => "?").join(", ");
+export async function isHostBlocked(db: D1Database, host: string): Promise<boolean> {
+  const normalized = normalizeHost(host);
   const row = await db
-    .prepare(`SELECT 1 AS hit FROM blocked_hosts WHERE host IN (${marks}) LIMIT 1`)
-    .bind(...checked)
+    .prepare(
+      `SELECT 1 AS hit FROM blocked_hosts b
+       WHERE ?1 = b.host OR substr(?1, -(length(b.host) + 1)) = '.' || b.host LIMIT 1`,
+    )
+    .bind(normalized)
     .first();
   return row !== null;
 }

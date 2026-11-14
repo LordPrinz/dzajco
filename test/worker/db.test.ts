@@ -126,11 +126,13 @@ describe("getLinkRecord", () => {
     expect((await getLinkRecord(db, "wild"))?.blocked).toBe(false);
   });
 
-  it("isHostBlocked matches given suffixes", async () => {
+  it("isHostBlocked matches the host and its parent domains", async () => {
     await blockHost(db, "evil.com", null, NOW);
-    expect(await isHostBlocked(db, ["x.evil.com", "evil.com", "com"])).toBe(true);
-    expect(await isHostBlocked(db, ["good.org", "org"])).toBe(false);
-    expect(await isHostBlocked(db, [])).toBe(false);
+    expect(await isHostBlocked(db, "x.evil.com")).toBe(true);
+    expect(await isHostBlocked(db, "evil.com")).toBe(true);
+    expect(await isHostBlocked(db, "notevil.com")).toBe(false);
+    expect(await isHostBlocked(db, "good.org")).toBe(false);
+    await expect(isHostBlocked(db, `${"a".repeat(254)}.com`)).rejects.toThrow();
   });
 });
 
@@ -148,10 +150,12 @@ describe("host normalisation", () => {
     }
   });
 
-  it("caps suffixes so many labels stay under the bound-parameter limit", async () => {
-    const suffixes = Array.from({ length: 150 }, (_, i) => `h${i}.evil.com`);
-    await blockHost(db, "com", null, NOW);
-    expect(await isHostBlocked(db, [...suffixes, "com"])).toBe(true);
+  it("matches a 12-label blocked entry against a deeper subdomain", async () => {
+    const entry = Array.from({ length: 12 }, (_, i) => `l${i}`).join(".");
+    await blockHost(db, entry, null, NOW);
+    expect(await isHostBlocked(db, `x.y.${entry}`)).toBe(true);
+    await insertLink(db, link("deep", { target: `https://x.y.${entry}/p` }));
+    expect((await getLinkRecord(db, "deep"))?.blocked).toBe(true);
   });
 });
 
