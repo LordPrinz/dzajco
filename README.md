@@ -25,6 +25,10 @@ bun run dev
 
 The Worker listens on http://localhost:8787. `GET /healthz` returns `{"ok":true}`.
 
+## Git hooks
+
+`bun install` installs the husky hooks (the `prepare` script): commit message and branch name checks, a Biome check of staged files, and typecheck plus tests before every push. Husky sets `core.hooksPath`, which all worktrees of a clone share, so run `bun install` in each new worktree or the hooks silently do not run. If the pre-commit check fails, run `bun run check:fix` and stage the result.
+
 ## Scripts
 
 | Script                                           | What it does                                              |
