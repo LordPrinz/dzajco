@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { runScheduled } from "./cron/scheduled";
 import type { AppEnv } from "./lib/app-env";
 import { notFound, onError } from "./middleware/errors";
 import { requestId } from "./middleware/request-id";
@@ -20,7 +21,7 @@ app.route("/", redirectRoutes());
 
 export default {
   fetch: app.fetch,
-  scheduled(controller: ScheduledController): void {
-    console.info(`scheduled run at ${new Date(controller.scheduledTime).toISOString()}`);
+  scheduled(controller: ScheduledController, env: Cloudflare.Env): Promise<void> {
+    return runScheduled(env, controller.scheduledTime);
   },
 } satisfies ExportedHandler<Cloudflare.Env>;
