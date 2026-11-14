@@ -22,10 +22,12 @@
     "gh:setup-repo": "bun scripts/gh/setup-repo.ts",
     "gh:setup-project": "bun scripts/gh/setup-project.ts",
     "gh:sync": "bun scripts/gh/sync-project.ts",
-    "gh:create-issues": "bun scripts/gh/create-issues.ts"
+    "gh:create-issues": "bun scripts/gh/create-issues.ts",
+    "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts"
   },
   "dependencies": {
-    "hono": "4.13.18"
+    "hono": "4.13.18",
+    "valibot": "1.5.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
@@ -34,6 +36,7 @@
     "husky": "9.1.7",
     "typescript": "7.0.2",
     "vitest": "5.1.0",
-    "wrangler": "4.162.0"
+    "wrangler": "4.162.0",
+    "fast-check": "4.10.2"
   }
 }
