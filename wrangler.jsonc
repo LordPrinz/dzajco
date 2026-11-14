@@ -26,6 +26,8 @@
     "PUBLIC_ORIGIN": "http://localhost:8787",
     "ROLLUP_MAX_PAGES": "10",
     "AE_FRESH_TTL": "300",
-    "SECRET_PEPPER_VERSION": "1"
+    "SECRET_PEPPER_VERSION": "1",
+    // Address shown as a "Report abuse" mailto link on 404/410 pages. Empty hides the link.
+    "ABUSE_EMAIL": ""
   }
 }
