@@ -19,6 +19,7 @@ export const REQUIRED_CHECKS = [
   "Test",
   "Worker tests",
   "Build",
+  "E2E",
 ];
 export const TOPICS = ["url-shortener", "cloudflare-workers", "hono", "d1", "bun", "typescript"];
 
