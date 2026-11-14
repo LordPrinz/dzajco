@@ -106,20 +106,20 @@ seconds (the staleness window).
 
 Redirect status and rules:
 
-| Case | Response |
-| --- | --- |
-| Link exists, not expired | 302 to target |
-| Link expired | 410, link removed lazily |
-| Link does not exist | 404 |
-| `/dzajapi` | 301 to `/docs/api` |
-| `/:id/info` | 301 to `/:id/stats` |
+| Case                     | Response                 |
+| ------------------------ | ------------------------ |
+| Link exists, not expired | 302 to target            |
+| Link expired             | 410, link removed lazily |
+| Link does not exist      | 404                      |
+| `/dzajapi`               | 301 to `/docs/api`       |
+| `/:id/info`              | 301 to `/:id/stats`      |
 
 Maximum expiry is one year. "Never" is stored as `NULL`.
 
 ### Visits and stats (Analytics Engine)
 
 - Dataset `dzajco_visits`. Secrets and vars: `CF_ACCOUNT_ID` (var) and `CF_AE_TOKEN` (token with the
-  *Account Analytics Read* permission).
+  _Account Analytics Read_ permission).
 - Data point: `indexes: [linkId]` (at most 96 bytes, enforced in the domain layer), `blobs: [country, city]`,
   `doubles: [lat, lon]`. Latitude and longitude are parsed from the `request.cf` strings.
 - Rollup (hourly cron): day D (UTC) closes only after `D+1 01:00 UTC`, to allow for ingest delay. The query
@@ -142,13 +142,13 @@ Maximum expiry is one year. "Never" is stored as `NULL`.
 
 ### API v1
 
-| Method | Path | Input | Responses |
-| --- | --- | --- | --- |
-| POST | `/api/v1/links` | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400 (including `blocked_target`), 409, 415, 429 |
-| GET | `/api/v1/links/:id` | none | 200 `{id, url, expiresAt}`, 404, 410, 429 |
-| GET | `/api/v1/links/:id/stats` | optional `Authorization: Bearer <key>` | 200 `{visits, countries: [{code, visits}], partial}` (plus `cities` with a key), 403, 404, 410, 429 |
-| DELETE | `/api/v1/links/:id` | `Authorization: Bearer <key>` | 204, 400, 403, 404, 429 |
-| GET | `/api/v1/stats` | none | 200 `{links, visits, countries, updatedAt}`, 429, lags up to about 24 h (stated in `/docs/api`) |
+| Method | Path                      | Input                                                                                         | Responses                                                                                           |
+| ------ | ------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400 (including `blocked_target`), 409, 415, 429         |
+| GET    | `/api/v1/links/:id`       | none                                                                                          | 200 `{id, url, expiresAt}`, 404, 410, 429                                                           |
+| GET    | `/api/v1/links/:id/stats` | optional `Authorization: Bearer <key>`                                                        | 200 `{visits, countries: [{code, visits}], partial}` (plus `cities` with a key), 403, 404, 410, 429 |
+| DELETE | `/api/v1/links/:id`       | `Authorization: Bearer <key>`                                                                 | 204, 400, 403, 404, 429                                                                             |
+| GET    | `/api/v1/stats`           | none                                                                                          | 200 `{links, visits, countries, updatedAt}`, 429, lags up to about 24 h (stated in `/docs/api`)     |
 
 Errors have the shape `{error: {code, message}}`. A `POST` with another content type gets 415, which blocks
 cross-site `text/plain` posts. A wrong key on the stats endpoint gets 403. It never falls back to the public
@@ -161,11 +161,11 @@ JSON responses carry `Content-Security-Policy: default-src 'none'`. There is no 
 
 Which limiter applies where, per IP and per 60 s:
 
-| Route | Limiter |
-| --- | --- |
-| `POST /`, `POST /api/v1/links` | `RL_CREATE` (10) |
-| `DELETE /api/v1/links/:id` | `RL_DELETE` (10) |
-| `GET /:id`, `GET /api/v1/links/:id` | `RL_REDIRECT` (120) |
+| Route                                              | Limiter                            |
+| -------------------------------------------------- | ---------------------------------- |
+| `POST /`, `POST /api/v1/links`                     | `RL_CREATE` (10)                   |
+| `DELETE /api/v1/links/:id`                         | `RL_DELETE` (10)                   |
+| `GET /:id`, `GET /api/v1/links/:id`                | `RL_REDIRECT` (120)                |
 | `GET /api/v1/links/:id/stats`, `GET /api/v1/stats` | `RL_STATS` (60), not `RL_REDIRECT` |
 
 Over the limit the response is 429 with `Retry-After`.
@@ -189,26 +189,26 @@ result page and owner stats carry `Cache-Control: no-store`.
 
 The Free plan is the design constraint. Limits used here:
 
-| Resource | Free limit |
-| --- | --- |
-| Worker requests | 100k per day |
-| CPU time | 10 ms per invocation |
-| D1 writes | 100k rows per day |
-| D1 reads | 5M rows per day |
-| Analytics Engine writes | 100k data points per day |
-| Analytics Engine queries | 10k per day |
+| Resource                 | Free limit               |
+| ------------------------ | ------------------------ |
+| Worker requests          | 100k per day             |
+| CPU time                 | 10 ms per invocation     |
+| D1 writes                | 100k rows per day        |
+| D1 reads                 | 5M rows per day          |
+| Analytics Engine writes  | 100k data points per day |
+| Analytics Engine queries | 10k per day              |
 
 Cost per operation:
 
-| Operation | D1 writes | D1 reads | AE | Notes |
-| --- | --- | --- | --- | --- |
-| Redirect (cache hit) | 0 | 0 | 1 point | AE write runs in `waitUntil` |
-| Redirect (cache miss) | 0 | 1 plus the `blocked_hosts` rows that match (one `IN (...)` query over the host and its parent domains, same batch) | 1 point | the cached record carries the `blocked` flag |
-| Create link | 1 to 2 (PK, `links_expires`) | 1 | 0 | |
-| Delete link | 1 to 2 plus `link_stats` rows | 1 | 0 | |
-| Stats (public or owner) | 0 | 1 plus the number of stats rows | at most 2 SQL API queries per 5 min per colo, shared by all links | data after the rollup cursor comes from AE |
-| Rollup (hourly cron, in pages) | 1 per (link, country, city) of the day, plus cursor | about the same | 1 to N queries | at most `ROLLUP_MAX_PAGES` x 500 groups per call. D1 and fetch wait time is not CPU, but building statements is, so `cpuTime` is measured in T16 and `ROLLUP_MAX_PAGES` is lowered if needed |
-| `global_stats` (daily cron step) | 1 | one `SUM` over `link_stats` per day | 0 | |
+| Operation                        | D1 writes                                           | D1 reads                                                                                                           | AE                                                                | Notes                                                                                                                                                                                        |
+| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Redirect (cache hit)             | 0                                                   | 0                                                                                                                  | 1 point                                                           | AE write runs in `waitUntil`                                                                                                                                                                 |
+| Redirect (cache miss)            | 0                                                   | 1 plus the `blocked_hosts` rows that match (one `IN (...)` query over the host and its parent domains, same batch) | 1 point                                                           | the cached record carries the `blocked` flag                                                                                                                                                 |
+| Create link                      | 1 to 2 (PK, `links_expires`)                        | 1                                                                                                                  | 0                                                                 |                                                                                                                                                                                              |
+| Delete link                      | 1 to 2 plus `link_stats` rows                       | 1                                                                                                                  | 0                                                                 |                                                                                                                                                                                              |
+| Stats (public or owner)          | 0                                                   | 1 plus the number of stats rows                                                                                    | at most 2 SQL API queries per 5 min per colo, shared by all links | data after the rollup cursor comes from AE                                                                                                                                                   |
+| Rollup (hourly cron, in pages)   | 1 per (link, country, city) of the day, plus cursor | about the same                                                                                                     | 1 to N queries                                                    | at most `ROLLUP_MAX_PAGES` x 500 groups per call. D1 and fetch wait time is not CPU, but building statements is, so `cpuTime` is measured in T16 and `ROLLUP_MAX_PAGES` is lowered if needed |
+| `global_stats` (daily cron step) | 1                                                   | one `SUM` over `link_stats` per day                                                                                | 0                                                                 |                                                                                                                                                                                              |
 
 A 429 from a rate limit binding still counts as a Worker request. Only the WAF rule protects the request quota
 (see Security, rate limits).
@@ -229,21 +229,21 @@ If fresh-data queries from many colos approach 7k per day, the cache TTL grows t
 
 The v2 findings and what v3 does instead. Each row has a regression test in v3 that replays the old input.
 
-| ID | v2 problem | v3 |
-| --- | --- | --- |
-| S1 | NoSQL injection: `secretKey: {"$ne":null}` deletes any link | Valibot schema on every input, secret compared as a hash. An object as key returns 400 and the link stays |
-| S2 | SSRF: the server fetched the user URL for metadata | Metadata preview and `RedirectPage` removed. No `fetch` of user URLs. The OG image is static |
-| S3 | Parameter injection in the geo API call, forgeable `x-forwarded-for`, dead middleware | `request.cf` for geo, `cf-connecting-ip` for the client. `x-forwarded-for` is ignored |
-| S4 | One in-memory limiter of 10 per minute for everyone | Limit per IP (IPv6 cut to /64), including reads |
-| S5 | Public city data, ids from 3 characters | Public stats: visits and countries only. Ids are 7 characters ([ADR 0005](adr/0005-stats-visibility.md)) |
-| S6 | secretKey stored in plaintext | Only `v<n>:HMAC-SHA256(pepper, key)` is stored ([ADR 0003](adr/0003-secret-key-hashing.md)) |
-| S7 | `file:` and `ftp:` accepted as redirect targets | Allowlist: `http:` and `https:` |
-| B1 | `.catch` assigned a Response to `req` | Invalid JSON returns 400 `invalid_json` |
-| B2 | `expire: "never"` rejected | `expiresAt: null` is valid and stored as `NULL` |
-| B3 | Past expiry date accepted | Past dates return 400 |
-| B4 | Custom name check and insert were separate (TOCTOU) | Insert against the primary key. The loser gets 409 |
-| B5 | Lost update on the visit counter | Idempotent rollup upsert in one batch with the cursor |
-| B6 | Visits counted on API calls | Only `GET /:id` that is not a bot and not `HEAD` writes a data point |
+| ID  | v2 problem                                                                            | v3                                                                                                        |
+| --- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| S1  | NoSQL injection: `secretKey: {"$ne":null}` deletes any link                           | Valibot schema on every input, secret compared as a hash. An object as key returns 400 and the link stays |
+| S2  | SSRF: the server fetched the user URL for metadata                                    | Metadata preview and `RedirectPage` removed. No `fetch` of user URLs. The OG image is static              |
+| S3  | Parameter injection in the geo API call, forgeable `x-forwarded-for`, dead middleware | `request.cf` for geo, `cf-connecting-ip` for the client. `x-forwarded-for` is ignored                     |
+| S4  | One in-memory limiter of 10 per minute for everyone                                   | Limit per IP (IPv6 cut to /64), including reads                                                           |
+| S5  | Public city data, ids from 3 characters                                               | Public stats: visits and countries only. Ids are 7 characters ([ADR 0005](adr/0005-stats-visibility.md))  |
+| S6  | secretKey stored in plaintext                                                         | Only `v<n>:HMAC-SHA256(pepper, key)` is stored ([ADR 0003](adr/0003-secret-key-hashing.md))               |
+| S7  | `file:` and `ftp:` accepted as redirect targets                                       | Allowlist: `http:` and `https:`                                                                           |
+| B1  | `.catch` assigned a Response to `req`                                                 | Invalid JSON returns 400 `invalid_json`                                                                   |
+| B2  | `expire: "never"` rejected                                                            | `expiresAt: null` is valid and stored as `NULL`                                                           |
+| B3  | Past expiry date accepted                                                             | Past dates return 400                                                                                     |
+| B4  | Custom name check and insert were separate (TOCTOU)                                   | Insert against the primary key. The loser gets 409                                                        |
+| B5  | Lost update on the visit counter                                                      | Idempotent rollup upsert in one batch with the cursor                                                     |
+| B6  | Visits counted on API calls                                                           | Only `GET /:id` that is not a bot and not `HEAD` writes a data point                                      |
 
 Other measures:
 
