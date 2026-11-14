@@ -1,0 +1,7 @@
+[install]
+exact = true
+
+[test]
+root = "."
+coverageSkipTestFiles = true
+pathIgnorePatterns = ["test/**", "node_modules/**"]

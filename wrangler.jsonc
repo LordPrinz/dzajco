@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dzajco",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-13",
+  "observability": { "enabled": true },
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dzajco",
+      // Placeholder: docs/DEPLOYMENT.md explains how to replace it with the real database id.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "analytics_engine_datasets": [{ "binding": "VISITS", "dataset": "dzajco_visits" }],
+  "ratelimits": [
+    { "name": "RL_CREATE", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } },
+    { "name": "RL_DELETE", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } },
+    { "name": "RL_STATS", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } }
+  ],
+  "triggers": { "crons": ["0 * * * *"] },
+  "vars": {
+    "PUBLIC_ORIGIN": "http://localhost:8787",
+    "ROLLUP_MAX_PAGES": "10",
+    "AE_FRESH_TTL": "300"
+  }
+}
