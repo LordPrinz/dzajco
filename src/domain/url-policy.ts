@@ -1,4 +1,5 @@
 import { hostIsIdn } from "../shared/form";
+import { MAX_HOST_LENGTH } from "./host";
 export const MAX_URL_LENGTH = 2048;
 
 export const SHORTENER_HOSTS: readonly string[] = [
@@ -42,7 +43,7 @@ function normalizeOwnHost(host: string): string {
   return host.toLowerCase().replace(/:\d+$/, "").replace(/\.+$/, "");
 }
 
-function isPrivateIPv4(a: number, b: number): boolean {
+function isPrivateIPv4(a: number, b: number, c: number): boolean {
   return (
     a === 0 ||
     a >= 224 ||
@@ -51,7 +52,12 @@ function isPrivateIPv4(a: number, b: number): boolean {
     (a === 100 && b >= 64 && b <= 127) ||
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168)
+    (a === 192 && b === 168) ||
+    // IETF protocol assignments, TEST-NET-1/2/3 and benchmarking (198.18.0.0/15).
+    (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113)
   );
 }
 
@@ -76,15 +82,28 @@ function ipv6Groups(host: string): number[] | null {
 function isPrivateIPv6(host: string): boolean {
   const g = ipv6Groups(host);
   if (!g) return true;
-  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0, g6 = 0] = g;
-  const embeddedV4 = isPrivateIPv4(g6 >> 8, g6 & 0xff);
+  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0, g6 = 0, g7 = 0] = g;
+  const embeddedV4 = isPrivateIPv4(g6 >> 8, g6 & 0xff, g7 >> 8);
   const zeroPrefix = g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0;
   if (zeroPrefix && g5 === 0 && (g6 === 0 || embeddedV4)) return true;
   if (zeroPrefix && g5 === 0xffff && embeddedV4) return true;
+  // IPv4-translated (::ffff:0:a.b.c.d).
+  if (g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0xffff && g5 === 0 && embeddedV4) {
+    return true;
+  }
   if (g0 === 0x64 && g1 === 0xff9b && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0 && embeddedV4) {
     return true;
   }
+  // Local-use NAT64 (64:ff9b:1::/48) maps into networks we cannot see, so it is refused whatever it embeds.
+  if (g0 === 0x64 && g1 === 0xff9b && g2 === 1) return true;
+  // Documentation (3fff::/20, RFC 9637).
+  if (g0 === 0x3fff && g1 < 0x1000) return true;
   if (g0 === 0x2002) return true;
+  // Teredo (2001::/32, can carry any IPv4), documentation (2001:db8::/32), discard (100::/64).
+  if (g0 === 0x2001 && (g1 === 0 || g1 === 0x0db8)) return true;
+  if (g0 === 0x0100 && g1 === 0 && g2 === 0 && g3 === 0) return true;
+  // Multicast (ff00::/8) and the deprecated site-local range (fec0::/10).
+  if ((g0 & 0xff00) === 0xff00 || (g0 & 0xffc0) === 0xfec0) return true;
   return (g0 & 0xfe00) === 0xfc00 || (g0 & 0xffc0) === 0xfe80;
 }
 
@@ -93,7 +112,7 @@ export function isPrivateHost(host: string): boolean {
   if (host.startsWith("[")) return isPrivateIPv6(host.slice(1, -1));
   if (hostSuffixes(host).includes("localhost")) return true;
   const v4 = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(host);
-  return v4 ? isPrivateIPv4(Number(v4[1]), Number(v4[2])) : false;
+  return v4 ? isPrivateIPv4(Number(v4[1]), Number(v4[2]), Number(v4[3])) : false;
 }
 
 export function parseTarget(input: string, options: { ownHosts: readonly string[] }): TargetResult {
@@ -110,7 +129,9 @@ export function parseTarget(input: string, options: { ownHosts: readonly string[
   if (url.username !== "" || url.password !== "") {
     return { ok: false, code: "credentials_not_allowed" };
   }
-  if (url.hostname === "") return { ok: false, code: "invalid_url" };
+  if (url.hostname === "" || url.hostname.length > MAX_HOST_LENGTH) {
+    return { ok: false, code: "invalid_url" };
+  }
   if (matches(url.hostname, options.ownHosts.map(normalizeOwnHost))) {
     return { ok: false, code: "own_host" };
   }

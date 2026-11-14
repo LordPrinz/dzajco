@@ -61,6 +61,15 @@ describe("isRandomId", () => {
   });
 });
 
+describe("transformLinks ids", () => {
+  it("reports ids with format characters as invalid, like redirect and admin:block do", async () => {
+    const docs = ["a\u200bb", "ab\u202ecd"].map((_id) => ({ _id, full: "https://example.com/" }));
+    const { rows, report } = await transformLinks(docs, OPTIONS);
+    expect(rows).toEqual([]);
+    expect(report.invalid.map((i) => i.reason)).toEqual(["invalid_id", "invalid_id"]);
+  });
+});
+
 describe("transformLinks on the v2 fixture", () => {
   it("reports read, inserted, expired, invalid, reserved collisions, duplicates and legacy keys", async () => {
     const { rows, report } = await transformLinks(fixture, OPTIONS);

@@ -109,18 +109,35 @@ export async function insertLink(db: D1Database, link: NewLink): Promise<void> {
   }
 }
 
-/** One round trip: the link plus whether its host, or a parent domain, is in `blocked_hosts`. */
+/**
+ * A recursive CTE `s(h)` with the host and its parent domains (`a.b.c`, `b.c`, `c`), so the blocklist
+ * check is one primary key lookup per label instead of a scan of `blocked_hosts`. A valid host has at
+ * most 127 labels; the LIMIT also bounds rows read for anything longer that was stored before.
+ */
+function suffixCte(seed: string): string {
+  return `WITH RECURSIVE s(h) AS (
+    SELECT ${seed}
+    UNION ALL SELECT substr(h, instr(h, '.') + 1) FROM s WHERE instr(h, '.') > 0
+    LIMIT 127
+  )`;
+}
+
+/** The link plus whether its host, or a parent domain, is in `blocked_hosts`. */
+export const LINK_RECORD_SQL = `SELECT l.id, l.target, l.expires_at AS expiresAt,
+  EXISTS (
+    ${suffixCte("l.target_host")}
+    SELECT 1 FROM blocked_hosts b WHERE b.host IN (SELECT h FROM s)
+  ) AS blocked
+FROM links l WHERE l.id = ?`;
+
+/** The same check for a host that is not stored yet. */
+export const HOST_BLOCKED_SQL = `${suffixCte("?1")}
+SELECT 1 AS hit FROM blocked_hosts b WHERE b.host IN (SELECT h FROM s) LIMIT 1`;
+
+/** One round trip: the link plus its blocked flag. */
 export async function getLinkRecord(db: D1Database, id: string): Promise<LinkRecord | null> {
   const row = await db
-    .prepare(
-      `SELECT l.id, l.target, l.expires_at AS expiresAt,
-        EXISTS (
-          SELECT 1 FROM blocked_hosts b
-          WHERE l.target_host = b.host
-             OR substr(l.target_host, -(length(b.host) + 1)) = '.' || b.host
-        ) AS blocked
-      FROM links l WHERE l.id = ?`,
-    )
+    .prepare(LINK_RECORD_SQL)
     .bind(id)
     .first<{ id: string; target: string; expiresAt: number | null; blocked: number }>();
   if (!row) return null;
@@ -340,12 +357,6 @@ export async function blockHost(
  */
 export async function isHostBlocked(db: D1Database, host: string): Promise<boolean> {
   const normalized = normalizeHost(host);
-  const row = await db
-    .prepare(
-      `SELECT 1 AS hit FROM blocked_hosts b
-       WHERE ?1 = b.host OR substr(?1, -(length(b.host) + 1)) = '.' || b.host LIMIT 1`,
-    )
-    .bind(normalized)
-    .first();
+  const row = await db.prepare(HOST_BLOCKED_SQL).bind(normalized).first();
   return row !== null;
 }

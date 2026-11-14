@@ -1,4 +1,6 @@
 import { describe, expect, it } from "bun:test";
+import fc from "fast-check";
+import { LOOKUP_ID } from "../../src/domain/ids";
 import { buildSql, CACHE_NOTE, type MainDeps, main, parseArgs, wranglerArgs } from "./block";
 
 const parse = (...a: string[]) =>
@@ -43,6 +45,27 @@ describe("parseArgs", () => {
       local: false,
       yes: true,
     });
+  });
+  it("accepts every id the redirect route can resolve", () => {
+    fc.assert(
+      fc.property(
+        fc
+          .string({ unit: "grapheme", minLength: 1, maxLength: 64 })
+          .filter((id) => LOOKUP_ID.test(id) && id === id.normalize("NFC") && !id.startsWith("--")),
+        (id) => {
+          expect(parse("link", id).command).toEqual({ kind: "link", id });
+        },
+      ),
+    );
+  });
+  it("accepts and rejects bracketed IPv6 hosts", () => {
+    expect(parse("host", "[2001:DB8::1]").command).toEqual({
+      kind: "host",
+      host: "[2001:db8::1]",
+      reason: null,
+    });
+    expect(() => parse("host", "[not:v6]")).toThrow();
+    expect(() => parse("host", "2001:db8::1")).toThrow();
   });
   it("rejects bidi and zero-width characters in link ids", () => {
     expect(() => parse("link", "ab\u202ecd")).toThrow();

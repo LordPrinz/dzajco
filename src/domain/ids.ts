@@ -6,10 +6,10 @@ export const NAME_MAX_BYTES = 96;
 
 /**
  * Lookup ids on redirect (after NFC) are looser than new custom names: names imported from v2 may
- * contain spaces and other characters the creation policy now rejects. Only `/` and control
- * characters are ruled out.
+ * contain spaces and other characters the creation policy now rejects. Only `/`, control and
+ * format characters (zero-width, bidi overrides) are ruled out.
  */
-export const LOOKUP_ID = /^[^/\p{Cc}]{1,64}$/u;
+export const LOOKUP_ID = /^[^/\p{Cc}\p{Cf}]{1,64}$/u;
 
 const NAME_PATTERN = /^[\p{L}\p{N}_-]{3,32}$/u;
 const encoder = new TextEncoder();

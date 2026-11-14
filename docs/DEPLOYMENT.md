@@ -298,7 +298,7 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
   Add `--dry-run` to print the SQL without running it. Cached copies of a deleted link can still redirect for up to 60 seconds.
 
 - Abuse reports arrive at `ABUSE_EMAIL`. Block the host or delete the link, then reply.
-- Logs: `bunx wrangler tail`, or Observability in the dashboard (enabled in `wrangler.jsonc`). The Worker does not log the `Authorization` header, form bodies or create responses. Client IPs appear only in Cloudflare's own logs (request logs and Workers Logs metadata); the app never writes them.
+- Logs: `bunx wrangler tail`, or Observability in the dashboard (enabled in `wrangler.jsonc`). The Worker does not log the `Authorization` header, form bodies or create responses. Cloudflare's own invocation logs record request details; the rehearsal checklist checks that they do not keep the `Authorization` value. Client IPs appear only in Cloudflare's own logs (request logs and Workers Logs metadata); the app never writes them.
 - Dependency updates: Dependabot opens weekly PRs (Bun, GitHub Actions, Docker) against `v3.0`. Merge them after CI passes, then redeploy manually.
 
 ## 10. Rehearsal checklist
@@ -325,6 +325,7 @@ Deploy
 - [ ] SQL API query on the real `dzajco_visits` dataset returns the test visits
 - [ ] Hourly cron ran (Triggers or Observability) and the rollup moved the cursor
 - [ ] Cache API works on the test domain (a repeated redirect is served without a D1 read)
+- [ ] Make a request with a dummy Bearer key (`curl -H "Authorization: Bearer AAAAAAAAAAAAAAAAAAAAAA" $ORIGIN/api/v1/links/<id>/stats`) and confirm Workers Logs don't show the `Authorization` value. If they do, set `"logs": { "invocation_logs": false }` under `observability` in `wrangler.jsonc` and redeploy
 
 Migration
 

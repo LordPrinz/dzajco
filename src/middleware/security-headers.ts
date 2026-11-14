@@ -5,7 +5,7 @@ export type NonceVariables = { nonce: string };
 export function htmlCsp(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://static.cloudflareinsights.com`,
+    `script-src 'self' 'nonce-${nonce}' https://static.cloudflareinsights.com/beacon.min.js`,
     "connect-src 'self' https://cloudflareinsights.com",
     "img-src 'self' data: https://tile.openstreetmap.org",
     "style-src 'self'",

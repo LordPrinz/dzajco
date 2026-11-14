@@ -67,7 +67,7 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
 ```bash
 bun install
 bun run dev          # wrangler dev (workerd + local D1)
-bun run infra:up     # the same in Docker (Debian, Node 22, Bun), no Cloudflare account needed
+bun run infra:up     # the same in Docker (Debian, Node 24, Bun), no Cloudflare account needed
 ```
 
 Locally there is no Analytics Engine SQL API. Without `CF_AE_TOKEN` the app uses `LocalVisitSource`, so the
