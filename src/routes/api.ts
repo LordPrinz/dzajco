@@ -8,6 +8,7 @@ import { currentVersion, generateSecretKey, hashSecret, peppersFromEnv } from ".
 import { parseTarget } from "../domain/url-policy";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
+import { isoOrNull } from "../lib/time";
 import { readOnlyCors } from "../middleware/cors";
 import { apiError } from "../middleware/errors";
 import { rateLimit } from "../middleware/rate-limit";
@@ -85,11 +86,7 @@ async function readCapped(request: Request, limit: number): Promise<string | nul
   return new TextDecoder().decode(bytes);
 }
 
-function isoOrNull(at: number | null): string | null {
-  return at === null ? null : new Date(at).toISOString();
-}
-
-/** `/api/v1` routes: create and read links. */
+/** `/api/v1` routes: create and read a link. Delete and stats live in `stats.ts`. */
 export function apiRoutes() {
   const app = new Hono<AppEnv>();
   const byIp = (c: Context<AppEnv>) => clientIpKey(c.req.raw);
