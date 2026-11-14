@@ -104,7 +104,8 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
   const stats = card.querySelector<HTMLAnchorElement>('[data-field="stats"]');
   if (stats) stats.href = `/${encodeURIComponent(link.id)}/stats`;
 
-  enableCopy(card);
+  // The fragment is empty once its children move into the slot, so the copy handlers need the section.
+  enableCopy(section);
   slot.replaceChildren(card);
   slot.querySelector<HTMLElement>("#result-title")?.focus();
 }

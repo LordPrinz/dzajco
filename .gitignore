@@ -18,3 +18,9 @@ coverage
 .DS_Store
 *.pem
 npm-debug.log*
+
+# Playwright and Lighthouse CI output
+test-results
+playwright-report
+.lighthouseci
+wrangler.log

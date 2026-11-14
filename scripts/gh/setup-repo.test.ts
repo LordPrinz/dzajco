@@ -94,6 +94,7 @@ describe("buildRuleset", () => {
       "Test",
       "Worker tests",
       "Build",
+      "E2E",
     ]);
   });
 

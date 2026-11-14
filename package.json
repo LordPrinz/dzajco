@@ -14,6 +14,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json",
     "test": "bun test ./src ./scripts",
     "test:worker": "vitest run",
+    "test:e2e": "playwright test",
+    "test:lhci": "lhci autorun",
     "types": "wrangler types --env-file .env.example",
     "prepare": "husky",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
@@ -39,6 +41,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
     "@cloudflare/vitest-plugin": "1.8.2",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.64.1",
     "@types/bun": "1.4.4",
     "@types/leaflet": "1.9.22",
     "fast-check": "4.10.2",
