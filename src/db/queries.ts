@@ -303,17 +303,25 @@ export async function recomputeGlobalStats(db: D1Database, now: number): Promise
     .run();
 }
 
-/** Deletes up to `limit` links with `expires_at < now` (oldest first); returns their ids. link_stats cascade. */
+/** Deletes up to `limit` links with `expires_at <= now` (oldest first); returns their ids. link_stats cascade. */
 export async function deleteExpired(db: D1Database, now: number, limit: number): Promise<string[]> {
   const { results } = await db
     .prepare(
       `DELETE FROM links WHERE id IN (
-         SELECT id FROM links WHERE expires_at IS NOT NULL AND expires_at < ?1 ORDER BY expires_at LIMIT ?2
+         SELECT id FROM links WHERE expires_at IS NOT NULL AND expires_at <= ?1 ORDER BY expires_at LIMIT ?2
        ) RETURNING id`,
     )
     .bind(now, Math.min(Math.max(1, Math.trunc(limit) || 1), MAX_EXPIRED_BATCH))
     .all<{ id: string }>();
   return results.map((r) => r.id);
+}
+
+/** Deletes one link only if it has expired (`expires_at <= now`); lazy cleanup on the redirect path. */
+export async function deleteIfExpired(db: D1Database, id: string, now: number): Promise<void> {
+  await db
+    .prepare("DELETE FROM links WHERE id = ? AND expires_at IS NOT NULL AND expires_at <= ?")
+    .bind(id, now)
+    .run();
 }
 
 export async function blockHost(

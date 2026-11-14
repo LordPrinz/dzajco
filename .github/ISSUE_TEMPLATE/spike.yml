@@ -1,0 +1,30 @@
+name: Research spike
+description: Time-boxed experiment (library choice, platform behaviour, performance)
+labels: ["type:spike"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question / hypothesis
+      description: What we want to find out.
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Method
+      description: What is tried and how the result is judged.
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      placeholder: e.g. 2 days
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result & decision
+      description: Fill in when closing. Record lasting decisions in docs/adr.
