@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { createApplier, createGraphql, createRest, isIssueClosed, isSubset } from "./github.ts";
+import {
+  closeIssue,
+  createApplier,
+  createGraphql,
+  createRest,
+  isIssueClosed,
+  isSubset,
+} from "./github.ts";
 
 const answering = (status: number, body: unknown) =>
   (async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch;
@@ -20,7 +27,7 @@ describe("isIssueClosed", () => {
   test("asks for the right issue with the token", async () => {
     const calls: { url: string; auth: string | null }[] = [];
     const spy = (async (url: string, init?: RequestInit) => {
-      calls.push({ url, auth: new Headers(init?.headers).get("authorization") });
+      calls.push({ url, auth: new Headers(init?.headers as Bun.HeadersInit).get("authorization") });
       return new Response(JSON.stringify({ state: "open" }));
     }) as unknown as typeof fetch;
     await isIssueClosed("tok", "acme", "app", 74, spy);
@@ -33,6 +40,36 @@ describe("isIssueClosed", () => {
     await expect(isIssueClosed("t", "acme", "app", 74, answering(403, {}))).rejects.toThrow(
       "Failed to read issue #74: 403",
     );
+  });
+});
+
+describe("closeIssue", () => {
+  test("patches the issue to closed/completed with the token", async () => {
+    const calls: { url: string; method?: string; auth: string | null; body?: unknown }[] = [];
+    const spy = (async (url: string, init?: RequestInit) => {
+      calls.push({
+        url,
+        method: init?.method,
+        auth: new Headers(init?.headers as Bun.HeadersInit).get("authorization"),
+        body: JSON.parse(String(init?.body)),
+      });
+      return new Response("{}");
+    }) as unknown as typeof fetch;
+    await closeIssue("tok", "acme", "app", 74, spy);
+    expect(calls).toEqual([
+      {
+        url: "https://api.github.com/repos/acme/app/issues/74",
+        method: "PATCH",
+        auth: "Bearer tok",
+        body: { state: "closed", state_reason: "completed" },
+      },
+    ]);
+  });
+
+  test("fails loudly when GitHub refuses", async () => {
+    await expect(
+      closeIssue("t", "acme", "app", 74, answering(403, { message: "no" })),
+    ).rejects.toThrow(/Failed to close issue #74: 403/);
   });
 });
 

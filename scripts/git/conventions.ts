@@ -1,7 +1,10 @@
 /** Shared naming rules for branches, commits and PR titles. */
 
+/** The long-lived branch PRs merge into. */
+export const TRUNK = "v3.0";
+
 /** Branches that PRs target. */
-export const TRUNK_BRANCHES = ["main", "v3.0"] as const;
+export const TRUNK_BRANCHES = ["main", TRUNK] as const;
 
 export const COMMIT_TYPES = [
   "feat",
@@ -27,6 +30,7 @@ export const COMMIT_SCOPES = [
   "ci",
   "docs",
   "deps",
+  "deps-dev",
 ] as const;
 
 /** `DZAJ-44-set-user-permissions` */
@@ -41,7 +45,7 @@ export const HEADER_PATTERN = new RegExp(
 /** Branches that never carry a ticket number. */
 export const UNTICKETED_BRANCHES = new Set<string>([...TRUNK_BRANCHES, "HEAD"]);
 
-/** Dependabot names its own branches (`dependabot/bun/zod-4.2.0`); its PR titles carry the umbrella ticket DZAJ-6. */
+/** Dependabot names its own branches (`dependabot/bun/zod-4.2.0`); its PR titles carry the umbrella ticket DZAJ-15. */
 export const BOT_BRANCH_PATTERN = /^dependabot\/[\w./-]+$/;
 
 /** Branch names a push may create or update: trunk, ticket branches and Dependabot branches. */

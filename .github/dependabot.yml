@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    target-branch: v3.0
+    schedule:
+      interval: weekly
+    # PR titles become "[DZAJ-15] build(deps): Bump …", which passes the title convention.
+    commit-message:
+      prefix: "[DZAJ-15] build"
+      include: scope
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: v3.0
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "[DZAJ-15] ci"
+      include: scope
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
