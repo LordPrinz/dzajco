@@ -281,8 +281,9 @@ Other measures:
   one, with a short fixed window) on all Worker paths but not on static assets, with a loose per-IP
   threshold. The WAF rule drops floods before the Worker runs. A 429 from a binding is still a Worker
   request and counts toward the 100k per day quota. The bindings only save D1 reads and AE writes. Only the
-  WAF rule protects the request quota. If the bindings are not available on Free, the WAF rule is the only
-  limiter ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
+  WAF rule protects the request quota. Spike T9.0 showed that the bindings work on Free. They count per location
+  and are eventually consistent (a limit is enforced after roughly 2.4 times its value), so they are an
+  abuse cut-off, not an exact limit ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
 - No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin` or an `Origin` equal to the own host. Anything
   else gets 403.
 - Security headers on HTML from the Worker (middleware). `Content-Security-Policy` is
