@@ -1,0 +1,4 @@
+bun scripts/git/check-push.ts
+bun run typecheck
+bun test --bail
+bun run test:worker

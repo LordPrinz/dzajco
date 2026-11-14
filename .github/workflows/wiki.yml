@@ -1,0 +1,58 @@
+name: Wiki
+
+# Publishes README and docs/ to the repository wiki (see scripts/gh/wiki.ts).
+# The wiki is generated: edit the files in the repository, not the wiki pages.
+# GitHub creates the wiki's git repository only after its first page is saved in the UI;
+# until then the wiki checkout below fails with "repository not found".
+on:
+  push:
+    branches: [v3.0]
+    paths:
+      - README.md
+      - "docs/**"
+      - scripts/gh/wiki.ts
+      - .github/workflows/wiki.yml
+  workflow_dispatch:
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  publish:
+    # Manual runs from other branches would publish unmerged docs.
+    if: github.ref == 'refs/heads/v3.0'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: .wiki
+          persist-credentials: false
+      - run: bun scripts/gh/wiki.ts .wiki
+      # The write token reaches only this step, so wiki.ts never runs with it on disk or in its env.
+      - name: Push
+        working-directory: .wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki is up to date."
+            exit 0
+          fi
+          git commit -m "Sync docs from ${GITHUB_SHA::7}"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push
