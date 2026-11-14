@@ -13,8 +13,10 @@
   files or logs. The var `SECRET_PEPPER_VERSION` is the current version, and new keys get that prefix.
 - Verification reads the version from the stored prefix and uses that pepper. Rotation is: add the next
   pepper secret, then bump `SECRET_PEPPER_VERSION`. Old keys keep verifying.
-- The stored and computed hex digests are compared in constant time. The comparison returns false for
-  different lengths without throwing.
+- Verification uses `crypto.subtle.verify` (HMAC), which compares in constant time. A malformed or
+  different-length stored value returns false without throwing.
+- If the pepper for a stored version is missing, verification fails and the Worker logs
+  `secret pepper v<n> missing` once per isolate.
 - The key never goes into a URL or query string. The create response, the `POST /` result page and owner
   stats are sent with `Cache-Control: no-store`.
 - The key is shown once, on the result page and in the create response.

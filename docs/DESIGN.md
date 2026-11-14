@@ -179,11 +179,25 @@ result page and owner stats carry `Cache-Control: no-store`.
 
 ### Identifiers and targets
 
-- Random ids: 7 characters (nanoid).
-- Custom names: NFC-normalized, `^[\p{L}\p{N}_-]{3,32}$` with the `u` flag, case-sensitive, at most 96
-  bytes in UTF-8. Reserved: app routes and the top-level entries of `public/` (the list is generated at
-  build time and a test checks it against the directory).
-- Target URL: only `http:` and `https:`, at most 2048 characters, host in punycode, own host rejected.
+- Random ids: 7 characters. They are drawn with rejection sampling over a URL-safe alphabet using
+  `crypto.getRandomValues` (no nanoid). An id that is reserved is drawn again.
+- Custom names: NFC-normalized, `^[\p{L}\p{N}_-]{3,32}$` with the `u` flag, at most 96 bytes in UTF-8. They
+  stay case-sensitive. Two more rules apply:
+  - `reserved_name`: the name is rejected when its NFKC and lowercase form equals a reserved name.
+  - `mixed_script`: a name that mixes Latin with any other script is rejected.
+- Reserved names: app routes and the top-level entries of `public/`. The list is kept by hand, and a test
+  compares it with `public/`, so a new file there fails the test until the list is updated.
+- Target URL: only `http:` and `https:`, at most 2048 characters, host in punycode. Also rejected:
+  - credentials in the URL (`credentials_not_allowed`);
+  - private, loopback, link-local, multicast and reserved IPv4 and IPv6 addresses, including alternative
+    IPv4 forms and `localhost` (`private_target`);
+  - the own host, including trailing dots and ports;
+  - targets on other URL shorteners (see Abuse).
+
+  The checks run in this order: own host, private target, shortener.
+- Expiry: a date that does not exist (02-30, `T24:00`) is rejected. Past dates, dates over one year ahead and
+  invalid values are rejected too.
+- The Bearer scheme in `Authorization` is case-insensitive.
 
 ## Budget
 
@@ -250,10 +264,13 @@ Other measures:
 - Secrets. The key is 128 bits, base64url, 22 characters. The stored value is `v<n>:<hex>`, an HMAC-SHA256
   with a versioned pepper. Peppers are Worker secrets `SECRET_PEPPER_V1`, `SECRET_PEPPER_V2` and so on. The var
   `SECRET_PEPPER_VERSION` is the current version. Verification picks the pepper from the stored prefix, so
-  rotation means adding a new pepper and bumping the version, and old keys keep working. The computed and
-  stored hex digests are compared in constant time. bcrypt and similar are out because of the 10 ms CPU limit
+  rotation means adding a new pepper and bumping the version, and old keys keep working. Verification uses
+  `crypto.subtle.verify` (HMAC), which compares in constant time. If the pepper for a stored version is
+  missing, the Worker logs `secret pepper v<n> missing` once per isolate. bcrypt and similar are out because of the 10 ms CPU limit
   (ADR 0003).
-- URL policy. Only `http:` and `https:`, at most 2048 characters, punycode host, own host rejected.
+- URL policy. Only `http:` and `https:`, at most 2048 characters, punycode host. No credentials in the URL, no
+  private, loopback, link-local, multicast or reserved addresses (so no SSRF-style targets), own host
+  rejected.
 - Rate limits. Bindings `RL_CREATE`, `RL_DELETE`, `RL_STATS` and `RL_REDIRECT`, keyed by
   `cf-connecting-ip` (table in the API section). Plus one zone WAF rate limiting rule (the Free plan allows
   one, with a short fixed window) on all Worker paths but not on static assets, with a loose per-IP
