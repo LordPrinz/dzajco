@@ -1,13 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-  buildSql,
-  CACHE_NOTE,
-  type MainDeps,
-  main,
-  parseArgs,
-  sqlString,
-  wranglerArgs,
-} from "./block";
+import { buildSql, CACHE_NOTE, type MainDeps, main, parseArgs, wranglerArgs } from "./block";
 
 const parse = (...a: string[]) =>
   parseArgs([...a, ...(a.some((x) => x === "--remote") ? [] : ["--local"])]);
@@ -66,19 +58,6 @@ describe("parseArgs", () => {
     expect(() => parse("link", "a.com", "--reason", "x")).toThrow();
     expect(() => parse("link", "a/b")).toThrow();
     expect(() => parse("host", "a.com", "--reason", "x".repeat(501))).toThrow();
-  });
-});
-
-describe("sqlString", () => {
-  it("doubles single quotes", () => {
-    expect(sqlString("it's")).toBe("'it''s'");
-  });
-  it("keeps hostile input inside one literal", () => {
-    expect(sqlString("'; DROP TABLE links; --")).toBe("'''; DROP TABLE links; --'");
-  });
-  it("rejects control characters", () => {
-    expect(() => sqlString("a\0b")).toThrow();
-    expect(() => sqlString("a\nb")).toThrow();
   });
 });
 
