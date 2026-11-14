@@ -6,6 +6,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { normalizeHost } from "../../src/domain/host";
+import { sqlString } from "../lib/sql";
 
 export type BlockCommand =
   | { kind: "host"; host: string; reason: string | null }
@@ -35,12 +36,6 @@ const LINK_ID = /^[^/\p{Cc}\p{Cf}]{1,64}$/u;
 
 export const CACHE_NOTE =
   "Note: cached copies of a deleted link can still redirect for up to 60 seconds.";
-
-/** A SQL string literal: single quotes doubled; NUL and other control characters are refused. */
-export function sqlString(value: string): string {
-  if (/\p{Cc}/u.test(value)) throw new Error("Control characters are not allowed");
-  return `'${value.replaceAll("'", "''")}'`;
-}
 
 export function parseArgs(argv: string[]): BlockArgs {
   let dryRun = false;

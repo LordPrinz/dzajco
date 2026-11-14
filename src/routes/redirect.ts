@@ -3,18 +3,13 @@ import type { VisitSink } from "../analytics/ports";
 import { aeSink, visitPoint } from "../analytics/sink";
 import { deleteIfExpired, getLinkRecord, type LinkRecord } from "../db/queries";
 import { isBot } from "../domain/bots";
-import { isReserved } from "../domain/ids";
+import { isReserved, LOOKUP_ID } from "../domain/ids";
 import { reportAbuseLink } from "../lib/abuse";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
 import { rateLimit } from "../middleware/rate-limit";
 import { LinkError, type LinkErrorKind } from "../views/LinkError";
 
-/**
- * Lookup ids are looser than new custom names: names imported from v2 may contain spaces and other
- * characters the creation policy now rejects. Only `/` and control characters are ruled out.
- */
-const LOOKUP_ID = /^[^/\p{Cc}]{1,64}$/u;
 const MAX_CACHE_SECONDS = 60;
 /**
  * Cache entries live under a fixed internal origin, never under the request URL, so a record cannot
