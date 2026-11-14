@@ -70,7 +70,7 @@ the scaffold. `nodejs_compat` is added only if something needs it. Other setting
 
 ```sql
 CREATE TABLE links (
-  id TEXT PRIMARY KEY, target TEXT NOT NULL, secret_hash TEXT,
+  id TEXT PRIMARY KEY, target TEXT NOT NULL, target_host TEXT NOT NULL, secret_hash TEXT,
   expires_at INTEGER, created_at INTEGER NOT NULL, is_custom INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 CREATE INDEX links_expires ON links(expires_at) WHERE expires_at IS NOT NULL;
@@ -79,10 +79,13 @@ CREATE TABLE link_stats (
   country TEXT NOT NULL, city TEXT NOT NULL DEFAULT '', lat REAL, lon REAL,
   visits INTEGER NOT NULL, PRIMARY KEY (link_id, country, city)
 ) WITHOUT ROWID;
-CREATE TABLE global_stats (id INTEGER PRIMARY KEY CHECK (id = 1), links INTEGER, visits INTEGER, countries TEXT, updated_at INTEGER);
+CREATE TABLE global_stats (id INTEGER PRIMARY KEY CHECK (id = 1), links INTEGER, visits INTEGER, countries TEXT, updated_at INTEGER);   -- countries: JSON list of the top 20 {code, visits}
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID;   -- rollup cursor {day, offset}
-CREATE TABLE blocked_hosts (host TEXT PRIMARY KEY, reason TEXT, created_at INTEGER) WITHOUT ROWID;
+CREATE TABLE blocked_hosts (host TEXT PRIMARY KEY, reason TEXT, created_at INTEGER NOT NULL) WITHOUT ROWID;
 ```
+
+`target_host` is the lowercased punycode host of the target. The cache-miss query uses it to check
+`blocked_hosts` in the same batch as the link read.
 
 D1 enforces foreign keys by default. The rollup therefore inserts with
 `INSERT … SELECT … WHERE EXISTS (SELECT 1 FROM links WHERE id = ?) ON CONFLICT DO UPDATE`. Visits for a
@@ -126,8 +129,10 @@ Maximum expiry is one year. "Never" is stored as `NULL`.
   is `SELECT index1, blob1, blob2, SUM(_sample_interval) … GROUP BY index1, blob1, blob2 ORDER BY index1,
   blob1, blob2 LIMIT 500 OFFSET <offset>`. Each page is one `db.batch` with the upserts and the new cursor
   `{day, offset}`. A page with fewer than 500 rows ends the day and moves the cursor to `{D+1, 0}`. One cron
-  call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. The
-  next hours finish the rest.
+  call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
+  `batch()` counts as one query toward the per-invocation limit (Free: 50), but the per-statement limits (100
+  bound parameters, 100 KB) still apply, so a page is split into statements that fit. The next hours finish
+  the rest.
 - Fresh data (everything not yet in D1) comes from two queries with the same `GROUP BY` and `ORDER BY`: day
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache
   API for 5 minutes under a key that contains the cursor, so a moved cursor never matches an old entry and
@@ -136,19 +141,19 @@ Maximum expiry is one year. "Never" is stored as `NULL`.
 - If the SQL API fails or is rate limited, stats come from D1 only and the response has `partial: true`.
 - Locally there is no SQL API. Without `CF_AE_TOKEN` the code uses `LocalVisitSource`, which returns an
   empty list, so locally the fresh part of the stats is empty.
-- Global stats: one row in `global_stats`, recomputed by the cron once a day. `GET /api/v1/stats` reads that
+- Global stats: one row in `global_stats`, recomputed by the cron once a day. `countries` is a JSON list of the top 20 `{code, visits}`. `GET /api/v1/stats` reads that
   row only, so the numbers can lag by up to about 24 hours.
 - Each link gets its own secretKey. v2 reused a key for "never" links with the same target. v3 does not.
 
 ### API v1
 
-| Method | Path                      | Input                                                                                         | Responses                                                                                           |
-| ------ | ------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400 (including `blocked_target`), 409, 415, 429         |
-| GET    | `/api/v1/links/:id`       | none                                                                                          | 200 `{id, url, expiresAt}`, 404, 410, 429                                                           |
-| GET    | `/api/v1/links/:id/stats` | optional `Authorization: Bearer <key>`                                                        | 200 `{visits, countries: [{code, visits}], partial}` (plus `cities` with a key), 403, 404, 410, 429 |
-| DELETE | `/api/v1/links/:id`       | `Authorization: Bearer <key>`                                                                 | 204, 400, 403, 404, 429                                                                             |
-| GET    | `/api/v1/stats`           | none                                                                                          | 200 `{links, visits, countries, updatedAt}`, 429, lags up to about 24 h (stated in `/docs/api`)     |
+| Method | Path                      | Input                                                                                         | Responses                                                                                                         |
+| ------ | ------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400 (including `blocked_target`), 409, 415, 429                       |
+| GET    | `/api/v1/links/:id`       | none                                                                                          | 200 `{id, url, expiresAt}`, 404, 410, 429                                                                         |
+| GET    | `/api/v1/links/:id/stats` | optional `Authorization: Bearer <key>`                                                        | 200 `{visits, countries: [{code, visits}], partial}` (plus `cities` with a key), 403, 404, 410, 429               |
+| DELETE | `/api/v1/links/:id`       | `Authorization: Bearer <key>`                                                                 | 204, 400, 403, 404, 429                                                                                           |
+| GET    | `/api/v1/stats`           | none                                                                                          | 200 `{links, visits, countries: [{code, visits}], updatedAt}`, 429, lags up to about 24 h (stated in `/docs/api`) |
 
 Errors have the shape `{error: {code, message}}`. A `POST` with another content type gets 415, which blocks
 cross-site `text/plain` posts. A wrong key on the stats endpoint gets 403. It never falls back to the public
