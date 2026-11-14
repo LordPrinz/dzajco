@@ -13,18 +13,21 @@
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json",
     "test": "bun test ./src ./scripts",
+    "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
     "test:worker": "vitest run",
     "types": "wrangler types --env-file .env.example",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
   },
   "dependencies": {
-    "hono": "4.13.18"
+    "hono": "4.13.18",
+    "valibot": "1.5.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.7",
     "@cloudflare/vitest-plugin": "1.8.2",
     "@types/bun": "1.4.4",
+    "fast-check": "4.10.2",
     "typescript": "7.0.2",
     "vitest": "5.1.0",
     "wrangler": "4.162.0"
