@@ -17,7 +17,12 @@
     "types": "wrangler types --env-file .env.example",
     "prepare": "husky",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "gh:setup": "bun scripts/gh/setup.ts",
+    "gh:setup-repo": "bun scripts/gh/setup-repo.ts",
+    "gh:setup-project": "bun scripts/gh/setup-project.ts",
+    "gh:sync": "bun scripts/gh/sync-project.ts",
+    "gh:create-issues": "bun scripts/gh/create-issues.ts"
   },
   "dependencies": {
     "hono": "4.13.18"
