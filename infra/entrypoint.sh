@@ -6,5 +6,5 @@ set -eu
 umask 077
 printf 'SECRET_PEPPER_V1=%s\n' "${SECRET_PEPPER_V1:?set SECRET_PEPPER_V1}" > .dev.vars
 
-bunx wrangler d1 migrations apply DB --local
-exec bunx wrangler dev --ip 0.0.0.0 --port 8787
+./node_modules/.bin/wrangler d1 migrations apply DB --local
+exec ./node_modules/.bin/wrangler dev --ip 0.0.0.0 --port 8787
