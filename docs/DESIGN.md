@@ -141,7 +141,8 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache
   API for 5 minutes under a key that contains the cursor, so a moved cursor never matches an old entry and
   nothing is counted twice. The stats request reads the cursor and `link_stats` in one `db.batch`, then
-  filters the cached result per link in the Worker.
+  filters the cached result per link in the Worker. The rollup keeps a visit-weighted mean of the coordinates
+  in `link_stats`, by the same rule as the live merge.
 - If the SQL API fails or is rate limited, stats come from D1 only and the response has `partial: true`. The
   outage is cached as partial for 30 seconds, so a failing API is not queried on every request.
 - Locally there is no SQL API. Without `CF_AE_TOKEN` the code uses `LocalVisitSource`, which returns an
@@ -154,7 +155,7 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
 
 | Method | Path                      | Input                                                                                         | Responses                                                                                                         |
 | ------ | ------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400, 409, 413, 415, 429, 503                                          |
+| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, url, secretKey, expiresAt}`, 400, 409, 413, 415, 429, 503                                     |
 | GET    | `/api/v1/links/:id`       | none                                                                                          | 200 `{id, url, expiresAt}`, 404, 410 (`expired` or `link_disabled`), 429                                          |
 | GET    | `/api/v1/links/:id/stats` | optional `Authorization: Bearer <key>`                                                        | 200 `{visits, countries: [{code, visits}], partial}` (plus `cities` with a key), 403, 404, 410, 429               |
 | DELETE | `/api/v1/links/:id`       | `Authorization: Bearer <key>`                                                                 | 204, 400, 403, 404, 429                                                                                           |
@@ -174,8 +175,9 @@ Errors have the shape `{error: {code, message}}`. Codes for `POST /api/v1/links`
 `GET /api/v1/links/:id` returns 410 with the code `expired` or `link_disabled`, and never 503.
 
 A `POST` with another content type gets 415, which blocks
-cross-site `text/plain` posts. A wrong key on the stats endpoint gets 403. It never falls back to the public
-view. CORS: `GET` sends `Access-Control-Allow-Origin: *`, never reflects `Origin` and never allows
+cross-site `text/plain` posts. `DELETE` without a key or with a malformed one gets 400 `invalid_key`. Stats without an `Authorization`
+header show the public view, and any `Authorization` that is not a valid key gets 403. It never falls back to
+the public view. `url` in the 201 body is the normalised target (punycode host). CORS: `GET` sends `Access-Control-Allow-Origin: *`, never reflects `Origin` and never allows
 credentials. `POST` and `DELETE` have no CORS, so they are for server-side or same-origin use.
 JSON responses carry `Content-Security-Policy: default-src 'none'`. There is no alias for the old `/api/urls`
 ([ADR 0004](adr/0004-new-api-without-alias.md)).
@@ -192,6 +194,9 @@ Which limiter applies where, per IP and per 60 s:
 | `GET /api/v1/links/:id/stats`, `GET /api/v1/stats` | `RL_STATS` (60), not `RL_REDIRECT` |
 
 Over the limit the response is 429 with `Retry-After`.
+
+A custom expiry date in the form is local time with JavaScript (converted to UTC) and UTC without it, and the
+form labels it as UTC.
 
 The no-JS form is `POST /` (`application/x-www-form-urlencoded`) with the same schema and the `RL_CREATE`
 limit. The result page shows the secretKey with a warning that it will not be shown again. With JavaScript
@@ -305,8 +310,8 @@ Other measures:
   WAF rule protects the request quota. Spike T9.0 showed that the bindings work on Free. They count per location
   and are eventually consistent (a limit is enforced after roughly 2.4 times its value), so they are an
   abuse cut-off, not an exact limit ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
-- No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin` or an `Origin` equal to the own host. Anything
-  else gets 403.
+- No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin`. When that header is absent, `Origin` must equal an own
+  origin. `Origin: null` is rejected. Anything else gets 403.
 - Security headers (middleware). On every Worker response (HTML, JSON and redirects) it sends
   `Strict-Transport-Security: max-age=31536000; includeSubDomains` and `X-Content-Type-Options: nosniff`.
   The CSP with a nonce is HTML only, and JSON responses get `Content-Security-Policy: default-src 'none'`.
