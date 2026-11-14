@@ -22,9 +22,9 @@ const MAX_CACHE_SECONDS = 60;
  */
 const CACHE_ORIGIN = "https://link-cache.internal";
 
-const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
+export const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 
-function errorPage(c: Context<AppEnv>, kind: LinkErrorKind, linkId?: string): string {
+export function errorPage(c: Context<AppEnv>, kind: LinkErrorKind, linkId?: string): string {
   const reportHref = reportAbuseLink(c.env, { linkId });
   return `<!doctype html>${LinkError({ nonce: c.var.nonce, kind, reportHref })}`;
 }

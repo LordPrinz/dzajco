@@ -9,6 +9,7 @@ import { infoPageRoutes } from "./routes/info-pages";
 import { pageRoutes } from "./routes/pages";
 import { redirectRoutes } from "./routes/redirect";
 import { statsRoutes } from "./routes/stats";
+import { statsPageRoutes } from "./routes/stats-page";
 
 const app = new Hono<AppEnv>();
 
@@ -21,6 +22,7 @@ app.route("/api/v1", apiRoutes());
 app.route("/api/v1", statsRoutes());
 app.route("/", pageRoutes());
 app.route("/", infoPageRoutes());
+app.route("/", statsPageRoutes());
 
 // Last: `/:id` matches any single segment, so every named route must be registered above it.
 app.route("/", redirectRoutes());

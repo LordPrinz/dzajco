@@ -1,0 +1,31 @@
+name: Bug
+description: Something does not work as expected
+labels: ["type:bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [core, web, api, db, stats, ui, migrate, infra, docs]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Request or action that triggers it (e.g. `GET /abc123` for a deleted link).
+      value: |
+        1. 
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Logs, response bodies, environment (local, preview, production).

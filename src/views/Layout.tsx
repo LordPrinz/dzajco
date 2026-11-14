@@ -17,7 +17,7 @@ export interface LayoutProps {
   title?: string;
   /** Module scripts under `/assets`, e.g. `form.js`. */
   scripts?: readonly string[];
-  /** Extra stylesheets under `/css`, e.g. `pages.css`, loaded after `app.css`. */
+  /** Extra stylesheets under `/css` (`pages.css`, `stats.css`), loaded after `app.css`. */
   styles?: readonly string[];
   children?: Child;
 }

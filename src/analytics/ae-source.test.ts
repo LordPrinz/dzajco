@@ -112,7 +112,9 @@ describe("AeVisitSource", () => {
       `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/analytics_engine/sql`,
     );
     expect(calls[0]?.init?.method).toBe("POST");
-    expect(new Headers(calls[0]?.init?.headers).get("authorization")).toBe("Bearer tok");
+    expect(new Headers(calls[0]?.init?.headers as Bun.HeadersInit).get("authorization")).toBe(
+      "Bearer tok",
+    );
     expect(calls[0]?.init?.body).toBe(buildDayQuery("2026-11-13", 0, 500));
     expect(rows).toEqual([
       { linkId: "abc", country: "PL", city: "Warsaw", visits: 3, lat: 52.23, lon: 21.01 },
