@@ -1,6 +1,8 @@
 CREATE TABLE links (
   id TEXT PRIMARY KEY,
   target TEXT NOT NULL,
+  -- Lowercased ASCII host of target, so a redirect cache miss reads the link and its blocked flag in one query.
+  target_host TEXT NOT NULL,
   secret_hash TEXT,
   expires_at INTEGER,
   created_at INTEGER NOT NULL,
