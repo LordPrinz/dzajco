@@ -94,6 +94,23 @@ describe("POST /api/v1/links", () => {
     expect(row?.secret_hash).not.toContain(body.secretKey);
   });
 
+  it("returns the normalised target as url, matching what is stored", async () => {
+    const cases: [string, string][] = [
+      ["https://Bücher.example/Pfad?q=1", "https://xn--bcher-kva.example/Pfad?q=1"],
+      ["https://EXAMPLE.com", "https://example.com/"],
+    ];
+    for (const [input, expected] of cases) {
+      const res = await call(post({ url: input }));
+      expect(res.status).toBe(201);
+      const body = (await res.json()) as Created & { url: string };
+      expect(body.url).toBe(expected);
+      const row = await env.DB.prepare("SELECT target FROM links WHERE id = ?")
+        .bind(body.id)
+        .first<{ target: string }>();
+      expect(row?.target).toBe(expected);
+    }
+  });
+
   it("creates a link with a custom name and an expiry", async () => {
     const name = freshName();
     const expiresAt = new Date(Date.now() + 86_400_000).toISOString();

@@ -7,11 +7,11 @@
     "bun": ">=1.4.4"
   },
   "scripts": {
-    "dev": "CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
-    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && wrangler deploy",
+    "dev": "bun run build:client && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
+    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json",
     "test": "bun test ./src ./scripts",
     "test:worker": "vitest run",
     "types": "wrangler types --env-file .env.example",
@@ -24,7 +24,9 @@
     "gh:sync": "bun scripts/gh/sync-project.ts",
     "gh:create-issues": "bun scripts/gh/create-issues.ts",
     "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
-    "admin:block": "bun scripts/admin/block.ts"
+    "admin:block": "bun scripts/admin/block.ts",
+    "build:client": "bun build src/client/*.ts --outdir public/assets --minify --target browser",
+    "check:size": "bun scripts/ci/size.ts"
   },
   "dependencies": {
     "hono": "4.13.18",
