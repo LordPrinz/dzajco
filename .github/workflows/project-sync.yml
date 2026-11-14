@@ -1,0 +1,43 @@
+name: Project sync
+
+# Moves the linked issue across the project board:
+#   branch DZAJ-<n>-… created → In Progress, PR opened or ready → QA, PR merged into v3.0 → Done and the issue is closed
+#   (`Closes #n` only closes issues when the PR targets the default branch).
+on:
+  create:
+  pull_request:
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions: {}
+
+concurrency:
+  group: project-sync-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: >-
+      vars.PROJECT_NUMBER != '' && github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'create' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      # The script runs with PROJECTS_TOKEN, so it comes from the trunk, not from the PR branch: this
+      # stops a changed script from running by accident. It is not a hard boundary, since a
+      # collaborator with write access could still edit this workflow file; the repo has one writer.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v3.0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - run: bun scripts/gh/sync-project.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER }}
