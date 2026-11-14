@@ -93,6 +93,7 @@ describe("buildRuleset", () => {
       "Typecheck",
       "Test",
       "Worker tests",
+      "Build",
     ]);
   });
 

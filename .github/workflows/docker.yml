@@ -1,0 +1,75 @@
+name: Docker
+
+# Builds the dev/test image (never pushed) and smoke-tests it when something that goes into it changes.
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - package.json
+      - bun.lock
+      - bunfig.toml
+      - tsconfig*.json
+      - worker-configuration.d.ts
+      - wrangler.jsonc
+      - src/**
+      - public/**
+      - migrations/**
+      - infra/**
+      - scripts/ci/smoke.ts
+      - .github/workflows/docker.yml
+  push:
+    branches: [v3.0]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - package.json
+      - bun.lock
+      - bunfig.toml
+      - tsconfig*.json
+      - worker-configuration.d.ts
+      - wrangler.jsonc
+      - src/**
+      - public/**
+      - migrations/**
+      - infra/**
+      - scripts/ci/smoke.ts
+      - .github/workflows/docker.yml
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  image:
+    name: Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - name: Build
+        run: docker build -t dzajco-dev:ci .
+      - name: Compose file is valid
+        run: docker compose -f infra/docker-compose.yml config --quiet
+      - name: Start
+        run: >-
+          docker run -d --name dzajco-smoke -p 127.0.0.1:8787:8787
+          -e SECRET_PEPPER_V1=ci-only-pepper dzajco-dev:ci
+      # Waits for /healthz, creates a link and follows it; needs no Cloudflare account.
+      - name: Smoke
+        run: bun scripts/ci/smoke.ts http://localhost:8787
+      - name: Container logs
+        if: failure()
+        run: docker logs dzajco-smoke
+      - name: Stop
+        if: always()
+        run: docker rm -f dzajco-smoke

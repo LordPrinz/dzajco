@@ -1,0 +1,41 @@
+name: dzajco
+
+services:
+  # The Worker under `wrangler dev` with a local D1 database. No Cloudflare account or token needed;
+  # without CF_AE_TOKEN the app uses LocalVisitSource, so fresh stats are empty.
+  web:
+    build:
+      context: ..
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      # Dev-only default. Put a different value in infra/.env (untracked) to override it.
+      SECRET_PEPPER_V1: ${SECRET_PEPPER_V1:-dev-only-pepper-not-a-secret}
+    volumes:
+      - d1-state:/app/.wrangler/state
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8787/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  # Source database for the migration tests (T15). Only started with --profile migrate-test.
+  mongo:
+    # mongo:7
+    image: mongo:7@sha256:9896df581dfd0718b7abe112f4c37598d0986c54060e4ec1384997e6503c8c71
+    profiles: ["migrate-test"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  d1-state:
+  mongo-data:

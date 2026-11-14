@@ -12,7 +12,14 @@ import {
   repoName,
 } from "./github.ts";
 
-export const REQUIRED_CHECKS = ["Conventions", "Lint", "Typecheck", "Test", "Worker tests"];
+export const REQUIRED_CHECKS = [
+  "Conventions",
+  "Lint",
+  "Typecheck",
+  "Test",
+  "Worker tests",
+  "Build",
+];
 export const TOPICS = ["url-shortener", "cloudflare-workers", "hono", "d1", "bun", "typescript"];
 
 export const SETTINGS = {

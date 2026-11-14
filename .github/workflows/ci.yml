@@ -52,7 +52,7 @@ jobs:
         with:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
-      - run: bun run check
+      - run: bunx biome ci .
 
   typecheck:
     name: Typecheck
@@ -82,7 +82,8 @@ jobs:
         with:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
-      - run: bun test ./src ./scripts
+      - run: bun test ./src ./scripts --coverage --coverage-reporter=text --coverage-reporter=lcov
+      - run: bun scripts/ci/coverage.ts
 
   worker-tests:
     name: Worker tests
@@ -102,3 +103,28 @@ jobs:
           node-version: 24
       - run: bun install --frozen-lockfile
       - run: bun run test:worker
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      # wrangler needs Node.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bun run build:client
+      - run: bun run check:size
+      # Builds the Worker without credentials and prints its bundle size.
+      - run: bunx wrangler deploy --dry-run --outdir dist
