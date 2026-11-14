@@ -33,6 +33,11 @@
     "infra:up": "docker compose -f infra/docker-compose.yml up -d --build",
     "infra:down": "docker compose -f infra/docker-compose.yml down"
   },
+  "trustedDependencies": [
+    "esbuild",
+    "fsevents",
+    "workerd"
+  ],
   "dependencies": {
     "hono": "4.13.18",
     "valibot": "1.5.0",

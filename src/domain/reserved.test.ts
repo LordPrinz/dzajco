@@ -21,7 +21,7 @@ describe("reserved names", () => {
 
   it("the static public list names only entries that exist or are build output", () => {
     const entries = new Set(readdirSync(PUBLIC_DIR));
-    const buildOutput = new Set(["assets", "css", "_headers", "robots.txt", "sitemap.xml"]);
+    const buildOutput = new Set(["assets", "css", "robots.txt", "sitemap.xml"]);
     const stale = PUBLIC_ENTRIES.filter((e) => !entries.has(e) && !buildOutput.has(e));
     expect(stale).toEqual([]);
   });

@@ -278,6 +278,9 @@ describe("POST /api/v1/links", () => {
     ["ftp://example.com", "unsupported_scheme"],
     ["https://user:pw@example.com", "credentials_not_allowed"],
     ["http://127.0.0.1/", "private_target"],
+    ["http://[ff02::1]/", "private_target"],
+    ["http://[2001:db8::1]/", "private_target"],
+    ["http://198.18.0.1/", "private_target"],
     ["https://bit.ly/x", "blocked_target"],
     ["https://dzaj.co/abc", "own_host"],
     ["http://localhost:8787/abc", "own_host"],
@@ -286,6 +289,31 @@ describe("POST /api/v1/links", () => {
     const res = await call(post({ url }));
     expect(res.status).toBe(400);
     expect(await errorCode(res)).toBe(code);
+  });
+
+  it("creates a link to a public IPv6 literal", async () => {
+    const res = await call(post({ url: "http://[2606:4700:4700::1111]/x" }));
+    expect(res.status).toBe(201);
+    const { id } = (await res.json()) as Created;
+    const redirect = await call(get(`/${id}`));
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("location")).toBe("http://[2606:4700:4700::1111]/x");
+  });
+
+  it("rejects an IPv6 literal on the blocklist and marks its existing links blocked", async () => {
+    await insertLink(env.DB, {
+      id: "v6blocked",
+      target: "http://[2606:4700:4700::1001]/",
+      secretHash: null,
+      expiresAt: null,
+      createdAt: Date.now(),
+      isCustom: true,
+    });
+    await blockHost(env.DB, "[2606:4700:4700:0::1001]", null, Date.now());
+    const res = await call(post({ url: "http://[2606:4700:4700::1001]/y" }));
+    expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe("blocked_target");
+    expect((await call(get("/v6blocked"))).status).toBe(410);
   });
 
   it("rejects a target on a blocked host with 400 blocked_target", async () => {
@@ -579,7 +607,7 @@ describe("headers", () => {
     const nonce = /'nonce-([A-Za-z0-9+/=_-]+)'/.exec(csp)?.[1];
     expect(nonce).toBeDefined();
     expect(csp).toBe(
-      `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; frame-src https://github.com/sponsors/; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'`,
+      `default-src 'self'; script-src 'self' 'nonce-${nonce}' https://static.cloudflareinsights.com/beacon.min.js; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; frame-src https://github.com/sponsors/; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'`,
     );
     expect(res.headers.get("strict-transport-security")).toBe(
       "max-age=31536000; includeSubDomains",

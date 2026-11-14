@@ -8,9 +8,11 @@ import {
   getLinkForOwner,
   getLinkRecord,
   globalStats,
+  HOST_BLOCKED_SQL,
   IdTakenError,
   insertLink,
   isHostBlocked,
+  LINK_RECORD_SQL,
   ownerStats,
   publicStats,
   readCursor,
@@ -133,6 +135,59 @@ describe("getLinkRecord", () => {
     expect(await isHostBlocked(db, "notevil.com")).toBe(false);
     expect(await isHostBlocked(db, "good.org")).toBe(false);
     await expect(isHostBlocked(db, `${"a".repeat(254)}.com`)).rejects.toThrow();
+  });
+});
+
+describe("blocked host lookup", () => {
+  async function plan(sql: string, ...args: unknown[]): Promise<string[]> {
+    const { results } = await db
+      .prepare(`EXPLAIN QUERY PLAN ${sql}`)
+      .bind(...args)
+      .all<{ detail: string }>();
+    return results.map((r) => r.detail);
+  }
+
+  it("reads blocked_hosts through its primary key, never with a full scan", async () => {
+    for (const details of [
+      await plan(LINK_RECORD_SQL, "some-id"),
+      await plan(HOST_BLOCKED_SQL, "a.b.evil.com"),
+    ]) {
+      const onBlocked = details.filter((d) => /\b(b|blocked_hosts)\b/.test(d));
+      expect(onBlocked.length).toBeGreaterThan(0);
+      for (const d of onBlocked) {
+        expect(d).not.toMatch(/^SCAN (b|blocked_hosts)\b/);
+        expect(d).toMatch(/USING (PRIMARY KEY|INDEX sqlite_autoindex_blocked_hosts)/);
+      }
+    }
+  });
+
+  it("keeps the right answer with many unrelated blocked hosts", async () => {
+    const filler = Array.from({ length: 500 }, (_, i) =>
+      db
+        .prepare("INSERT INTO blocked_hosts (host, reason, created_at) VALUES (?, NULL, ?)")
+        .bind(`filler${i}.example`, NOW),
+    );
+    await db.batch(filler);
+    await blockHost(db, "evil.com", null, NOW);
+    const cases: [string, boolean][] = [
+      ["evil.com", true],
+      ["a.evil.com", true],
+      ["a.b.c.d.e.evil.com", true],
+      ["notevil.com", false],
+      ["evil.com.example", false],
+      ["com", false],
+    ];
+    for (const [host, blocked] of cases) {
+      expect(await isHostBlocked(db, host)).toBe(blocked);
+      const id = `bh-${host}`;
+      await insertLink(db, link(id, { target: `https://${host}/p` }));
+      expect((await getLinkRecord(db, id))?.blocked).toBe(blocked);
+    }
+    // rows_read is what D1 bills, so it is the real guard against a full scan; the query plan test above
+    // is a second signal that can change with SQLite's planner.
+    const meta = await db.prepare(HOST_BLOCKED_SQL).bind("a.b.c.d.e.evil.com").run();
+    // A full scan would read all 501 rows; the suffix walk reads a few per label.
+    expect(meta.meta.rows_read).toBeLessThan(50);
   });
 });
 

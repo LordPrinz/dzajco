@@ -191,6 +191,29 @@ describe("private targets", () => {
     "http://240.0.0.1/",
     "http://255.255.255.255/",
     "http://[2002:c000:204::1]/",
+    "http://192.0.0.1/",
+    "http://192.0.2.1/",
+    "http://198.18.0.1/",
+    "http://198.19.255.255/",
+    "http://198.51.100.7/",
+    "http://203.0.113.5/",
+    "http://[::ffff:198.18.0.1]/",
+    "http://[ff02::1]/",
+    "http://[ff0e::1]/",
+    "http://[fec0::1]/",
+    "http://[feff::1]/",
+    "http://[2001:db8::1]/",
+    "http://[2001:db8:ffff::1]/",
+    "http://[2001:0:4136:e378:8000:63bf:f5ff:fffe]/",
+    "http://[2001::1]/",
+    "http://[100::1]/",
+    "http://[100::ffff:ffff:ffff:ffff]/",
+    "http://[64:ff9b:1::1]/",
+    "http://[64:ff9b:1:ffff::808:808]/",
+    "http://[::ffff:0:a00:1]/",
+    "http://[::ffff:0:7f00:1]/",
+    "http://[3fff::1]/",
+    "http://[3fff:fff:ffff::1]/",
   ])("rejects %s as private_target", (input) => {
     expect(parse(input)).toEqual({ ok: false, code: "private_target" });
   });
@@ -205,13 +228,43 @@ describe("private targets", () => {
     "http://100.128.0.1/",
     "http://169.253.0.1/",
     "http://192.169.0.1/",
-    "http://[2001:db8::1]/",
     "http://[::ffff:8.8.8.8]/",
-    "http://[fec0::1]/",
+    "http://[2606:4700:4700::1111]/",
+    "http://[2001:4860:4860::8888]/",
+    "http://[2001:1::1]/",
+    "http://[2001:db9::1]/",
+    "http://[101::1]/",
+    "http://[100:0:0:1::1]/",
+    "http://[fe00::1]/",
+    "http://[64:ff9b:2::1]/",
+    "http://[::ffff:0:808:808]/",
+    "http://[3fff:1000::1]/",
+    "http://[3ffe::1]/",
+    "http://192.0.1.1/",
+    "http://192.0.3.1/",
+    "http://198.17.255.255/",
+    "http://198.20.0.1/",
+    "http://198.51.101.1/",
+    "http://203.0.112.1/",
+    "http://203.0.114.1/",
     "http://localhost.example.com/",
     "http://notlocalhost/",
   ])("accepts public %s", (input) => {
     expect(parse(input).ok).toBe(true);
+  });
+
+  it("rejects a host longer than 253 characters as invalid_url", () => {
+    expect(parse(`http://${"a.".repeat(900)}com/`)).toEqual({ ok: false, code: "invalid_url" });
+    expect(
+      parse(`http://${"a".repeat(63)}.${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(57)}.com/`)
+        .ok,
+    ).toBe(true);
+    expect(
+      parse(`http://${"a".repeat(63)}.${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(58)}.com/`),
+    ).toEqual({
+      ok: false,
+      code: "invalid_url",
+    });
   });
 
   it("rejects a malformed IPv6 group layout safely", () => {

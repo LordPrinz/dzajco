@@ -9,6 +9,9 @@ updates:
     commit-message:
       prefix: "[DZAJ-15] build"
       include: scope
+    # Skip releases younger than a week; most malicious npm versions are pulled within days.
+    cooldown:
+      default-days: 7
     groups:
       minor-and-patch:
         update-types: [minor, patch]

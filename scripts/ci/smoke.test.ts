@@ -1,10 +1,25 @@
 import { describe, expect, it } from "bun:test";
 import { smoke } from "./smoke.ts";
 
-function fakeFetch(overrides: { create?: number; redirect?: number; location?: string } = {}) {
+const ASSET_HEADERS = {
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+};
+
+function fakeFetch(
+  overrides: {
+    create?: number;
+    redirect?: number;
+    location?: string;
+    assetHeaders?: Record<string, string>;
+  } = {},
+) {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url.endsWith("/healthz")) return new Response('{"ok":true}');
+    if (url.endsWith("/css/app.css")) {
+      return new Response("body{}", { headers: overrides.assetHeaders ?? ASSET_HEADERS });
+    }
     if (init?.method === "POST") {
       return new Response(JSON.stringify({ id: "abc" }), { status: overrides.create ?? 201 });
     }
@@ -32,7 +47,13 @@ describe("smoke", () => {
 
   it("passes when health, create and redirect behave", async () => {
     const log = await smoke("http://x", fakeFetch());
-    expect(log).toHaveLength(3);
+    expect(log).toHaveLength(4);
+  });
+
+  it("fails when a static asset lacks the security headers", async () => {
+    await expect(smoke("http://x", fakeFetch({ assetHeaders: {} }))).rejects.toThrow(
+      "/css/app.css",
+    );
   });
 
   it("fails when the link is not created", async () => {

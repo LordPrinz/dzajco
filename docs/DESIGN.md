@@ -44,7 +44,7 @@ dzajco/                          (trunk: v3.0)
 │   ├── ci/            # coverage.ts, size.ts
 │   └── migrate/       # mongo-to-d1.ts
 ├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:7)
-├── Dockerfile                 # dev/test: node:22-bookworm-slim + bun + wrangler (workerd needs glibc)
+├── Dockerfile                 # dev/test: node:24-bookworm-slim + bun + wrangler (workerd needs glibc)
 ├── wrangler.jsonc  vitest.config.ts  biome.json  bunfig.toml  tsconfig.json  .editorconfig  .env.example
 ├── docs/{DESIGN.md,ROADMAP.md,DEPLOYMENT.md,adr/}
 ├── .github/  .husky/  CONTRIBUTING.md  README.md
@@ -228,11 +228,18 @@ result page and owner stats carry `Cache-Control: no-store`.
 - Reserved names: app routes and the top-level entries of `public/`. The list is kept by hand, and a test
   compares it with `public/`, so a new file there fails the test until the list is updated.
 - Lookup ids on redirect: 1 to 64 characters (NFC) with no `/`, control or format characters, so imported v2
-  names keep working. The strict rules above apply only at creation.
-- Target URL: only `http:` and `https:`, at most 2048 characters, host in punycode. Also rejected:
+  names keep working. The strict rules above apply only at creation. The migration and `admin:block link`
+  use the same rule (`LOOKUP_ID`), so every id that resolves can also be deleted.
+- Target URL: only `http:` and `https:`, at most 2048 characters, host in punycode and at most 253
+  characters (a longer host is `invalid_url`). Also rejected:
   - credentials in the URL (`credentials_not_allowed`);
   - private, loopback, link-local, multicast and reserved IPv4 and IPv6 addresses, including alternative
-    IPv4 forms and `localhost` (`private_target`);
+    IPv4 forms and `localhost` (`private_target`). Reserved covers the IPv4 documentation and benchmarking
+    ranges (`192.0.0.0/24`, `192.0.2.0/24`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`) and, for
+    IPv6, site-local `fec0::/10`, documentation `2001:db8::/32` and `3fff::/20`, Teredo `2001::/32`,
+    discard `100::/64`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and IPv4-mapped, translated, compatible or
+    NAT64 (`64:ff9b::/96`) forms of a private IPv4 address. A public IPv6 literal such as
+    `http://[2606:4700:4700::1111]/` is accepted, and `admin:block host` takes one in brackets;
   - the own hosts: the host of `PUBLIC_ORIGIN`, the request host, and the account's `*.workers.dev` suffix
     (preview URLs), including trailing dots and ports;
   - targets on other URL shorteners (see Abuse).
@@ -257,15 +264,15 @@ The Free plan is the design constraint. Limits used here:
 
 Cost per operation:
 
-| Operation                        | D1 writes                                           | D1 reads                                                                                                           | AE                                                                | Notes                                                                                                                                                                                        |
-| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Redirect (cache hit)             | 0                                                   | 0                                                                                                                  | 1 point                                                           | AE write runs in `waitUntil`                                                                                                                                                                 |
-| Redirect (cache miss)            | 0                                                   | 1 plus the `blocked_hosts` rows that match (one `IN (...)` query over the host and its parent domains, same batch) | 1 point                                                           | the cached record carries the `blocked` flag                                                                                                                                                 |
-| Create link                      | 1 to 2 (PK, `links_expires`)                        | 1                                                                                                                  | 0                                                                 |                                                                                                                                                                                              |
-| Delete link                      | 1 to 2 plus `link_stats` rows                       | 1                                                                                                                  | 0                                                                 |                                                                                                                                                                                              |
-| Stats (public or owner)          | 0                                                   | 1 plus the number of stats rows                                                                                    | at most 2 SQL API queries per 5 min per colo, shared by all links | data after the rollup cursor comes from AE                                                                                                                                                   |
-| Rollup (hourly cron, in pages)   | 1 per (link, country, city) of the day, plus cursor | about the same                                                                                                     | 1 to N queries                                                    | at most `ROLLUP_MAX_PAGES` x 500 groups per call. D1 and fetch wait time is not CPU, but building statements is, so `cpuTime` is measured in T16 and `ROLLUP_MAX_PAGES` is lowered if needed |
-| `global_stats` (daily cron step) | 1                                                   | one `SUM` over `link_stats` per day                                                                                | 0                                                                 |                                                                                                                                                                                              |
+| Operation                        | D1 writes                                           | D1 reads                                                                                                       | AE                                                                | Notes                                                                                                                                                                                        |
+| -------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Redirect (cache hit)             | 0                                                   | 0                                                                                                              | 1 point                                                           | AE write runs in `waitUntil`                                                                                                                                                                 |
+| Redirect (cache miss)            | 0                                                   | 1 plus one `blocked_hosts` primary key lookup per label of the host (a recursive CTE lists the parent domains) | 1 point                                                           | the cached record carries the `blocked` flag                                                                                                                                                 |
+| Create link                      | 1 to 2 (PK, `links_expires`)                        | 1                                                                                                              | 0                                                                 |                                                                                                                                                                                              |
+| Delete link                      | 1 to 2 plus `link_stats` rows                       | 1                                                                                                              | 0                                                                 |                                                                                                                                                                                              |
+| Stats (public or owner)          | 0                                                   | 1 plus the number of stats rows                                                                                | at most 2 SQL API queries per 5 min per colo, shared by all links | data after the rollup cursor comes from AE                                                                                                                                                   |
+| Rollup (hourly cron, in pages)   | 1 per (link, country, city) of the day, plus cursor | about the same                                                                                                 | 1 to N queries                                                    | at most `ROLLUP_MAX_PAGES` x 500 groups per call. D1 and fetch wait time is not CPU, but building statements is, so `cpuTime` is measured in T16 and `ROLLUP_MAX_PAGES` is lowered if needed |
+| `global_stats` (daily cron step) | 1                                                   | one `SUM` over `link_stats` per day                                                                            | 0                                                                 |                                                                                                                                                                                              |
 
 A 429 from a rate limit binding still counts as a Worker request. Only the WAF rule protects the request quota
 (see Security, rate limits).
@@ -329,13 +336,17 @@ Other measures:
   `Strict-Transport-Security: max-age=31536000; includeSubDomains` and `X-Content-Type-Options: nosniff`.
   The CSP with a nonce is HTML only, and JSON responses get `Content-Security-Policy: default-src 'none'`.
   The HTML CSP is
-  `default-src 'self'; script-src 'self' 'nonce-<n>' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; frame-src https://github.com/sponsors/; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'`.
+  `default-src 'self'; script-src 'self' 'nonce-<n>' https://static.cloudflareinsights.com/beacon.min.js; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; frame-src https://github.com/sponsors/; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'`.
   The nonce changes on every request. The Cloudflare Web Analytics beacon is a manual snippet with the nonce,
   because auto-injection has no nonce. HTML also gets:
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy: geolocation=(), camera=(), microphone=()`
 
-  Static assets get the same headers (without a nonce) from `public/_headers`.
+  Static assets do not pass through the Worker, so `public/_headers` gives them HSTS, `nosniff`,
+  `Referrer-Policy` and
+  `Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`.
+  That CSP only matters when an asset is opened as a document (the SVGs); it does not limit how pages load
+  scripts or styles.
 - Logging. The Worker never logs the `Authorization` header, form bodies or create responses. Client IPs live
   only in Cloudflare's own logs. The privacy page says so. Analytics Engine stores one event per visit (time,
   link id, country, city, approximate coordinates, no IP and no User-Agent) for up to 3 months.
@@ -350,7 +361,7 @@ A shortener is open to abuse, so v3.0 has a minimum set of controls (task T10c):
   `src/domain` (for example bit.ly, tinyurl.com, t.co, goo.gl, ow.ly, is.gd, buff.ly, rebrand.ly, cutt.ly,
   shorturl.at, tiny.cc). The own host is on it too.
 - The D1 table `blocked_hosts` lists blocked hosts. It is checked on create (exact host and parent domains)
-  and on redirect. A blocked target gives a 410 page "link disabled".
+  and on redirect, through primary key lookups only. A blocked target gives a 410 page "link disabled".
 - A "Report abuse" mailto link on the stats, 404 and 410 pages. The address is the var `ABUSE_EMAIL`.
 - Admin CLI `scripts/admin/block.ts`: `bun run admin:block host <host> [--reason <text>]`,
   `bun run admin:block unblock <host>` and `bun run admin:block link <id>` (deletes a link). Each needs exactly

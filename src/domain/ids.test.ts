@@ -4,6 +4,7 @@ import {
   ID_ALPHABET,
   ID_LENGTH,
   isReserved,
+  LOOKUP_ID,
   parseCustomName,
   randomId,
   randomString,
@@ -165,5 +166,29 @@ describe("parseCustomName", () => {
         }
       }),
     );
+  });
+});
+
+describe("LOOKUP_ID", () => {
+  it("accepts imported v2 names with spaces and punctuation", () => {
+    for (const id of ["abc", "a b", "hello!", "zółw", "x".repeat(64)]) {
+      expect(LOOKUP_ID.test(id)).toBe(true);
+    }
+  });
+
+  it("rejects /, control and format characters and more than 64 characters", () => {
+    for (const id of [
+      "",
+      "a/b",
+      "a\u0000b",
+      "a\u007fb",
+      "a\u200bb",
+      "a\u202eb",
+      "a\u00adb",
+      "a\ufeffb",
+      "x".repeat(65),
+    ]) {
+      expect(LOOKUP_ID.test(id)).toBe(false);
+    }
   });
 });

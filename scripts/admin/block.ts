@@ -6,6 +6,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { normalizeHost } from "../../src/domain/host";
+import { LOOKUP_ID } from "../../src/domain/ids";
 import { sqlString } from "../lib/sql";
 
 export type BlockCommand =
@@ -32,7 +33,6 @@ export const USAGE = [
   "  --help, -h          show this text",
 ].join("\n");
 const MAX_REASON_LENGTH = 500;
-const LINK_ID = /^[^/\p{Cc}\p{Cf}]{1,64}$/u;
 
 export const CACHE_NOTE =
   "Note: cached copies of a deleted link can still redirect for up to 60 seconds.";
@@ -71,7 +71,7 @@ export function parseArgs(argv: string[]): BlockArgs {
   }
   if (kind === "link") {
     const id = target.normalize("NFC");
-    if (!LINK_ID.test(id)) throw new Error("Not a valid link id");
+    if (!LOOKUP_ID.test(id)) throw new Error("Not a valid link id");
     return { command: { kind, id }, dryRun, local, yes };
   }
   throw new Error(USAGE);

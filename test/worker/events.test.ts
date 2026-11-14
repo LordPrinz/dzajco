@@ -57,7 +57,7 @@ describe("CF Web Analytics beacon", () => {
     expect(csp).toContain("https://static.cloudflareinsights.com");
     expect(csp).toContain("connect-src 'self' https://cloudflareinsights.com");
     expect(csp).toMatch(
-      /script-src 'self' 'nonce-[^']+' https:\/\/static\.cloudflareinsights\.com;/,
+      /script-src 'self' 'nonce-[^']+' https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js;/,
     );
   });
 });

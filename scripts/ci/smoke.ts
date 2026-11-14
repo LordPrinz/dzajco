@@ -1,4 +1,5 @@
-// Smoke test against a running Worker: /healthz answers 200, a link is created (201) and redirects (302).
+// Smoke test against a running Worker: /healthz answers 200, a static asset carries the headers from
+// public/_headers, a link is created (201) and redirects (302).
 // Needs no Cloudflare account. Usage: bun scripts/ci/smoke.ts [base-url]   (default http://localhost:8787)
 
 const WAIT_MS = 120_000;
@@ -32,6 +33,14 @@ export async function smoke(base: string, fetcher: typeof fetch = fetch): Promis
   const log: string[] = [];
   await waitForHealth(base, fetcher);
   log.push("GET /healthz -> 200");
+
+  const asset = await fetcher(`${base}/css/app.css`, { signal: timeout() });
+  await asset.body?.cancel();
+  if (asset.status !== 200) throw new Error(`GET /css/app.css returned ${asset.status}`);
+  for (const name of ["Strict-Transport-Security", "X-Content-Type-Options"]) {
+    if (!asset.headers.get(name)) throw new Error(`GET /css/app.css has no ${name}`);
+  }
+  log.push("security headers present on /css/app.css");
 
   const target = "https://example.com/smoke";
   const created = await fetcher(`${base}/api/v1/links`, {
