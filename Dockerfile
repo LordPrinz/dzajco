@@ -8,6 +8,10 @@ FROM oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb472
 # node:22-bookworm-slim
 FROM node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+# workerd needs the system CA store for its outbound TLS configuration; the slim image ships without it.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 ENV HUSKY=0 \
     CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false \
     WRANGLER_SEND_METRICS=false \
