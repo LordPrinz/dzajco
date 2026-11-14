@@ -1,4 +1,6 @@
 import type { RollupCursor, VisitRow } from "../analytics/ports";
+import { roundCoord } from "../domain/geo";
+import { normalizeHost, normalizeHostname } from "../domain/host";
 
 export class IdTakenError extends Error {
   constructor(id: string) {
@@ -9,24 +11,6 @@ export class IdTakenError extends Error {
 
 const CURSOR_KEY = "rollup_cursor";
 const MAX_EXPIRED_BATCH = 1000;
-const MAX_HOST_LENGTH = 253;
-
-function normalizeHostname(hostname: string): string {
-  return hostname.toLowerCase().replace(/\.+$/, "");
-}
-
-/** Normalises a bare host the same way `insertLink` stores `target_host` (punycode, lowercase, no trailing dot). */
-function normalizeHost(input: string): string {
-  const trimmed = input.trim();
-  if (trimmed === "" || trimmed.length > MAX_HOST_LENGTH || /[\s/:@?#\\]/.test(trimmed)) {
-    throw new Error(`Not a bare host: ${input}`);
-  }
-  return normalizeHostname(new URL(`http://${trimmed}`).hostname);
-}
-
-function cleanCoord(value: number | null): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? Math.round(value * 100) / 100 : null;
-}
 
 export interface NewLink {
   id: string;
@@ -203,9 +187,12 @@ export async function upsertStatsBatch(
      SELECT ?4, ?5, ?6, ?7, ?8, ?9
      WHERE EXISTS (SELECT 1 FROM links WHERE id = ?4) AND ${cursorMatches}
      ON CONFLICT (link_id, country, city) DO UPDATE SET
-       visits = visits + excluded.visits,
-       lat = COALESCE(excluded.lat, lat),
-       lon = COALESCE(excluded.lon, lon)`,
+       -- Weighted by all visits: D1 does not track visits-with-coords (small drift vs the live merge).
+       lat = CASE WHEN excluded.lat IS NULL THEN lat WHEN lat IS NULL THEN excluded.lat
+         ELSE round((lat * visits + excluded.lat * excluded.visits) / (visits + excluded.visits), 2) END,
+       lon = CASE WHEN excluded.lon IS NULL THEN lon WHEN lon IS NULL THEN excluded.lon
+         ELSE round((lon * visits + excluded.lon * excluded.visits) / (visits + excluded.visits), 2) END,
+       visits = visits + excluded.visits`,
   );
   const statements = rows
     .filter((r) => Number.isInteger(r.visits) && r.visits > 0)
@@ -217,8 +204,8 @@ export async function upsertStatsBatch(
         r.linkId,
         r.country,
         r.city,
-        cleanCoord(r.lat),
-        cleanCoord(r.lon),
+        roundCoord(r.lat),
+        roundCoord(r.lon),
         r.visits,
       ),
     );
@@ -251,9 +238,16 @@ export async function publicStats(db: D1Database, id: string): Promise<PublicSta
   };
 }
 
-/** Includes city coordinates: the caller must have verified the link's secret first. */
-export async function ownerStats(db: D1Database, id: string): Promise<OwnerStats> {
-  const [cursorRes, countryRes, cityRes] = await db.batch([
+/**
+ * Includes city coordinates and the stored secret hash, so one batch serves the owner view: the
+ * caller must verify the key against `secretHash` before it returns anything. `found` is false
+ * when the link no longer exists.
+ */
+export async function ownerStats(
+  db: D1Database,
+  id: string,
+): Promise<OwnerStats & { found: boolean; secretHash: string | null }> {
+  const [cursorRes, countryRes, cityRes, linkRes] = await db.batch([
     db.prepare("SELECT value FROM meta WHERE key = ?").bind(CURSOR_KEY),
     db
       .prepare(
@@ -265,13 +259,17 @@ export async function ownerStats(db: D1Database, id: string): Promise<OwnerStats
         "SELECT country, city, lat, lon, visits FROM link_stats WHERE link_id = ? AND city <> '' ORDER BY visits DESC, country, city",
       )
       .bind(id),
+    db.prepare("SELECT secret_hash AS secretHash FROM links WHERE id = ?").bind(id),
   ]);
+  const linkRow = linkRes?.results?.[0] as { secretHash: string | null } | undefined;
   const countries = (countryRes?.results ?? []) as unknown as CountryStat[];
   return {
     cursor: parseCursor((cursorRes?.results?.[0] as { value: string } | undefined)?.value),
     visits: countries.reduce((sum, c) => sum + c.visits, 0),
     countries,
     cities: (cityRes?.results ?? []) as unknown as CityStat[],
+    found: linkRow !== undefined,
+    secretHash: linkRow?.secretHash ?? null,
   };
 }
 

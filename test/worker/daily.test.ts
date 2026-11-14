@@ -1,0 +1,114 @@
+import { createScheduledController } from "cloudflare:test";
+import { env } from "cloudflare:workers";
+import { beforeEach, expect, it } from "vitest";
+import { runDaily } from "../../src/cron/daily";
+import { globalStats, insertLink, readCursor, upsertStatsBatch } from "../../src/db/queries";
+import worker from "../../src/index";
+
+const db = env.DB;
+const DAY1 = Date.parse("2026-11-14T00:00:00Z");
+const DAY2 = Date.parse("2026-11-15T00:00:00Z");
+
+async function addLink(id: string, expiresAt: number | null) {
+  await insertLink(db, {
+    id,
+    target: "https://example.com/",
+    secretHash: null,
+    expiresAt,
+    createdAt: DAY1 - 86_400_000,
+    isCustom: false,
+  });
+}
+
+async function linkIds(): Promise<string[]> {
+  const { results } = await db.prepare("SELECT id FROM links ORDER BY id").all<{ id: string }>();
+  return results.map((r) => r.id);
+}
+
+function cron(scheduledTime: number) {
+  return worker.scheduled(createScheduledController({ scheduledTime }), env);
+}
+
+beforeEach(async () => {
+  await db.batch([
+    db.prepare("DELETE FROM link_stats"),
+    db.prepare("DELETE FROM links"),
+    db.prepare("DELETE FROM meta"),
+    db.prepare("DELETE FROM global_stats"),
+  ]);
+});
+
+const H = 3_600_000;
+
+it("without analytics configured the daily step runs once per UTC day after 01:00", async () => {
+  await addLink("old", DAY1 - 1);
+  await addLink("live", null);
+  await upsertStatsBatch(
+    db,
+    [{ linkId: "live", country: "PL", city: "", visits: 7, lat: null, lon: null }],
+    null,
+    { day: "2026-11-13", offset: 0 },
+  );
+
+  // Before 01:00 UTC yesterday is not closed yet.
+  await cron(DAY1 + 60_000);
+  expect(await linkIds()).toEqual(["live", "old"]);
+  expect(await globalStats(db)).toBeNull();
+
+  await cron(DAY1 + H);
+  expect(await linkIds()).toEqual(["live"]);
+  expect(await globalStats(db)).toEqual({
+    links: 1,
+    visits: 7,
+    countries: [{ code: "PL", visits: 7 }],
+    updatedAt: DAY1 + H,
+  });
+
+  // Later hours of the same day skip the daily step.
+  await addLink("old2", DAY1);
+  await cron(DAY1 + 2 * H);
+  expect(await linkIds()).toEqual(["live", "old2"]);
+  expect((await globalStats(db))?.updatedAt).toBe(DAY1 + H);
+
+  // The next day it runs again.
+  await cron(DAY2 + H);
+  expect(await linkIds()).toEqual(["live"]);
+  expect((await globalStats(db))?.updatedAt).toBe(DAY2 + H);
+});
+
+it("without CF_AE_TOKEN the cron skips the rollup and leaves the cursor alone", async () => {
+  await cron(DAY1 + H);
+  expect(await readCursor(db)).toBeNull();
+
+  await upsertStatsBatch(db, [], null, { day: "2026-11-12", offset: 0 });
+  await cron(DAY1 + 2 * H);
+  expect(await readCursor(db)).toEqual({ day: "2026-11-12", offset: 0 });
+});
+
+it("with analytics configured global_stats waits for the rollup cursor, deleteExpired does not", async () => {
+  await addLink("old", DAY1 - 1);
+  const none = { expired: false, globalStats: false };
+
+  expect(await runDaily(db, DAY1 + 30 * 60_000, true)).toEqual(none);
+  expect(await linkIds()).toEqual(["old"]);
+
+  // Cursor stuck at yesterday (AE failing): expired links still go, once that day.
+  await upsertStatsBatch(db, [], null, { day: "2026-11-13", offset: 0 });
+  expect(await runDaily(db, DAY1 + H, true)).toEqual({ expired: true, globalStats: false });
+  expect(await linkIds()).toEqual([]);
+  expect(await globalStats(db)).toBeNull();
+  await addLink("old2", DAY1);
+  expect(await runDaily(db, DAY1 + 2 * H, true)).toEqual(none);
+  expect(await linkIds()).toEqual(["old2"]);
+
+  // The rollup catches up: global_stats runs once.
+  await upsertStatsBatch(
+    db,
+    [],
+    { day: "2026-11-13", offset: 0 },
+    { day: "2026-11-14", offset: 0 },
+  );
+  expect(await runDaily(db, DAY1 + 3 * H, true)).toEqual({ expired: false, globalStats: true });
+  expect((await globalStats(db))?.updatedAt).toBe(DAY1 + 3 * H);
+  expect(await runDaily(db, DAY1 + 4 * H, true)).toEqual(none);
+});

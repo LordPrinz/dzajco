@@ -7,19 +7,26 @@
     "bun": ">=1.4.4"
   },
   "scripts": {
-    "build:client": "bun build src/client/*.ts --outdir public/assets --minify --target browser",
     "dev": "bun run build:client && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
     "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy",
     "check": "biome check .",
-    "check:size": "bun scripts/ci/size.ts",
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json",
     "test": "bun test ./src ./scripts",
-    "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
     "test:worker": "vitest run",
     "types": "wrangler types --env-file .env.example",
+    "prepare": "husky",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "gh:setup": "bun scripts/gh/setup.ts",
+    "gh:setup-repo": "bun scripts/gh/setup-repo.ts",
+    "gh:setup-project": "bun scripts/gh/setup-project.ts",
+    "gh:sync": "bun scripts/gh/sync-project.ts",
+    "gh:create-issues": "bun scripts/gh/create-issues.ts",
+    "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
+    "admin:block": "bun scripts/admin/block.ts",
+    "build:client": "bun build src/client/*.ts --outdir public/assets --minify --target browser",
+    "check:size": "bun scripts/ci/size.ts"
   },
   "dependencies": {
     "hono": "4.13.18",
@@ -29,9 +36,10 @@
     "@biomejs/biome": "2.6.7",
     "@cloudflare/vitest-plugin": "1.8.2",
     "@types/bun": "1.4.4",
-    "fast-check": "4.10.2",
+    "husky": "9.1.7",
     "typescript": "7.0.2",
     "vitest": "5.1.0",
-    "wrangler": "4.162.0"
+    "wrangler": "4.162.0",
+    "fast-check": "4.10.2"
   }
 }
