@@ -1,0 +1,1 @@
+bunx biome check --staged --no-errors-on-unmatched || { echo "Run: bun run check:fix, then re-stage"; exit 1; }

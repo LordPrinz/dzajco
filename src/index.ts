@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { runScheduled } from "./cron/scheduled";
 import { redirectRoutes } from "./routes/redirect";
 
 const app = new Hono<{ Bindings: Cloudflare.Env }>();
@@ -10,7 +11,7 @@ app.route("/", redirectRoutes());
 
 export default {
   fetch: app.fetch,
-  scheduled(controller: ScheduledController): void {
-    console.info(`scheduled run at ${new Date(controller.scheduledTime).toISOString()}`);
+  scheduled(controller: ScheduledController, env: Cloudflare.Env): Promise<void> {
+    return runScheduled(env, controller.scheduledTime);
   },
 } satisfies ExportedHandler<Cloudflare.Env>;
