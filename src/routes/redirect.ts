@@ -4,7 +4,9 @@ import { aeSink, visitPoint } from "../analytics/sink";
 import { deleteIfExpired, getLinkRecord, type LinkRecord } from "../db/queries";
 import { isBot } from "../domain/bots";
 import { isReserved } from "../domain/ids";
+import { reportAbuseLink } from "../lib/abuse";
 import { clientIpKey } from "../lib/client-ip";
+import { escapeHtml } from "../lib/html";
 import { rateLimit } from "../middleware/rate-limit";
 
 type Env = { Bindings: Cloudflare.Env };
@@ -22,12 +24,18 @@ const MAX_CACHE_SECONDS = 60;
 const CACHE_ORIGIN = "https://link-cache.internal";
 
 const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
-const GONE_PAGE =
-  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Link expired</title><h1>This link has expired</h1></html>';
-const NOT_FOUND_PAGE =
-  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Not found</title><h1>Link not found</h1></html>';
-const DISABLED_PAGE =
-  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Link disabled</title><h1>This link has been disabled</h1></html>';
+
+/** Static page; the only dynamic part is the report link, whose href is escaped. */
+function page(
+  env: Cloudflare.Env,
+  title: "Not found" | "Link expired" | "Link disabled",
+  heading: "Link not found" | "This link has expired" | "This link has been disabled",
+  linkId?: string,
+): string {
+  const href = reportAbuseLink(env, { linkId });
+  const report = href ? `<p><a href="${escapeHtml(href)}">Report abuse</a></p>` : "";
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><title>${title}</title><h1>${heading}</h1>${report}</html>`;
+}
 
 export function linkCacheKey(id: string): Request {
   return new Request(`${CACHE_ORIGIN}/link/${encodeURIComponent(id)}`);
@@ -90,7 +98,7 @@ async function writeVisit(sink: VisitSink, point: ReturnType<typeof visitPoint>)
 }
 
 function notFound(c: Context<Env>): Response {
-  return c.html(NOT_FOUND_PAGE, 404, PAGE_HEADERS);
+  return c.html(page(c.env, "Not found", "Link not found"), 404, PAGE_HEADERS);
 }
 
 export interface RedirectOptions {
@@ -128,9 +136,14 @@ export function redirectRoutes(options: RedirectOptions = {}) {
             .then(() => purgeLinkCache(id))
             .catch(() => console.warn("redirect: lazy delete failed")),
         );
-        return c.html(GONE_PAGE, 410, PAGE_HEADERS);
+        return c.html(page(c.env, "Link expired", "This link has expired", id), 410, PAGE_HEADERS);
       }
-      if (record.blocked) return c.html(DISABLED_PAGE, 410, PAGE_HEADERS);
+      if (record.blocked)
+        return c.html(
+          page(c.env, "Link disabled", "This link has been disabled", id),
+          410,
+          PAGE_HEADERS,
+        );
       const location = safeLocation(record.target);
       if (!location) {
         console.warn("redirect: stored target is not an http(s) URL");

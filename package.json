@@ -23,7 +23,8 @@
     "gh:setup-project": "bun scripts/gh/setup-project.ts",
     "gh:sync": "bun scripts/gh/sync-project.ts",
     "gh:create-issues": "bun scripts/gh/create-issues.ts",
-    "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts"
+    "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
+    "admin:block": "bun scripts/admin/block.ts"
   },
   "dependencies": {
     "hono": "4.13.18",
