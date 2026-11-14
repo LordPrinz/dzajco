@@ -172,6 +172,30 @@ export async function isIssueClosed(
   return ((await res.json()) as { state: string }).state === "closed";
 }
 
+/** Closes an issue as completed; `Closes #n` only auto-closes on the default branch. */
+export async function closeIssue(
+  token: string,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  const res = await fetchImpl(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`,
+    {
+      method: "PATCH",
+      headers: {
+        authorization: `Bearer ${token}`,
+        accept: "application/vnd.github+json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ state: "closed", state_reason: "completed" }),
+    },
+  );
+  if (!res.ok)
+    throw new Error(`Failed to close issue #${issueNumber}: ${res.status} ${await res.text()}`);
+}
+
 /** Result of one `gh` invocation. */
 export interface GhResult {
   code: number;
