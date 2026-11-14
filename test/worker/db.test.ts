@@ -196,7 +196,7 @@ describe("deleteLink", () => {
 });
 
 describe("deleteExpired", () => {
-  it("removes only expires_at < now, at most limit, and returns the ids", async () => {
+  it("removes only expires_at <= now, at most limit, and returns the ids", async () => {
     await insertLink(db, link("e1", { expiresAt: NOW - 30 }));
     await insertLink(db, link("e2", { expiresAt: NOW - 20 }));
     await insertLink(db, link("e3", { expiresAt: NOW - 10 }));
@@ -207,8 +207,8 @@ describe("deleteExpired", () => {
 
     expect(await deleteExpired(db, NOW, 2)).toEqual(["e1", "e2"]);
     expect(await count("link_stats", "link_id = 'e1'")).toBe(0);
-    expect(await deleteExpired(db, NOW, 500)).toEqual(["e3"]);
-    expect(await count("links")).toBe(3);
+    expect(await deleteExpired(db, NOW, 500)).toEqual(["e3", "edge"]);
+    expect(await count("links")).toBe(2);
     expect(await deleteExpired(db, NOW, 500)).toEqual([]);
   });
 
