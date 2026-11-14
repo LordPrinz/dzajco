@@ -15,8 +15,14 @@
     "test": "bun test ./src ./scripts",
     "test:worker": "vitest run",
     "types": "wrangler types --env-file .env.example",
+    "prepare": "husky",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "gh:setup": "bun scripts/gh/setup.ts",
+    "gh:setup-repo": "bun scripts/gh/setup-repo.ts",
+    "gh:setup-project": "bun scripts/gh/setup-project.ts",
+    "gh:sync": "bun scripts/gh/sync-project.ts",
+    "gh:create-issues": "bun scripts/gh/create-issues.ts"
   },
   "dependencies": {
     "hono": "4.13.18"
@@ -25,6 +31,7 @@
     "@biomejs/biome": "2.6.7",
     "@cloudflare/vitest-plugin": "1.8.2",
     "@types/bun": "1.4.4",
+    "husky": "9.1.7",
     "typescript": "7.0.2",
     "vitest": "5.1.0",
     "wrangler": "4.162.0"
