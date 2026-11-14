@@ -1,8 +1,10 @@
 import * as v from "valibot";
 
 export const KEY_LENGTH = 22;
+/** v2 keys came from `nanoid(12)`; links imported from v2 keep them, so they stay valid. */
+export const LEGACY_KEY_LENGTH = 12;
 
-const KEY_PATTERN = `[A-Za-z0-9_-]{${KEY_LENGTH}}`;
+const KEY_PATTERN = `(?:[A-Za-z0-9_-]{${KEY_LENGTH}}|[A-Za-z0-9_-]{${LEGACY_KEY_LENGTH}})`;
 
 export const keySchema = v.pipe(v.string(), v.regex(new RegExp(`^${KEY_PATTERN}$`), "Invalid key"));
 

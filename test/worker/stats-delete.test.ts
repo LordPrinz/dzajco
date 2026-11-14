@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { freshCacheKey } from "../../src/analytics/fresh";
 import type { RollupCursor } from "../../src/analytics/ports";
 import { blockHost, insertLink } from "../../src/db/queries";
+import { hashSecret } from "../../src/domain/secret";
 import worker from "../../src/index";
 import { FakeAe, type FakePoint } from "./fake-ae";
 
@@ -149,6 +150,26 @@ describe("DELETE /api/v1/links/:id", () => {
     const asJsonHeader = await call(del(id, { authorization: `Bearer {"$ne":null}` }));
     expect(asJsonHeader.status).toBe(400);
     expect(await linkExists(id)).toBe(true);
+  });
+
+  it("deletes a link imported from v2 whose key is a 12 char nanoid", async () => {
+    const id = `legacy${Date.now().toString(36)}`;
+    const legacyKey = "Ab3_-xYz09Qw";
+    expect(legacyKey).toHaveLength(12);
+    await insertLink(env.DB, {
+      id,
+      target: "https://example.com/legacy",
+      secretHash: await hashSecret(legacyKey, { version: 1, peppers: { 1: PEPPER } }),
+      expiresAt: null,
+      createdAt: Date.now(),
+      isCustom: true,
+    });
+    const wrong = await call(del(id, { authorization: "Bearer Ab3_-xYz09Qx" }));
+    expect(wrong.status).toBe(403);
+    expect(await linkExists(id)).toBe(true);
+    const ok = await call(del(id, { authorization: `Bearer ${legacyKey}` }));
+    expect(ok.status).toBe(204);
+    expect(await linkExists(id)).toBe(false);
   });
 
   it("returns 403 for a wrong key and the link stays", async () => {
