@@ -22,10 +22,10 @@ const MAX_CACHE_SECONDS = 60;
  */
 const CACHE_ORIGIN = "https://link-cache.internal";
 
-const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
+export const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 
 /** Static page; the only dynamic part is the report link, whose href is escaped. */
-function page(
+export function page(
   env: Cloudflare.Env,
   title: "Not found" | "Link expired" | "Link disabled",
   heading: "Link not found" | "This link has expired" | "This link has been disabled",

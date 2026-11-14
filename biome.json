@@ -12,7 +12,8 @@
       "!worker-configuration.d.ts",
       "!node_modules",
       "!public/assets",
-      "!public/img"
+      "!public/img",
+      "!public/css/leaflet.css"
     ]
   },
   "formatter": {
