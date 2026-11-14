@@ -1,0 +1,345 @@
+import type { RollupCursor, VisitRow } from "../analytics/ports";
+
+export class IdTakenError extends Error {
+  constructor(id: string) {
+    super(`Link id already taken: ${id}`);
+    this.name = "IdTakenError";
+  }
+}
+
+const CURSOR_KEY = "rollup_cursor";
+const MAX_EXPIRED_BATCH = 1000;
+const MAX_HOST_LENGTH = 253;
+
+function normalizeHostname(hostname: string): string {
+  return hostname.toLowerCase().replace(/\.+$/, "");
+}
+
+/** Normalises a bare host the same way `insertLink` stores `target_host` (punycode, lowercase, no trailing dot). */
+function normalizeHost(input: string): string {
+  const trimmed = input.trim();
+  if (trimmed === "" || trimmed.length > MAX_HOST_LENGTH || /[\s/:@?#\\]/.test(trimmed)) {
+    throw new Error(`Not a bare host: ${input}`);
+  }
+  return normalizeHostname(new URL(`http://${trimmed}`).hostname);
+}
+
+function cleanCoord(value: number | null): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? Math.round(value * 100) / 100 : null;
+}
+
+export interface NewLink {
+  id: string;
+  target: string;
+  secretHash: string | null;
+  expiresAt: number | null;
+  createdAt: number;
+  isCustom: boolean;
+}
+
+export interface LinkRecord {
+  id: string;
+  target: string;
+  expiresAt: number | null;
+  blocked: boolean;
+}
+
+export interface OwnerLink {
+  id: string;
+  target: string;
+  secretHash: string | null;
+  expiresAt: number | null;
+}
+
+export interface CountryStat {
+  code: string;
+  visits: number;
+}
+
+export interface CityStat {
+  country: string;
+  city: string;
+  lat: number | null;
+  lon: number | null;
+  visits: number;
+}
+
+export interface PublicStats {
+  cursor: RollupCursor | null;
+  visits: number;
+  countries: CountryStat[];
+}
+
+export interface OwnerStats extends PublicStats {
+  cities: CityStat[];
+}
+
+export interface GlobalStats {
+  links: number;
+  visits: number;
+  /** Top 20 countries by visits. */
+  countries: CountryStat[];
+  updatedAt: number;
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const text = `${error instanceof Error ? error.message : ""} ${
+    (error as { cause?: { message?: string } } | null)?.cause?.message ?? ""
+  }`;
+  return /UNIQUE constraint failed|PRIMARY KEY constraint failed/i.test(text);
+}
+
+function parseCursor(value: string | null | undefined): RollupCursor | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<RollupCursor>;
+    if (typeof parsed.day === "string" && Number.isInteger(parsed.offset)) {
+      return { day: parsed.day, offset: parsed.offset as number };
+    }
+  } catch {
+    // fall through: a corrupt cursor reads as missing
+  }
+  return null;
+}
+
+export async function insertLink(db: D1Database, link: NewLink): Promise<void> {
+  const targetHost = normalizeHostname(new URL(link.target).hostname);
+  try {
+    await db
+      .prepare(
+        "INSERT INTO links (id, target, target_host, secret_hash, expires_at, created_at, is_custom) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      )
+      .bind(
+        link.id,
+        link.target,
+        targetHost,
+        link.secretHash,
+        link.expiresAt,
+        link.createdAt,
+        link.isCustom ? 1 : 0,
+      )
+      .run();
+  } catch (error) {
+    if (isUniqueViolation(error)) throw new IdTakenError(link.id);
+    throw error;
+  }
+}
+
+/** One round trip: the link plus whether its host, or a parent domain, is in `blocked_hosts`. */
+export async function getLinkRecord(db: D1Database, id: string): Promise<LinkRecord | null> {
+  const row = await db
+    .prepare(
+      `SELECT l.id, l.target, l.expires_at AS expiresAt,
+        EXISTS (
+          SELECT 1 FROM blocked_hosts b
+          WHERE l.target_host = b.host
+             OR substr(l.target_host, -(length(b.host) + 1)) = '.' || b.host
+        ) AS blocked
+      FROM links l WHERE l.id = ?`,
+    )
+    .bind(id)
+    .first<{ id: string; target: string; expiresAt: number | null; blocked: number }>();
+  if (!row) return null;
+  return { id: row.id, target: row.target, expiresAt: row.expiresAt, blocked: row.blocked === 1 };
+}
+
+export async function getLinkForOwner(db: D1Database, id: string): Promise<OwnerLink | null> {
+  const row = await db
+    .prepare(
+      "SELECT id, target, secret_hash AS secretHash, expires_at AS expiresAt FROM links WHERE id = ?",
+    )
+    .bind(id)
+    .first<OwnerLink>();
+  return row ?? null;
+}
+
+/**
+ * Deletes a link when `verify` accepts the stored hash. The comparison stays in the caller
+ * (versioned HMAC cannot be compared in SQL); the DELETE re-checks the hash it verified, so a
+ * concurrent change cannot slip through. Links without a hash can never be deleted this way.
+ */
+export async function deleteLink(
+  db: D1Database,
+  id: string,
+  verify: (storedHash: string) => Promise<boolean>,
+): Promise<"deleted" | "forbidden" | "not_found"> {
+  const link = await getLinkForOwner(db, id);
+  if (!link) return "not_found";
+  if (link.secretHash === null || !(await verify(link.secretHash))) return "forbidden";
+  const result = await db
+    .prepare("DELETE FROM links WHERE id = ? AND secret_hash = ?")
+    .bind(id, link.secretHash)
+    .run();
+  // The hash changed between the read and the delete: treat as a failed verification.
+  return result.meta.changes > 0 ? "deleted" : "forbidden";
+}
+
+export async function readCursor(db: D1Database): Promise<RollupCursor | null> {
+  const row = await db
+    .prepare("SELECT value FROM meta WHERE key = ?")
+    .bind(CURSOR_KEY)
+    .first<{ value: string }>();
+  return parseCursor(row?.value);
+}
+
+/**
+ * Applies one rollup page and moves the cursor in a single batch. Every upsert only runs while the
+ * stored cursor still equals `from` (compared by field, not by text), so replaying a page that
+ * already landed changes nothing and returns `false`. Rows for links deleted in the meantime are
+ * skipped without failing the batch; rows with a non-positive or non-integer count are dropped.
+ */
+export async function upsertStatsBatch(
+  db: D1Database,
+  rows: readonly VisitRow[],
+  from: RollupCursor | null,
+  to: RollupCursor,
+): Promise<boolean> {
+  const fromDay = from?.day ?? null;
+  const fromOffset = from?.offset ?? null;
+  const cursorMatches = `(SELECT json_extract(value, '$.day') FROM meta WHERE key = ?1) IS ?2
+     AND (SELECT json_extract(value, '$.offset') FROM meta WHERE key = ?1) IS ?3`;
+  const upsert = db.prepare(
+    `INSERT INTO link_stats (link_id, country, city, lat, lon, visits)
+     SELECT ?4, ?5, ?6, ?7, ?8, ?9
+     WHERE EXISTS (SELECT 1 FROM links WHERE id = ?4) AND ${cursorMatches}
+     ON CONFLICT (link_id, country, city) DO UPDATE SET
+       visits = visits + excluded.visits,
+       lat = COALESCE(excluded.lat, lat),
+       lon = COALESCE(excluded.lon, lon)`,
+  );
+  const statements = rows
+    .filter((r) => Number.isInteger(r.visits) && r.visits > 0)
+    .map((r) =>
+      upsert.bind(
+        CURSOR_KEY,
+        fromDay,
+        fromOffset,
+        r.linkId,
+        r.country,
+        r.city,
+        cleanCoord(r.lat),
+        cleanCoord(r.lon),
+        r.visits,
+      ),
+    );
+  statements.push(
+    db
+      .prepare(
+        `INSERT INTO meta (key, value) SELECT ?1, ?4 WHERE ${cursorMatches}
+         ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+      )
+      .bind(CURSOR_KEY, fromDay, fromOffset, JSON.stringify(to)),
+  );
+  const results = await db.batch(statements);
+  return (results[results.length - 1]?.meta.changes ?? 0) > 0;
+}
+
+export async function publicStats(db: D1Database, id: string): Promise<PublicStats> {
+  const [cursorRes, countryRes] = await db.batch([
+    db.prepare("SELECT value FROM meta WHERE key = ?").bind(CURSOR_KEY),
+    db
+      .prepare(
+        "SELECT country AS code, SUM(visits) AS visits FROM link_stats WHERE link_id = ? GROUP BY country ORDER BY visits DESC, country",
+      )
+      .bind(id),
+  ]);
+  const countries = (countryRes?.results ?? []) as unknown as CountryStat[];
+  return {
+    cursor: parseCursor((cursorRes?.results?.[0] as { value: string } | undefined)?.value),
+    visits: countries.reduce((sum, c) => sum + c.visits, 0),
+    countries,
+  };
+}
+
+/** Includes city coordinates: the caller must have verified the link's secret first. */
+export async function ownerStats(db: D1Database, id: string): Promise<OwnerStats> {
+  const [cursorRes, countryRes, cityRes] = await db.batch([
+    db.prepare("SELECT value FROM meta WHERE key = ?").bind(CURSOR_KEY),
+    db
+      .prepare(
+        "SELECT country AS code, SUM(visits) AS visits FROM link_stats WHERE link_id = ? GROUP BY country ORDER BY visits DESC, country",
+      )
+      .bind(id),
+    db
+      .prepare(
+        "SELECT country, city, lat, lon, visits FROM link_stats WHERE link_id = ? AND city <> '' ORDER BY visits DESC, country, city",
+      )
+      .bind(id),
+  ]);
+  const countries = (countryRes?.results ?? []) as unknown as CountryStat[];
+  return {
+    cursor: parseCursor((cursorRes?.results?.[0] as { value: string } | undefined)?.value),
+    visits: countries.reduce((sum, c) => sum + c.visits, 0),
+    countries,
+    cities: (cityRes?.results ?? []) as unknown as CityStat[],
+  };
+}
+
+export async function globalStats(db: D1Database): Promise<GlobalStats | null> {
+  const row = await db
+    .prepare(
+      "SELECT links, visits, countries, updated_at AS updatedAt FROM global_stats WHERE id = 1",
+    )
+    .first<{ links: number; visits: number; countries: string | null; updatedAt: number }>();
+  if (!row) return null;
+  return { ...row, countries: row.countries ? (JSON.parse(row.countries) as CountryStat[]) : [] };
+}
+
+/** Recomputes the single `global_stats` row (daily cron step). `countries` is the top 20 by visits, as JSON. */
+export async function recomputeGlobalStats(db: D1Database, now: number): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO global_stats (id, links, visits, countries, updated_at)
+       SELECT 1,
+         (SELECT COUNT(*) FROM links),
+         COALESCE((SELECT SUM(visits) FROM link_stats), 0),
+         (SELECT json_group_array(json_object('code', country, 'visits', v)) FROM (
+            SELECT country, SUM(visits) AS v FROM link_stats GROUP BY country ORDER BY v DESC, country LIMIT 20)),
+         ?
+       ON CONFLICT (id) DO UPDATE SET links = excluded.links, visits = excluded.visits,
+         countries = excluded.countries, updated_at = excluded.updated_at`,
+    )
+    .bind(now)
+    .run();
+}
+
+/** Deletes up to `limit` links with `expires_at < now` (oldest first); returns their ids. link_stats cascade. */
+export async function deleteExpired(db: D1Database, now: number, limit: number): Promise<string[]> {
+  const { results } = await db
+    .prepare(
+      `DELETE FROM links WHERE id IN (
+         SELECT id FROM links WHERE expires_at IS NOT NULL AND expires_at < ?1 ORDER BY expires_at LIMIT ?2
+       ) RETURNING id`,
+    )
+    .bind(now, Math.min(Math.max(1, Math.trunc(limit) || 1), MAX_EXPIRED_BATCH))
+    .all<{ id: string }>();
+  return results.map((r) => r.id);
+}
+
+export async function blockHost(
+  db: D1Database,
+  host: string,
+  reason: string | null,
+  now: number,
+): Promise<void> {
+  await db
+    .prepare("INSERT OR REPLACE INTO blocked_hosts (host, reason, created_at) VALUES (?, ?, ?)")
+    .bind(normalizeHost(host), reason, now)
+    .run();
+}
+
+/**
+ * True when the host, or any parent domain of it, is in `blocked_hosts`. Throws on input that is
+ * not a bare host (or longer than 253 characters); callers must treat an error as blocked.
+ */
+export async function isHostBlocked(db: D1Database, host: string): Promise<boolean> {
+  const normalized = normalizeHost(host);
+  const row = await db
+    .prepare(
+      `SELECT 1 AS hit FROM blocked_hosts b
+       WHERE ?1 = b.host OR substr(?1, -(length(b.host) + 1)) = '.' || b.host LIMIT 1`,
+    )
+    .bind(normalized)
+    .first();
+  return row !== null;
+}
