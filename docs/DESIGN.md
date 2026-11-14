@@ -27,7 +27,8 @@ dzajco/                          (trunk: v3.0)
 ├── src/
 │   ├── domain/        # pure code: url-policy, ids, reserved, expiry, secret, bots, schemas (+ *.test.ts, bun test)
 │   ├── db/            # queries.ts (D1)
-│   ├── analytics/     # sink.ts (AE writeDataPoint), source.ts (SQL API), rollup.ts. Ports, mocked in tests
+│   ├── analytics/     # sink.ts (AE writeDataPoint), ae-source.ts (SQL API), fresh.ts. Ports, mocked in tests
+│   ├── cron/          # rollup.ts, daily.ts, scheduled.ts
 │   ├── middleware/    # security-headers, rate-limit, origin-check, errors, request-id
 │   ├── routes/        # redirect.ts, api.ts, pages.ts, form.ts
 │   ├── views/         # Hono JSX: Layout, Home, Created, History, Stats, About, ApiDocs, Privacy, NotFound, Gone
@@ -109,15 +110,16 @@ seconds (the staleness window).
 
 Redirect status and rules:
 
-| Case                     | Response                 |
-| ------------------------ | ------------------------ |
-| Link exists, not expired | 302 to target            |
-| Link expired             | 410, link removed lazily |
-| Link does not exist      | 404                      |
-| `/dzajapi`               | 301 to `/docs/api`       |
-| `/:id/info`              | 301 to `/:id/stats`      |
+| Case                     | Response                           |
+| ------------------------ | ---------------------------------- |
+| Link exists, not expired | 302 to target                      |
+| Link expired             | 410 `expired`, link removed lazily |
+| Target host is blocked   | 410 `link_disabled`                |
+| Link does not exist      | 404                                |
+| `/dzajapi`               | 301 to `/docs/api`                 |
+| `/:id/info`              | 301 to `/:id/stats`                |
 
-Maximum expiry is one year. "Never" is stored as `NULL`.
+A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup). Maximum expiry is one year. "Never" is stored as `NULL`.
 
 ### Visits and stats (Analytics Engine)
 
@@ -125,20 +127,23 @@ Maximum expiry is one year. "Never" is stored as `NULL`.
   _Account Analytics Read_ permission).
 - Data point: `indexes: [linkId]` (at most 96 bytes, enforced in the domain layer), `blobs: [country, city]`,
   `doubles: [lat, lon]`. Latitude and longitude are parsed from the `request.cf` strings.
-- Rollup (hourly cron): day D (UTC) closes only after `D+1 01:00 UTC`, to allow for ingest delay. The query
+- Rollup (hourly cron, `src/cron/rollup.ts`): it is skipped, with the cursor untouched, when `CF_ACCOUNT_ID` or
+  `CF_AE_TOKEN` is missing. Day D (UTC) closes only after `D+1 01:00 UTC`, to allow for ingest delay. The query
   is `SELECT index1, blob1, blob2, SUM(_sample_interval) … GROUP BY index1, blob1, blob2 ORDER BY index1,
   blob1, blob2 LIMIT 500 OFFSET <offset>`. Each page is one `db.batch` with the upserts and the new cursor
   `{day, offset}`. A page with fewer than 500 rows ends the day and moves the cursor to `{D+1, 0}`. One cron
   call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
   `batch()` counts as one query toward the per-invocation limit (Free: 50), but the per-statement limits (100
   bound parameters, 100 KB) still apply, so a page is split into statements that fit. The next hours finish
-  the rest.
+  the rest. `deleteExpired` runs once a day after 01:00 UTC, whatever the cursor is. The `global_stats`
+  recompute runs once the cursor has reached today.
 - Fresh data (everything not yet in D1) comes from two queries with the same `GROUP BY` and `ORDER BY`: day
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache
   API for 5 minutes under a key that contains the cursor, so a moved cursor never matches an old entry and
   nothing is counted twice. The stats request reads the cursor and `link_stats` in one `db.batch`, then
   filters the cached result per link in the Worker.
-- If the SQL API fails or is rate limited, stats come from D1 only and the response has `partial: true`.
+- If the SQL API fails or is rate limited, stats come from D1 only and the response has `partial: true`. The
+  outage is cached as partial for 30 seconds, so a failing API is not queried on every request.
 - Locally there is no SQL API. Without `CF_AE_TOKEN` the code uses `LocalVisitSource`, which returns an
   empty list, so locally the fresh part of the stats is empty.
 - Global stats: one row in `global_stats`, recomputed by the cron once a day. `countries` is a JSON list of the top 20 `{code, visits}`. `GET /api/v1/stats` reads that
@@ -149,13 +154,26 @@ Maximum expiry is one year. "Never" is stored as `NULL`.
 
 | Method | Path                      | Input                                                                                         | Responses                                                                                                         |
 | ------ | ------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400 (including `blocked_target`), 409, 415, 429                       |
-| GET    | `/api/v1/links/:id`       | none                                                                                          | 200 `{id, url, expiresAt}`, 404, 410, 429                                                                         |
+| POST   | `/api/v1/links`           | JSON `{url, customName?, expiresAt?: ISO \| null}`, `Content-Type: application/json` required | 201 `{id, shortUrl, secretKey, expiresAt}`, 400, 409, 413, 415, 429, 503                                          |
+| GET    | `/api/v1/links/:id`       | none                                                                                          | 200 `{id, url, expiresAt}`, 404, 410 (`expired` or `link_disabled`), 429                                          |
 | GET    | `/api/v1/links/:id/stats` | optional `Authorization: Bearer <key>`                                                        | 200 `{visits, countries: [{code, visits}], partial}` (plus `cities` with a key), 403, 404, 410, 429               |
 | DELETE | `/api/v1/links/:id`       | `Authorization: Bearer <key>`                                                                 | 204, 400, 403, 404, 429                                                                                           |
 | GET    | `/api/v1/stats`           | none                                                                                          | 200 `{links, visits, countries: [{code, visits}], updatedAt}`, 429, lags up to about 24 h (stated in `/docs/api`) |
 
-Errors have the shape `{error: {code, message}}`. A `POST` with another content type gets 415, which blocks
+Errors have the shape `{error: {code, message}}`. Codes for `POST /api/v1/links`:
+
+| Status | Code                                                                                                                                                                                                                                                |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `invalid_json`, `invalid_body`, or a domain code: `invalid_url`, `scheme_not_allowed`, `url_too_long`, `credentials_not_allowed`, `own_host`, `private_target`, `blocked_target`, `invalid_name`, `reserved_name`, `mixed_script`, `invalid_expiry` |
+| 409    | `id_taken`                                                                                                                                                                                                                                          |
+| 413    | `payload_too_large` (body over 8 KB)                                                                                                                                                                                                                |
+| 415    | unsupported content type                                                                                                                                                                                                                            |
+| 429    | rate limited                                                                                                                                                                                                                                        |
+| 503    | `service_unavailable` (the blocklist lookup failed)                                                                                                                                                                                                 |
+
+`GET /api/v1/links/:id` returns 410 with the code `expired` or `link_disabled`, and never 503.
+
+A `POST` with another content type gets 415, which blocks
 cross-site `text/plain` posts. A wrong key on the stats endpoint gets 403. It never falls back to the public
 view. CORS: `GET` sends `Access-Control-Allow-Origin: *`, never reflects `Origin` and never allows
 credentials. `POST` and `DELETE` have no CORS, so they are for server-side or same-origin use.
@@ -192,11 +210,14 @@ result page and owner stats carry `Cache-Control: no-store`.
   - `mixed_script`: a name that mixes Latin with any other script is rejected.
 - Reserved names: app routes and the top-level entries of `public/`. The list is kept by hand, and a test
   compares it with `public/`, so a new file there fails the test until the list is updated.
+- Lookup ids on redirect: 1 to 64 characters (NFC) with no `/`, control or format characters, so imported v2
+  names keep working. The strict rules above apply only at creation.
 - Target URL: only `http:` and `https:`, at most 2048 characters, host in punycode. Also rejected:
   - credentials in the URL (`credentials_not_allowed`);
   - private, loopback, link-local, multicast and reserved IPv4 and IPv6 addresses, including alternative
     IPv4 forms and `localhost` (`private_target`);
-  - the own host, including trailing dots and ports;
+  - the own hosts: the host of `PUBLIC_ORIGIN`, the request host, and the account's `*.workers.dev` suffix
+    (preview URLs), including trailing dots and ports;
   - targets on other URL shorteners (see Abuse).
 
   The checks run in this order: own host, private target, shortener.
@@ -311,8 +332,9 @@ A shortener is open to abuse, so v3.0 has a minimum set of controls (task T10c):
 - The D1 table `blocked_hosts` lists blocked hosts. It is checked on create (exact host and parent domains)
   and on redirect. A blocked target gives a 410 page "link disabled".
 - A "Report abuse" mailto link on the stats, 404 and 410 pages. The address is the var `ABUSE_EMAIL`.
-- Admin script `scripts/admin/block.ts` (`bun run admin:block <host|id>`) runs `wrangler d1 execute --remote`.
-  It blocks a host or deletes a link by id. A dry run prints the SQL.
+- Admin CLI `scripts/admin/block.ts`: `bun run admin:block host <host> [--reason <text>]`,
+  `bun run admin:block unblock <host>` and `bun run admin:block link <id>` (deletes a link). Each needs exactly
+  one of `--remote` or `--local`. Remote `unblock` and `link` also need `--yes`. `--dry-run` only prints the SQL. It runs `wrangler d1 execute`.
 - Follow-up: Google Safe Browsing checks.
 
 Accepted risks:
