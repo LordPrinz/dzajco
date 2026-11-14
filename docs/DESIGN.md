@@ -307,12 +307,13 @@ Other measures:
   abuse cut-off, not an exact limit ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
 - No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin` or an `Origin` equal to the own host. Anything
   else gets 403.
-- Security headers on HTML from the Worker (middleware). `Content-Security-Policy` is
+- Security headers (middleware). On every Worker response (HTML, JSON and redirects) it sends
+  `Strict-Transport-Security: max-age=31536000; includeSubDomains` and `X-Content-Type-Options: nosniff`.
+  The CSP with a nonce is HTML only, and JSON responses get `Content-Security-Policy: default-src 'none'`.
+  The HTML CSP is
   `default-src 'self'; script-src 'self' 'nonce-<n>' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self'; frame-src https://github.com/sponsors/; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'`.
   The nonce changes on every request. The Cloudflare Web Analytics beacon is a manual snippet with the nonce,
-  because auto-injection has no nonce. Also sent:
-  - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
-  - `X-Content-Type-Options: nosniff`
+  because auto-injection has no nonce. HTML also gets:
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy: geolocation=(), camera=(), microphone=()`
 
