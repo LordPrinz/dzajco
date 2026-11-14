@@ -3,7 +3,7 @@ import * as v from "valibot";
 import { createVisitSource } from "../analytics/ae-source";
 import { loadFresh, parseFreshTtl } from "../analytics/fresh";
 import { mergeCities, mergeCountries } from "../analytics/merge";
-import { deleteLink, globalStats, ownerStats, publicStats } from "../db/queries";
+import { deleteLink, globalStats, ownerStats } from "../db/queries";
 import { bearerSchema } from "../domain/schemas";
 import { peppersFromEnv, verifySecret } from "../domain/secret";
 import type { AppEnv } from "../lib/app-env";
@@ -12,6 +12,7 @@ import { isoOrNull } from "../lib/time";
 import { readOnlyCors } from "../middleware/cors";
 import { apiError } from "../middleware/errors";
 import { rateLimit } from "../middleware/rate-limit";
+import { loadPublicStats } from "../services/stats";
 import { deleteLazily, isExpired, loadRecord, parseId, purgeLinkCache } from "./redirect";
 
 /**
@@ -79,15 +80,14 @@ export function statsRoutes() {
         (await verifySecret(key, owner.secretHash, peppersFromEnv(c.env)));
       if (!verified) return forbidden(c);
     }
-    const d1 = owner ?? (await publicStats(c.env.DB, id));
+    if (!owner) return c.json(await loadPublicStats(c.env, id, now));
     const fresh = await loadFresh({
       source: createVisitSource(c.env),
-      cursor: d1.cursor,
+      cursor: owner.cursor,
       now,
       ttlSeconds: parseFreshTtl(c.env.AE_FRESH_TTL),
     });
-    const { visits, countries } = mergeCountries(d1, fresh.rows, id);
-    if (!owner) return c.json({ visits, countries, partial: fresh.partial });
+    const { visits, countries } = mergeCountries(owner, fresh.rows, id);
     return c.json(
       { visits, countries, cities: mergeCities(owner, fresh.rows, id), partial: fresh.partial },
       200,

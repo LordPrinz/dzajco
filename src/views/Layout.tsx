@@ -17,10 +17,12 @@ export interface LayoutProps {
   title?: string;
   /** Module scripts under `/assets`, e.g. `form.js`. */
   scripts?: readonly string[];
+  /** Extra stylesheets under `/css`, e.g. `stats.css`, loaded after `app.css`. */
+  styles?: readonly string[];
   children?: Child;
 }
 
-export function Layout({ nonce, title, scripts = [], children }: LayoutProps) {
+export function Layout({ nonce, title, scripts = [], styles = [], children }: LayoutProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   return (
     <html lang="pl">
@@ -45,6 +47,9 @@ export function Layout({ nonce, title, scripts = [], children }: LayoutProps) {
           crossorigin=""
         />
         <link rel="stylesheet" href="/css/app.css" />
+        {styles.map((href) => (
+          <link rel="stylesheet" href={`/css/${href}`} />
+        ))}
       </head>
       <body>
         <main class="page">{children}</main>
