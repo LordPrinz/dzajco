@@ -180,6 +180,7 @@ describe("GET /privacy-policy", () => {
     expect(html).toContain("kraj i miasto");
     expect(html).toContain("tylko w logach samego Cloudflare");
     expect(html).toContain("Cloudflare Web Analytics bez plików cookie");
+    expect(html).toContain("tile.openstreetmap.org");
     expect(html).toContain("links-history");
     expect(html).toContain("nie trafia na nasz serwer");
   });
