@@ -43,7 +43,9 @@
 - Rotation keeps old keys working, but an old pepper secret must stay deployed while any key uses it.
 - The migration from MongoDB hashes the old keys with the current pepper version (`SECRET_PEPPER_V<n>` from the
   environment). The generated SQL contains hashes only.
-- Old v2 keys keep working after the migration, because the importer hashes them the same way.
+- Legacy v2 keys are 12-character nanoid strings (`A-Za-z0-9_-`). They stay valid. The Bearer schema accepts
+  both lengths (12 and 22), and the importer hashes the 12-character keys as they are. New keys always have
+  22 characters.
 - The `Authorization: Bearer <key>` value must be a string. An object is a schema error (S1).
 
 ## Follow-ups

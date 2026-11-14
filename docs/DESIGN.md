@@ -304,7 +304,8 @@ The v2 findings and what v3 does instead. Each row has a regression test in v3 t
 
 Other measures:
 
-- Secrets. The key is 128 bits, base64url, 22 characters. The stored value is `v<n>:<hex>`, an HMAC-SHA256
+- Secrets. A new key is 128 bits, base64url, 22 characters. Legacy v2 keys are 12-character nanoid strings and stay
+  valid: the Bearer schema accepts both lengths, and the migration hashes them as they are. The stored value is `v<n>:<hex>`, an HMAC-SHA256
   with a versioned pepper. Peppers are Worker secrets `SECRET_PEPPER_V1`, `SECRET_PEPPER_V2` and so on. The var
   `SECRET_PEPPER_VERSION` is the current version. Verification picks the pepper from the stored prefix, so
   rotation means adding a new pepper and bumping the version, and old keys keep working. Verification uses
@@ -336,7 +337,8 @@ Other measures:
 
   Static assets get the same headers (without a nonce) from `public/_headers`.
 - Logging. The Worker never logs the `Authorization` header, form bodies or create responses. Client IPs live
-  only in Cloudflare's own logs. The privacy page says so.
+  only in Cloudflare's own logs. The privacy page says so. Analytics Engine stores one event per visit (time,
+  link id, country, city, approximate coordinates, no IP and no User-Agent) for up to 3 months.
 - CI and tokens. Actions pinned to SHAs, `permissions: {}` at workflow level, least privilege per job.
   Deploys are manual only (`bun run deploy`).
 
