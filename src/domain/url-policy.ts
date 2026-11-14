@@ -1,3 +1,4 @@
+import { hostIsIdn } from "../shared/form";
 export const MAX_URL_LENGTH = 2048;
 
 export const SHORTENER_HOSTS: readonly string[] = [
@@ -116,6 +117,6 @@ export function parseTarget(input: string, options: { ownHosts: readonly string[
   if (isPrivateHost(url.hostname)) return { ok: false, code: "private_target" };
   if (matches(url.hostname, SHORTENER_HOSTS)) return { ok: false, code: "blocked_target" };
   if (url.href.length > MAX_URL_LENGTH) return { ok: false, code: "url_too_long" };
-  const isIdn = url.hostname.split(".").some((label) => label.startsWith("xn--"));
+  const isIdn = hostIsIdn(url.hostname);
   return { ok: true, url: url.href, host: url.hostname, isIdn };
 }

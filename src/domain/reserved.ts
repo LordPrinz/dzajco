@@ -14,6 +14,7 @@ export const PUBLIC_ENTRIES = [
   "assets",
   "css",
   "favicon.ico",
+  "fonts",
   "img",
   "robots.txt",
   "sitemap.xml",

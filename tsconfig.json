@@ -20,5 +20,5 @@
     "noEmit": true
   },
   "include": ["src", "test/worker", "vitest.config.ts", "worker-configuration.d.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/client"]
 }

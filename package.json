@@ -7,11 +7,13 @@
     "bun": ">=1.4.4"
   },
   "scripts": {
-    "dev": "CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
-    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && wrangler deploy",
+    "build:client": "bun build src/client/*.ts --outdir public/assets --minify --target browser",
+    "dev": "bun run build:client && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
+    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy",
     "check": "biome check .",
+    "check:size": "bun scripts/ci/size.ts",
     "check:fix": "biome check --write .",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json",
     "test": "bun test ./src ./scripts",
     "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
     "test:worker": "vitest run",
