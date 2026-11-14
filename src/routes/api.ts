@@ -4,6 +4,7 @@ import { createLinkSchema } from "../domain/schemas";
 import type { AppEnv } from "../lib/app-env";
 import { readCapped } from "../lib/body";
 import { clientIpKey } from "../lib/client-ip";
+import { isoOrNull } from "../lib/time";
 import { readOnlyCors } from "../middleware/cors";
 import { apiError } from "../middleware/errors";
 import { rateLimit } from "../middleware/rate-limit";
@@ -39,11 +40,7 @@ function isJson(contentType: string | undefined): boolean {
   return contentType?.split(";")[0]?.trim().toLowerCase() === "application/json";
 }
 
-function isoOrNull(at: number | null): string | null {
-  return at === null ? null : new Date(at).toISOString();
-}
-
-/** `/api/v1` routes: create and read links. */
+/** `/api/v1` routes: create and read a link. Delete and stats live in `stats.ts`. */
 export function apiRoutes() {
   const app = new Hono<AppEnv>();
   const byIp = (c: Context<AppEnv>) => clientIpKey(c.req.raw);

@@ -225,6 +225,7 @@ describe("upsertStatsBatch", () => {
   const c0 = { day: "2026-11-13", offset: 0 };
   const c1 = { day: "2026-11-13", offset: 500 };
   const c2 = { day: "2026-11-14", offset: 0 };
+  const c3 = { day: "2026-11-14", offset: 500 };
 
   it("adds visits across pages and writes the cursor in the same batch", async () => {
     await insertLink(db, link("a"));
@@ -291,6 +292,24 @@ describe("upsertStatsBatch", () => {
     expect(await count("link_stats", "link_id = 'deleted'")).toBe(0);
     expect((await publicStats(db, "alive")).visits).toBe(2);
     expect(await readCursor(db)).toEqual(c1);
+  });
+
+  it("keeps a visit-weighted mean of the coordinates across pages", async () => {
+    await insertLink(db, link("a"));
+    const at = (visits: number, lat: number | null, lon: number | null): VisitRow => ({
+      linkId: "a",
+      country: "PL",
+      city: "Warsaw",
+      visits,
+      lat,
+      lon,
+    });
+    await upsertStatsBatch(db, [at(1, 52, 21)], null, c1);
+    await upsertStatsBatch(db, [at(3, 53, 22)], c1, c2);
+    await upsertStatsBatch(db, [at(5, null, null)], c2, c3);
+    expect((await ownerStats(db, "a")).cities).toEqual([
+      { country: "PL", city: "Warsaw", lat: 52.75, lon: 21.75, visits: 9 },
+    ]);
   });
 
   it("exposes cities with coordinates to the owner only", async () => {

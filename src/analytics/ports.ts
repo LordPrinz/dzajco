@@ -1,5 +1,6 @@
-// Ports for visit recording and aggregation. Implementations: sink.ts and source.ts (Analytics
-// Engine), a local source that returns nothing, and in-memory fakes in tests.
+// Ports for visit recording and aggregation. Implementations: the Analytics Engine sink, the SQL
+// API source (ae-source.ts, used by cron/rollup.ts and fresh.ts), a local source that returns
+// nothing, and in-memory fakes in tests.
 
 /** One visit, as written to the dataset: `indexes: [linkId]`, `blobs: [country, city]`, `doubles: [lat, lon]`. */
 export interface VisitPoint {

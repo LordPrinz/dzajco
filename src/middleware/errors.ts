@@ -8,7 +8,7 @@ const ERROR_PAGE =
 
 export function apiError(
   c: Context,
-  status: 400 | 404 | 409 | 410 | 413 | 415 | 429 | 500 | 503,
+  status: 400 | 403 | 404 | 409 | 410 | 413 | 415 | 429 | 500 | 503,
   code: string,
   message: string,
 ) {
