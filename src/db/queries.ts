@@ -1,5 +1,6 @@
 import type { RollupCursor, VisitRow } from "../analytics/ports";
 import { roundCoord } from "../domain/geo";
+import { normalizeHost, normalizeHostname } from "../domain/host";
 
 export class IdTakenError extends Error {
   constructor(id: string) {
@@ -10,20 +11,6 @@ export class IdTakenError extends Error {
 
 const CURSOR_KEY = "rollup_cursor";
 const MAX_EXPIRED_BATCH = 1000;
-const MAX_HOST_LENGTH = 253;
-
-function normalizeHostname(hostname: string): string {
-  return hostname.toLowerCase().replace(/\.+$/, "");
-}
-
-/** Normalises a bare host the same way `insertLink` stores `target_host` (punycode, lowercase, no trailing dot). */
-function normalizeHost(input: string): string {
-  const trimmed = input.trim();
-  if (trimmed === "" || trimmed.length > MAX_HOST_LENGTH || /[\s/:@?#\\]/.test(trimmed)) {
-    throw new Error(`Not a bare host: ${input}`);
-  }
-  return normalizeHostname(new URL(`http://${trimmed}`).hostname);
-}
 
 export interface NewLink {
   id: string;

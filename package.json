@@ -17,6 +17,7 @@
     "test": "bun test ./src ./scripts",
     "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
     "test:worker": "vitest run",
+    "admin:block": "bun scripts/admin/block.ts",
     "types": "wrangler types --env-file .env.example",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote"

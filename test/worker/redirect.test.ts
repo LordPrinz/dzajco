@@ -257,6 +257,38 @@ describe("GET /:id", () => {
     expect(sink.points).toHaveLength(0);
   });
 
+  it("returns 410 for a link whose host is blocked after creation, once the cache entry is gone", async () => {
+    const id = freshId();
+    const host = `${id.toLowerCase()}.example.org`;
+    await seedLink(id, { target: `https://${host}/x` });
+    const app = appWith(new RecordingSink());
+    expect((await run(app, request(`/${id}`))).status).toBe(302);
+
+    await blockHost(env.DB, host, "abuse", Date.now());
+    // The 302 is still cached (at most 60 s); purging stands in for the TTL running out.
+    expect((await run(app, request(`/${id}`))).status).toBe(302);
+    await purgeLinkCache(id);
+    const res = await run(app, request(`/${id}`));
+    expect(res.status).toBe(410);
+    expect(await res.text()).toContain("This link has been disabled");
+  });
+
+  it("shows an escaped report-abuse link on 404 and 410 pages only when ABUSE_EMAIL is set", async () => {
+    const app = appWith(new RecordingSink());
+    const id = freshId();
+    await seedLink(id, { expiresAt: Date.now() - 1000 });
+    const withMail = { ...env, ABUSE_EMAIL: "abuse@dzaj.co" } as unknown as typeof env;
+
+    const gone = await (await run(app, request(`/${id}`), withMail)).text();
+    expect(gone).toContain(`href="mailto:abuse@dzaj.co?subject=Report%20abuse%3A%20link%20${id}"`);
+    const missing = await (await run(app, request("/nope-missing"), withMail)).text();
+    expect(missing).toContain('href="mailto:abuse@dzaj.co?subject=Report%20abuse"');
+
+    const id2 = freshId();
+    await seedLink(id2, { expiresAt: Date.now() - 1000 });
+    expect(await (await run(app, request(`/${id2}`))).text()).not.toContain("mailto:");
+  });
+
   it("caches the record, and purgeLinkCache clears it in this colo", async () => {
     const id = freshId();
     await seedLink(id);
