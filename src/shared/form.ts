@@ -36,11 +36,6 @@ export function expiresAtFrom(
   return preset?.ms ? new Date(now + preset.ms).toISOString() : `invalid:${expiry}`;
 }
 
-/** True when a (punycode) host has an internationalised label; the server and the browser share this rule. */
-export function hostIsIdn(hostname: string): boolean {
-  return hostname.split(".").some((label) => label.startsWith("xn--"));
-}
-
 /** `example.com` is accepted as `https://example.com`; anything that already has a scheme is left alone. */
 export function normalizeUrlInput(input: string): string {
   const trimmed = input.trim();

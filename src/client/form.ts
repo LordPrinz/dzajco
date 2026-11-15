@@ -1,13 +1,13 @@
 // Progressive enhancement of the home form and the result page. Without this script the form posts
 // to `/` and the server renders the result.
 
+import { hostIsIdn } from "../domain/host";
 import {
   CUSTOM_EXPIRY,
   errorText,
   expiresAtFrom,
   HISTORY_KEY,
   type HistoryEntry,
-  hostIsIdn,
   normalizeUrlInput,
 } from "../shared/form";
 
