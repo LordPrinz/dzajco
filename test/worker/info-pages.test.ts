@@ -79,6 +79,14 @@ describe("GET /about", () => {
     expect(html).toContain("24 godzin");
   });
 
+  it("says the totals cover live links", async () => {
+    const { html } = await page("/about");
+    expect(html).toContain("Aktywnych linków");
+    expect(html).toContain("Wejść w aktywnych linkach");
+    expect(html).toContain("Usunięte i wygasłe linki");
+    expect((await page("/docs/api")).html).toContain("tylko aktywne linki");
+  });
+
   it("embeds the sponsor button without an inline style", async () => {
     const { res, html } = await page("/about");
     expect(html).toContain('src="https://github.com/sponsors/LordPrinz/button"');

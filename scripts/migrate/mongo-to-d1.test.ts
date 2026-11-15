@@ -120,6 +120,11 @@ describe("main", () => {
     expect(sql).not.toContain("'v1:");
   });
 
+  it("lists the ids over 96 bytes in the summary", async () => {
+    await run(["--from-json", FIXTURE, "--dry-run"]);
+    expect(logs.join("\n")).toContain("ids over 96 bytes (imported anyway): 0 []");
+  });
+
   it("flags own-host targets using PUBLIC_ORIGIN, or the --own-host list instead", async () => {
     await run(["--from-json", FIXTURE, "--dry-run"]);
     const flags = () => JSON.parse(readFileSync(join(out, "report.json"), "utf8")).policyFlags;

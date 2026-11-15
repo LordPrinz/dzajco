@@ -127,6 +127,7 @@ export function redirectRoutes(options: RedirectOptions = {}) {
     "/:id",
     rateLimit<AppEnv>("RL_REDIRECT", (c) => clientIpKey(c.req.raw), {
       onLimited: (c) => c.text("Too many requests", 429, { "Cache-Control": "no-store" }),
+      failOpen: true,
     }),
     async (c) => {
       const id = parseId(c.req.param("id"));

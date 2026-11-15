@@ -76,7 +76,7 @@ export const ENDPOINTS: readonly Endpoint[] = [
   {
     method: "GET",
     path: "/api/v1/stats",
-    summary: "Statystyki całego serwisu.",
+    summary: "Statystyki całego serwisu. Liczby obejmują tylko aktywne linki.",
     input: "Brak.",
     responses: [
       {

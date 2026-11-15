@@ -150,7 +150,9 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
 - Locally there is no SQL API. Without `CF_AE_TOKEN` the code uses `LocalVisitSource`, which returns an
   empty list, so locally the fresh part of the stats is empty.
 - Global stats: one row in `global_stats`, recomputed by the cron once a day. `countries` is a JSON list of the top 20 `{code, visits}`. `GET /api/v1/stats` reads that
-  row only, so the numbers can lag by up to about 24 hours.
+  row only, so the numbers can lag by up to about 24 hours. The totals cover live links only: deleted and expired
+  links drop out together with their stats rows, and a running total would cost a D1 write per deleted row.
+  `/about` and `/docs/api` say so.
 - Each link gets its own secretKey. v2 reused a key for "never" links with the same target. v3 does not.
 
 ### API v1
@@ -339,6 +341,8 @@ Other measures:
   WAF rule protects the request quota. Spike T9.0 showed that the bindings work on Free. They count per location
   and are eventually consistent (a limit is enforced after roughly 2.4 times its value), so they are an
   abuse cut-off, not an exact limit ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
+  `RL_REDIRECT` fails open: if the binding throws, the Worker logs a warning per failing request, without the client key, and
+  serves the request, because a redirect must not break when a side system fails. The other limiters fail closed.
 - No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin`. When that header is absent, `Origin` must equal an own
   origin. `Origin: null` is rejected. Anything else gets 403.
 - Security headers (middleware). On every Worker response (HTML, JSON and redirects) it sends

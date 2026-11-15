@@ -47,6 +47,7 @@ Never put a secret value on a command line (`VAR=value cmd`): it lands in shell 
 
 - `SECRET_PEPPER_V1` is the HMAC pepper for link secret keys ([ADR 0003](adr/0003-secret-key-hashing.md)). Store a copy in a password manager. Losing it makes every stored secret key unverifiable.
 - `CF_AE_TOKEN` is a Cloudflare API token with the single permission _Account Analytics: Read_ (My Profile, API Tokens, Create Token). Grant nothing else.
+- Set `CF_AE_TOKEN` and `CF_ACCOUNT_ID` before the Worker takes traffic. The first rollup starts at the previous UTC day, so visits recorded earlier are never rolled up and stay missing from the stats.
 
 If the Worker does not exist yet, wrangler offers to create it when you set the first secret. Accept.
 
@@ -322,6 +323,7 @@ Deploy
 - [ ] `curl $ORIGIN/healthz` returns `{"ok":true}`
 - [ ] Link created, redirect answers `302`, stats page shows the visit
 - [ ] Redirect `cpuTime` p50 under 5 ms in `wrangler tail`
+- [ ] Stats CPU time measured with `wrangler tail` on a link with many fresh visits; the Worker logs `fresh visits returned N rows` above 20000 rows
 - [ ] SQL API query on the real `dzajco_visits` dataset returns the test visits
 - [ ] Hourly cron ran (Triggers or Observability) and the rollup moved the cursor
 - [ ] Cache API works on the test domain (a repeated redirect is served without a D1 read)

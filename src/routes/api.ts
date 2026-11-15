@@ -72,7 +72,7 @@ export function apiRoutes() {
     });
   });
 
-  app.get("/links/:id", rateLimit<AppEnv>("RL_REDIRECT", byIp), async (c) => {
+  app.get("/links/:id", rateLimit<AppEnv>("RL_REDIRECT", byIp, { failOpen: true }), async (c) => {
     const id = parseId(c.req.param("id"));
     if (!id) return apiError(c, 404, "not_found", "Link not found");
     const now = Date.now();
