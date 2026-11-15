@@ -25,6 +25,7 @@ export interface LinkRecord {
   id: string;
   target: string;
   expiresAt: number | null;
+  createdAt: number;
   blocked: boolean;
 }
 
@@ -50,6 +51,8 @@ export interface CityStat {
 
 export interface PublicStats {
   cursor: RollupCursor | null;
+  /** `created_at` of the link; null when it no longer exists. Fresh rows only count for this value. */
+  createdAt: number | null;
   visits: number;
   countries: CountryStat[];
 }
@@ -123,7 +126,7 @@ function suffixCte(seed: string): string {
 }
 
 /** The link plus whether its host, or a parent domain, is in `blocked_hosts`. */
-export const LINK_RECORD_SQL = `SELECT l.id, l.target, l.expires_at AS expiresAt,
+export const LINK_RECORD_SQL = `SELECT l.id, l.target, l.expires_at AS expiresAt, l.created_at AS createdAt,
   EXISTS (
     ${suffixCte("l.target_host")}
     SELECT 1 FROM blocked_hosts b WHERE b.host IN (SELECT h FROM s)
@@ -136,12 +139,21 @@ SELECT 1 AS hit FROM blocked_hosts b WHERE b.host IN (SELECT h FROM s) LIMIT 1`;
 
 /** One round trip: the link plus its blocked flag. */
 export async function getLinkRecord(db: D1Database, id: string): Promise<LinkRecord | null> {
-  const row = await db
-    .prepare(LINK_RECORD_SQL)
-    .bind(id)
-    .first<{ id: string; target: string; expiresAt: number | null; blocked: number }>();
+  const row = await db.prepare(LINK_RECORD_SQL).bind(id).first<{
+    id: string;
+    target: string;
+    expiresAt: number | null;
+    createdAt: number;
+    blocked: number;
+  }>();
   if (!row) return null;
-  return { id: row.id, target: row.target, expiresAt: row.expiresAt, blocked: row.blocked === 1 };
+  return {
+    id: row.id,
+    target: row.target,
+    expiresAt: row.expiresAt,
+    createdAt: row.createdAt,
+    blocked: row.blocked === 1,
+  };
 }
 
 export async function getLinkForOwner(db: D1Database, id: string): Promise<OwnerLink | null> {
@@ -186,8 +198,8 @@ export async function readCursor(db: D1Database): Promise<RollupCursor | null> {
 /**
  * Applies one rollup page and moves the cursor in a single batch. Every upsert only runs while the
  * stored cursor still equals `from` (compared by field, not by text), so replaying a page that
- * already landed changes nothing and returns `false`. Rows for links deleted in the meantime are
- * skipped without failing the batch; rows with a non-positive or non-integer count are dropped.
+ * already landed changes nothing and returns `false`. Rows for links deleted in the meantime, or
+ * for an earlier link that used the same id (other `created_at`), are skipped without failing the batch; rows with a non-positive or non-integer count are dropped.
  */
 export async function upsertStatsBatch(
   db: D1Database,
@@ -202,7 +214,7 @@ export async function upsertStatsBatch(
   const upsert = db.prepare(
     `INSERT INTO link_stats (link_id, country, city, lat, lon, visits)
      SELECT ?4, ?5, ?6, ?7, ?8, ?9
-     WHERE EXISTS (SELECT 1 FROM links WHERE id = ?4) AND ${cursorMatches}
+     WHERE EXISTS (SELECT 1 FROM links WHERE id = ?4 AND created_at = ?10) AND ${cursorMatches}
      ON CONFLICT (link_id, country, city) DO UPDATE SET
        -- Weighted by all visits: D1 does not track visits-with-coords (small drift vs the live merge).
        lat = CASE WHEN excluded.lat IS NULL THEN lat WHEN lat IS NULL THEN excluded.lat
@@ -224,6 +236,7 @@ export async function upsertStatsBatch(
         roundCoord(r.lat),
         roundCoord(r.lon),
         r.visits,
+        r.createdAt,
       ),
     );
   statements.push(
@@ -239,17 +252,19 @@ export async function upsertStatsBatch(
 }
 
 export async function publicStats(db: D1Database, id: string): Promise<PublicStats> {
-  const [cursorRes, countryRes] = await db.batch([
+  const [cursorRes, countryRes, linkRes] = await db.batch([
     db.prepare("SELECT value FROM meta WHERE key = ?").bind(CURSOR_KEY),
     db
       .prepare(
         "SELECT country AS code, SUM(visits) AS visits FROM link_stats WHERE link_id = ? GROUP BY country ORDER BY visits DESC, country",
       )
       .bind(id),
+    db.prepare("SELECT created_at AS createdAt FROM links WHERE id = ?").bind(id),
   ]);
   const countries = (countryRes?.results ?? []) as unknown as CountryStat[];
   return {
     cursor: parseCursor((cursorRes?.results?.[0] as { value: string } | undefined)?.value),
+    createdAt: (linkRes?.results?.[0] as { createdAt: number } | undefined)?.createdAt ?? null,
     visits: countries.reduce((sum, c) => sum + c.visits, 0),
     countries,
   };
@@ -276,12 +291,17 @@ export async function ownerStats(
         "SELECT country, city, lat, lon, visits FROM link_stats WHERE link_id = ? AND city <> '' ORDER BY visits DESC, country, city",
       )
       .bind(id),
-    db.prepare("SELECT secret_hash AS secretHash FROM links WHERE id = ?").bind(id),
+    db
+      .prepare("SELECT secret_hash AS secretHash, created_at AS createdAt FROM links WHERE id = ?")
+      .bind(id),
   ]);
-  const linkRow = linkRes?.results?.[0] as { secretHash: string | null } | undefined;
+  const linkRow = linkRes?.results?.[0] as
+    | { secretHash: string | null; createdAt: number }
+    | undefined;
   const countries = (countryRes?.results ?? []) as unknown as CountryStat[];
   return {
     cursor: parseCursor((cursorRes?.results?.[0] as { value: string } | undefined)?.value),
+    createdAt: linkRow?.createdAt ?? null,
     visits: countries.reduce((sum, c) => sum + c.visits, 0),
     countries,
     cities: (cityRes?.results ?? []) as unknown as CityStat[],

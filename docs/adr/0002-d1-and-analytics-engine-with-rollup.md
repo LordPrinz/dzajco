@@ -6,7 +6,9 @@
 ## Decision
 
 - Links and aggregated stats live in D1.
-- Each visit is a Workers Analytics Engine data point, written inside `waitUntil`.
+- Each visit is a Workers Analytics Engine data point, written inside `waitUntil`. It carries the link's
+  `created_at`, so the rollup and the live merge count visits per link and not per id: a deleted id that is
+  created again starts at zero.
 - An hourly cron rolls AE data up into D1 `link_stats`, one day at a time, in pages of 500 groups. A cursor
   `{day, offset}` is saved in the same `db.batch` as the upserts, so a repeated page changes nothing.
 - Stats for data after the cursor are read from the AE SQL API (two queries cached for 5 minutes per colo,

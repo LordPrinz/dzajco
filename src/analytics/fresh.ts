@@ -59,6 +59,8 @@ function isVisitRow(value: unknown): value is VisitRow {
     typeof r === "object" &&
     r !== null &&
     typeof r.linkId === "string" &&
+    // An entry cached before rows carried createdAt has no such key and is fetched again.
+    (r.createdAt === null || Number.isSafeInteger(r.createdAt)) &&
     typeof r.country === "string" &&
     typeof r.city === "string" &&
     typeof r.visits === "number" &&

@@ -23,6 +23,6 @@ export async function loadPublicStats(
     now,
     ttlSeconds: parseFreshTtl(env.AE_FRESH_TTL),
   });
-  const { visits, countries } = mergeCountries(d1, fresh.rows, id);
+  const { visits, countries } = mergeCountries(d1, fresh.rows, id, d1.createdAt);
   return { visits, countries, partial: fresh.partial };
 }

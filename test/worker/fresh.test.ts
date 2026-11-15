@@ -7,6 +7,7 @@ const NOW = Date.parse("2026-11-14T01:00:00Z");
 function sourceOf(count: number): VisitSource {
   const rows: VisitRow[] = Array.from({ length: count }, (_, i) => ({
     linkId: `l${i}`,
+    createdAt: 1,
     country: "PL",
     city: "",
     visits: 1,

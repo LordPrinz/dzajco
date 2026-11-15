@@ -9,6 +9,7 @@ const OPEN = Date.parse("2026-11-14T00:59:59Z");
 function rows(n: number, prefix = "l"): VisitRow[] {
   return Array.from({ length: n }, (_, i) => ({
     linkId: `${prefix}${String(i).padStart(5, "0")}`,
+    createdAt: 1,
     country: "PL",
     city: "",
     visits: 1,

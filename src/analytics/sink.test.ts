@@ -15,24 +15,32 @@ function dataset(onWrite: (p: AnalyticsEngineDataPoint) => void = () => {}) {
 describe("visitPoint", () => {
   it("parses latitude and longitude from the cf strings", () => {
     expect(
-      visitPoint("abc", {
+      visitPoint("abc", 1700, {
         country: "PL",
         city: "Warsaw",
         latitude: "52.22977",
         longitude: "21.01178",
       }),
-    ).toEqual({ linkId: "abc", country: "PL", city: "Warsaw", lat: 52.22977, lon: 21.01178 });
+    ).toEqual({
+      linkId: "abc",
+      createdAt: 1700,
+      country: "PL",
+      city: "Warsaw",
+      lat: 52.22977,
+      lon: 21.01178,
+    });
   });
 
   it("uses empty strings and nulls when cf data is missing or broken", () => {
-    expect(visitPoint("abc", undefined)).toEqual({
+    expect(visitPoint("abc", 1700, undefined)).toEqual({
       linkId: "abc",
+      createdAt: 1700,
       country: "",
       city: "",
       lat: null,
       lon: null,
     });
-    expect(visitPoint("abc", { latitude: "north", longitude: "" })).toMatchObject({
+    expect(visitPoint("abc", 1700, { latitude: "north", longitude: "" })).toMatchObject({
       lat: null,
       lon: null,
     });
@@ -40,16 +48,32 @@ describe("visitPoint", () => {
 });
 
 describe("aeSink", () => {
-  it("writes indexes [linkId], blobs [country, city], doubles [lat, lon]", () => {
+  it("writes indexes [linkId], blobs [country, city, createdAt], doubles [lat, lon]", () => {
     const ds = dataset();
-    aeSink(ds).write({ linkId: "abc", country: "PL", city: "Warsaw", lat: 52.2, lon: 21 });
-    expect(ds.points).toEqual([{ indexes: ["abc"], blobs: ["PL", "Warsaw"], doubles: [52.2, 21] }]);
+    aeSink(ds).write({
+      linkId: "abc",
+      createdAt: 1700,
+      country: "PL",
+      city: "Warsaw",
+      lat: 52.2,
+      lon: 21,
+    });
+    expect(ds.points).toEqual([
+      { indexes: ["abc"], blobs: ["PL", "Warsaw", "1700"], doubles: [52.2, 21] },
+    ]);
   });
 
   it("writes no doubles when a coordinate is missing", () => {
     const ds = dataset();
-    aeSink(ds).write({ linkId: "abc", country: "PL", city: "", lat: 52.2, lon: null });
-    expect(ds.points).toEqual([{ indexes: ["abc"], blobs: ["PL", ""], doubles: [] }]);
+    aeSink(ds).write({
+      linkId: "abc",
+      createdAt: 1700,
+      country: "PL",
+      city: "",
+      lat: 52.2,
+      lon: null,
+    });
+    expect(ds.points).toEqual([{ indexes: ["abc"], blobs: ["PL", "", "1700"], doubles: [] }]);
   });
 
   it("never throws", () => {
@@ -57,7 +81,14 @@ describe("aeSink", () => {
       throw new Error("quota");
     });
     expect(() =>
-      aeSink(ds).write({ linkId: "abc", country: "", city: "", lat: null, lon: null }),
+      aeSink(ds).write({
+        linkId: "abc",
+        createdAt: 1700,
+        country: "",
+        city: "",
+        lat: null,
+        lon: null,
+      }),
     ).not.toThrow();
   });
 });

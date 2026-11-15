@@ -19,8 +19,8 @@ describe("buildDayQuery", () => {
       "sumIf(double1 * _sample_interval, (double1 != 0 OR double2 != 0)) / sumIf(_sample_interval, (double1 != 0 OR double2 != 0)) AS lat",
     );
     expect(sql).toContain("FROM dzajco_visits");
-    expect(sql).toContain("GROUP BY index1, blob1, blob2");
-    expect(sql).toContain("ORDER BY index1, blob1, blob2");
+    expect(sql).toContain("GROUP BY index1, blob1, blob2, blob3");
+    expect(sql).toContain("ORDER BY index1, blob1, blob2, blob3");
     expect(sql).toContain("LIMIT 500 OFFSET 500");
     expect(sql).toContain("timestamp >= toDateTime('2026-11-13 00:00:00')");
     expect(sql).toContain("timestamp < toDateTime('2026-11-14 00:00:00')");
@@ -98,7 +98,15 @@ describe("AeVisitSource", () => {
       calls.push({ url: String(input), init });
       return jsonResponse({
         data: [
-          { linkId: "abc", country: "PL", city: "Warsaw", visits: "3", lat: 52.23, lon: 21.01 },
+          {
+            linkId: "abc",
+            createdAt: "1700",
+            country: "PL",
+            city: "Warsaw",
+            visits: "3",
+            lat: 52.23,
+            lon: 21.01,
+          },
           { linkId: "abc", country: "DE", city: "", visits: 2, lat: null, lon: "nan" },
         ],
       });
@@ -117,8 +125,16 @@ describe("AeVisitSource", () => {
     );
     expect(calls[0]?.init?.body).toBe(buildDayQuery("2026-11-13", 0, 500));
     expect(rows).toEqual([
-      { linkId: "abc", country: "PL", city: "Warsaw", visits: 3, lat: 52.23, lon: 21.01 },
-      { linkId: "abc", country: "DE", city: "", visits: 2, lat: null, lon: null },
+      {
+        linkId: "abc",
+        createdAt: 1700,
+        country: "PL",
+        city: "Warsaw",
+        visits: 3,
+        lat: 52.23,
+        lon: 21.01,
+      },
+      { linkId: "abc", createdAt: null, country: "DE", city: "", visits: 2, lat: null, lon: null },
     ]);
   });
 
@@ -198,6 +214,15 @@ describe("AeVisitSource row mapping", () => {
     const source = new AeVisitSource({ accountId: ACCOUNT, token: "t", fetch: fetcher });
     return (await source.queryDay("2026-11-13", 0, 500))[0];
   }
+
+  it("reads blob3 as the link's created_at and anything but a safe integer string as null", async () => {
+    expect(await mapOne({ createdAt: "1700000000000" })).toMatchObject({
+      createdAt: 1700000000000,
+    });
+    for (const bad of ["", "abc", "-5", "1.5", "99999999999999999", 1700, null]) {
+      expect(await mapOne({ createdAt: bad })).toMatchObject({ createdAt: null });
+    }
+  });
 
   it("reads 0, 0 (no doubles written) as no coordinates", async () => {
     expect(await mapOne({ lat: 0, lon: 0 })).toMatchObject({ lat: null, lon: null });
