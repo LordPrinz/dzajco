@@ -92,11 +92,12 @@ function setupMap(owner: HTMLElement, cities: readonly CityRow[]): void {
 /** The page view already used one `RL_STATS` token for the server render; this fetch uses a second one. */
 async function init(): Promise<void> {
   const root = document.querySelector<HTMLElement>("[data-stats]");
-  const owner = root?.querySelector<HTMLElement>("[data-owner]");
-  const id = root?.dataset.id;
-  if (!root || !owner || !id) return;
-  enableCopy(root);
+  if (!root) return;
   localizeTimes(root, pageLocale());
+  const owner = root.querySelector<HTMLElement>("[data-owner]");
+  const id = root.dataset.id;
+  if (!owner || !id) return;
+  enableCopy(root);
   const key = readKey(id);
   if (key === null) return;
   // This browser made the link: reporting it as abuse makes no sense for its owner.
