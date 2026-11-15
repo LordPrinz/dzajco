@@ -3,7 +3,7 @@ name: E2E
 on:
   pull_request:
   push:
-    branches: [v3.0]
+    branches: [main, dev]
 
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}

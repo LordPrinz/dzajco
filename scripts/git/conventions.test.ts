@@ -51,7 +51,7 @@ describe("branch names", () => {
     "DZAJ-44-set-user-permissions",
     "DZAJ-120-add-v2-api",
     "main",
-    "v3.0",
+    "dev",
     "dependabot/bun/minor-and-patch-1a2b3c",
     "dependabot/github_actions/actions/checkout-7",
   ])("accepts %p", (branch) => {
@@ -73,7 +73,7 @@ describe("branch names", () => {
 
   test("accepts trunk and Dependabot branches", () => {
     expect(isValidBranch("main")).toBe(true);
-    expect(isValidBranch("v3.0")).toBe(true);
+    expect(isValidBranch("dev")).toBe(true);
     expect(isValidBranch("dependabot/bun/hono-4.14.0")).toBe(true);
   });
 

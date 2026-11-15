@@ -39,8 +39,8 @@ The `dzajco_visits` dataset is created by the first write. There is nothing to r
 ```sh
 openssl rand -base64 32          # generate once, store in a password manager
 read -rs SECRET_PEPPER_V1 && export SECRET_PEPPER_V1   # paste the pepper, no echo
-printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1
-bunx wrangler secret put CF_AE_TOKEN                   # prompts for the value
+printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1 --env=""
+bunx wrangler secret put CF_AE_TOKEN --env=""         # prompts for the value
 ```
 
 Never put a secret value on a command line (`VAR=value cmd`): it lands in shell history and the process list. Keep `SECRET_PEPPER_V1` exported in this shell only for the import in section 5, which needs the same value.
@@ -129,6 +129,43 @@ Watch live logs:
 ```sh
 bunx wrangler tail
 ```
+
+### Dev environment (test.dzaj.de)
+
+Branch flow: feature branches merge into `dev`, `dev` is deployed to `https://test.dzaj.de`, and `dev` goes to `main` (production, `dzaj.de`) through a PR.
+
+The dev environment is `env.dev` in `wrangler.jsonc`: Worker `dzajco-dev`, custom domain `test.dzaj.de`, its own D1 database `dzajco-dev`, Analytics Engine dataset `dzajco_visits_dev` and rate limit namespaces `2001` to `2004`. `workers_dev` and `preview_urls` are off, and the hourly cron runs.
+
+Wrangler does not inherit bindings or vars into an environment, so `env.dev` repeats them.
+
+`AE_DATASET` names the dataset the SQL queries read. It is set to `dzajco_visits_dev` in `env.dev` and left out of the top-level `vars`, where the Worker falls back to `dzajco_visits`. An empty value also falls back to the default.
+
+The name must match `^[a-z0-9_]{1,64}$`; anything else makes the query builder throw before any SQL is built. Keep it equal to the `dataset` of the `VISITS` binding of the same environment.
+
+One-time setup, with a Cloudflare account that has `dzaj.de` as an active zone:
+
+```sh
+printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1 --env dev
+bunx wrangler secret put CF_AE_TOKEN --env dev     # prompts for the value
+```
+
+Use a pepper of its own for dev, not the production one. Create a separate `CF_AE_TOKEN` for dev too (_Account Analytics: Read_), so it can be revoked on its own. Analytics Engine tokens are account-wide, so a dev token can read the production dataset; keep it out of anything shared.
+
+The `dzajco-dev` database already exists and is empty. The custom domain and its DNS record are created by the first deploy, because the route in `wrangler.jsonc` has `custom_domain: true`. The `dzajco_visits_dev` dataset appears after the first redirect.
+
+Deploy, always migrating first:
+
+```sh
+bun run db:migrate:dev
+bun run deploy:dev
+```
+
+- `db:migrate:dev` runs `wrangler d1 migrations apply DB --remote --env dev`.
+- `deploy:dev` runs the same checks as `deploy`, then `wrangler deploy --env dev`. `PUBLIC_ORIGIN` comes from `env.dev`, so nothing needs to be exported.
+- `bun run deploy` (production) passes `--env=""` so wrangler targets the top-level config now that `env.dev` exists.
+- Check the result with `bunx wrangler deploy --env dev --dry-run`; it lists the dev bindings.
+
+As in production, nothing in CI runs `wrangler deploy`.
 
 ### Post-deploy checks
 
@@ -281,7 +318,7 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
 
    ```sh
    openssl rand -base64 32
-   bunx wrangler secret put SECRET_PEPPER_V2
+   bunx wrangler secret put SECRET_PEPPER_V2 --env=""
    ```
 
 2. Set `SECRET_PEPPER_VERSION` to `"2"` in `wrangler.jsonc` and run `bun run deploy`.
@@ -302,7 +339,7 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
 
 - Abuse reports arrive at `ABUSE_EMAIL`. Block the host or delete the link, then reply.
 - Logs: `bunx wrangler tail`, or Observability in the dashboard (enabled in `wrangler.jsonc`). The Worker does not log the `Authorization` header, form bodies or create responses. Cloudflare's own invocation logs record request details; the rehearsal checklist checks that they do not keep the `Authorization` value. Client IPs appear only in Cloudflare's own logs (request logs and Workers Logs metadata); the app never writes them.
-- Dependency updates: Dependabot opens weekly PRs (Bun, GitHub Actions, Docker) against `v3.0`. Merge them after CI passes, then redeploy manually.
+- Dependency updates: Dependabot opens weekly PRs (Bun, GitHub Actions, Docker) against `dev`. Merge them after CI passes, then redeploy manually.
 
 ## 10. Rehearsal checklist
 

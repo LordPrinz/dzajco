@@ -42,7 +42,7 @@ export function buildRuleset(withChecks: boolean) {
     name: "trunk",
     target: "branch",
     enforcement: "active",
-    conditions: { ref_name: { include: ["~DEFAULT_BRANCH", "refs/heads/v3.0"], exclude: [] } },
+    conditions: { ref_name: { include: ["~DEFAULT_BRANCH", "refs/heads/dev"], exclude: [] } },
     // The owner may merge their own PR without an approval (solo work), never push directly.
     bypass_actors: [{ actor_id: 5, actor_type: "RepositoryRole", bypass_mode: "pull_request" }],
     rules: [
