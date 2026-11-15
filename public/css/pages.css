@@ -148,21 +148,43 @@
 }
 
 /* About */
-.features {
+.doc .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
   gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.features__item {
+/* Icon on the left, title and text beside it, as in the v2 "why Dzajco" section. The `.doc` prefix beats
+   the generic `.doc ul` and `.doc li` spacing. */
+.doc .features__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1rem;
+  align-content: start;
   margin: 0;
   padding: 1.25rem;
   border-radius: 0.75rem;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.features__badge {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  color: var(--icon);
+  background: var(--icon-bg);
+}
+
+.features__icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .features__title {

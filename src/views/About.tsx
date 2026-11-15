@@ -1,5 +1,6 @@
 import type { CountryStat } from "../db/queries";
 import { countryName } from "../shared/stats";
+import { FeatureIcon, type FeatureIconName } from "./FeatureIcon";
 import { Layout } from "./Layout";
 
 export interface AboutStats {
@@ -10,32 +11,38 @@ export interface AboutStats {
   updatedAt: string | null;
 }
 
-const FEATURES = [
+const FEATURES: readonly { icon: FeatureIconName; title: string; text: string }[] = [
   {
+    icon: "login",
     title: "Bez logowania",
     text: "Żadnych kont. Skracasz link od razu, bez zakładania profilu.",
   },
   {
+    icon: "expiry",
     title: "Data wygaśnięcia",
     text: "Ustaw, kiedy link ma przestać działać. Dobre do promocji i tymczasowych udostępnień.",
   },
   {
+    icon: "name",
     title: "Własne nazwy",
     text: "Nadaj linkowi własną nazwę albo pozwól wygenerować krótki, unikalny identyfikator.",
   },
   {
+    icon: "delete",
     title: "Ręczne usuwanie",
     text: "Kluczem z momentu utworzenia usuniesz link, kiedy tylko zechcesz.",
   },
   {
+    icon: "visitors",
     title: "Licznik wejść",
     text: "Zobacz, ile razy link został otwarty i z jakich krajów. Pełne dane, z miastami, widzi właściciel klucza.",
   },
   {
+    icon: "history",
     title: "Historia",
     text: "Linki z tej przeglądarki wracają na liście, żeby łatwo je skopiować lub usunąć.",
   },
-] as const;
+];
 
 const TOP = 8;
 const NUMBER = new Intl.NumberFormat("pl-PL");
@@ -65,6 +72,9 @@ export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
         <ul class="features">
           {FEATURES.map((feature) => (
             <li class="features__item">
+              <span class="features__badge">
+                <FeatureIcon name={feature.icon} />
+              </span>
               <h2 class="features__title">{feature.title}</h2>
               <p>{feature.text}</p>
             </li>
