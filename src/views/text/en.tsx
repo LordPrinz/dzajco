@@ -244,7 +244,8 @@ export const en: PageText = {
     keyText:
       "This key lets you delete the link and see its full stats. Save it now, it will not be shown again.",
     stats: "Stats",
-    another: "Shorten another",
+    another: "Shorten another link",
+    share: "Share",
   },
   created: { title: "Link created" },
   notices: {

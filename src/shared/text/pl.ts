@@ -41,6 +41,10 @@ export const pl = {
     failedToast: "Nie udało się skopiować. Zaznacz tekst i skopiuj go ręcznie.",
   },
   toastClose: "Zamknij",
+  savedKey: {
+    title: "Klucz do zarządzania",
+    text: "Zapisany w Historii tej przeglądarki. Skopiuj go, jeśli chcesz usunąć link albo widzieć miasta na innym urządzeniu.",
+  },
   form: {
     sending: "Skracanie…",
     localDateLabel: "Własna data wygaśnięcia (czas lokalny)",

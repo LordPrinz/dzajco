@@ -129,6 +129,10 @@ describe("POST / without JavaScript", () => {
     const key = /data-field="secretKey">([A-Za-z0-9_-]{22})</.exec(html)?.[1];
     expect(key).toBeTruthy();
     expect(html).toContain("Zapisz go, nie pokażemy go ponownie");
+    // The short link shows without its protocol; the href and Copy keep the full URL.
+    const shown = `${env.PUBLIC_ORIGIN}/${name}`.replace(/^https?:\/\//, "");
+    expect(html).toContain(`>${shown}</a>`);
+    expect(html).toContain(`data-value="${env.PUBLIC_ORIGIN}/${name}"`);
     // A settings post would redirect away and lose the key, so the result page has no switches.
     expect(html).not.toContain('action="/prefs/');
     expect(html).toContain(`${env.PUBLIC_ORIGIN}/${name}`);
