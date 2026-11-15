@@ -13,7 +13,6 @@ export function History({ nonce }: { nonce: string }) {
           Linki utworzone w tej przeglądarce. Lista jest zapisana tylko tutaj, na Twoim urządzeniu.
         </p>
 
-        <p class="sr-only" role="status" id="history-status" />
         <p id="history-loading" class="history__empty">
           Wczytywanie historii…
         </p>

@@ -14,6 +14,7 @@ import {
   statsPath,
   visibleEntries,
 } from "../shared/history";
+import { toast } from "./lib/toast";
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = { dateStyle: "long", timeStyle: "short" };
 
@@ -58,23 +59,19 @@ function meta(label: string, value: string): HTMLElement {
 interface Page {
   list: HTMLElement;
   empty: HTMLElement;
-  status: HTMLElement;
 }
 
-function setStatus(page: Page, message: string): void {
-  page.status.textContent = message;
-}
-
-function copyButton(value: string, page: Page): HTMLButtonElement {
+function copyButton(value: string): HTMLButtonElement {
   const button = el("button", "button button--ghost button--small", "Kopiuj");
   button.type = "button";
   button.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(value);
       button.textContent = "Skopiowano";
-      setStatus(page, "Skopiowano do schowka");
+      toast("Skopiowano do schowka", "success");
     } catch {
       button.textContent = "Nie udało się";
+      toast("Nie udało się skopiować. Zaznacz link i skopiuj go ręcznie.", "error");
     }
     setTimeout(() => {
       button.textContent = "Kopiuj";
@@ -102,7 +99,7 @@ async function remove(
   if (outcome === "removed") {
     save(removeEntry(load(), entry.id));
     item.remove();
-    setStatus(page, `Usunięto link ${entry.id}`);
+    toast(`Usunięto link ${entry.id}`, "success");
     if (page.list.children.length === 0) page.empty.hidden = false;
     return;
   }
@@ -112,7 +109,7 @@ async function remove(
     key_rejected: "Ten klucz nie pasuje do linku.",
     failed: "Nie udało się usunąć linku. Spróbuj ponownie.",
   } as const;
-  setStatus(page, messages[outcome]);
+  toast(messages[outcome], "error");
 }
 
 function render(entry: HistoryEntry, page: Page): HTMLElement {
@@ -128,7 +125,7 @@ function render(entry: HistoryEntry, page: Page): HTMLElement {
   item.append(meta("Wygasa", entry.expire === "never" ? "nigdy" : formatDate(entry.expire)));
 
   const actions = el("div", "history__actions");
-  actions.append(copyButton(short, page));
+  actions.append(copyButton(short));
   const stats = el("a", "button button--ghost button--small", "Statystyki");
   stats.href = statsPath(entry.id);
   actions.append(stats);
@@ -148,9 +145,8 @@ function render(entry: HistoryEntry, page: Page): HTMLElement {
 function init(): void {
   const list = document.getElementById("history-list");
   const empty = document.getElementById("history-empty");
-  const status = document.getElementById("history-status");
-  if (!list || !empty || !status) return;
-  const page: Page = { list, empty, status };
+  if (!list || !empty) return;
+  const page: Page = { list, empty };
 
   // Expired links are gone from the service already; v2 dropped them from the history too.
   const now = Date.now();

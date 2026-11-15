@@ -6,11 +6,13 @@ import {
   CUSTOM_EXPIRY,
   errorText,
   expiresAtFrom,
+  FIELD_OF_ERROR,
   HISTORY_KEY,
   type HistoryEntry,
   normalizeUrlInput,
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
+import { dismissAll, toast } from "./lib/toast";
 
 interface CreatedLink {
   id: string;
@@ -49,7 +51,6 @@ function setField(root: ParentNode, name: string, text: string): void {
 }
 
 function enableCopy(root: ParentNode): void {
-  const status = root.querySelector<HTMLElement>('[data-field="copied"]');
   for (const button of root.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
     button.hidden = false;
     button.addEventListener("click", async () => {
@@ -57,9 +58,10 @@ function enableCopy(root: ParentNode): void {
       try {
         await navigator.clipboard.writeText(source?.textContent ?? "");
         button.textContent = "Skopiowano";
-        if (status) status.textContent = "Skopiowano do schowka";
+        toast("Skopiowano do schowka", "success");
       } catch {
         button.textContent = "Nie udało się";
+        toast("Nie udało się skopiować. Zaznacz tekst i skopiuj go ręcznie.", "error");
       }
       setTimeout(() => {
         button.textContent = "Kopiuj";
@@ -109,7 +111,7 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
 }
 
 function setupShortenForm(form: HTMLFormElement): void {
-  const error = byId<HTMLElement>("form-error");
+  const serverError = byId<HTMLElement>("form-error");
   const status = byId<HTMLElement>("form-status");
   const expiry = byId<HTMLSelectElement>("expiry");
   const customDate = byId<HTMLElement>("custom-date");
@@ -126,15 +128,37 @@ function setupShortenForm(form: HTMLFormElement): void {
   expiry?.addEventListener("change", syncCustomDate);
   syncCustomDate();
 
-  const fail = (message: string) => {
-    if (!error) return;
-    error.textContent = message;
-    error.hidden = false;
+  const fields = ["url", "customName", "expiry"] as const;
+  const clearInvalid = () => {
+    for (const name of fields) {
+      byId(name)?.removeAttribute("aria-invalid");
+      byId(name)?.removeAttribute("aria-describedby");
+    }
+    if (serverError) serverError.hidden = true;
+  };
+  const fail = (code: string) => {
+    const message = errorText(code);
+    const field = byId(FIELD_OF_ERROR[code] ?? "url");
+    // The toast announces the error; the field keeps the text as its description, in the
+    // server's #form-error paragraph, hidden from sight and with its alert role dropped so the
+    // message is not read twice.
+    if (serverError) {
+      serverError.removeAttribute("role");
+      serverError.classList.add("sr-only");
+      serverError.textContent = message;
+      serverError.hidden = false;
+    }
+    field?.setAttribute("aria-invalid", "true");
+    if (serverError) field?.setAttribute("aria-describedby", serverError.id);
+    field?.focus();
+    toast(message, "error", { returnFocus: field });
   };
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (error) error.hidden = true;
+    // Also hides a server-rendered error from a no-JS attempt: it is stale once the script runs.
+    clearInvalid();
+    dismissAll("error");
     const data = new FormData(form);
     const url = normalizeUrlInput(String(data.get("url") ?? ""));
     const customName = String(data.get("customName") ?? "").trim();
@@ -171,11 +195,11 @@ function setupShortenForm(form: HTMLFormElement): void {
         syncCustomDate();
         if (status) status.textContent = "";
       } else {
-        fail(errorText(json.error?.code ?? "unknown"));
+        fail(json.error?.code ?? "unknown");
         if (status) status.textContent = "";
       }
     } catch {
-      fail(errorText("unknown"));
+      fail("unknown");
     } finally {
       if (submit) submit.disabled = false;
     }

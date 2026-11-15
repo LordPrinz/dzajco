@@ -93,6 +93,12 @@ export function Layout({
             </ul>
           </nav>
         </footer>
+        {/* Filled by the toast module; empty and silent without JavaScript. Present from the start so
+            screen readers watch them before the first toast arrives. */}
+        <div class="toasts">
+          <div class="toasts__region" id="toasts-alert" role="alert" />
+          <div class="toasts__region" id="toasts-status" role="status" />
+        </div>
         {["theme.js", ...scripts].map((src) => (
           <script type="module" nonce={nonce} src={`/assets/${src}`} />
         ))}

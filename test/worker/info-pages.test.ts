@@ -27,6 +27,9 @@ describe.each(["/history", "/about", "/docs/api", "/privacy-policy"])("GET %s", 
     expect(html.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain('<html lang="pl">');
     expect(html).toContain('href="/css/pages.css"');
+    // The live region exists before any toast, so screen readers announce the first one too.
+    expect(html).toContain('<div class="toasts__region" id="toasts-alert" role="alert"></div>');
+    expect(html).toContain('<div class="toasts__region" id="toasts-status" role="status"></div>');
 
     const nonce = /nonce-([^';\s]+)/.exec(res.headers.get("content-security-policy") ?? "")?.[1];
     expect(nonce).toBeTruthy();
