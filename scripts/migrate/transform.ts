@@ -2,7 +2,7 @@
 // No Node or Bun APIs here, so the worker test can run it inside workerd.
 
 import { normalizeHostname } from "../../src/domain/host";
-import { isReserved, LOOKUP_ID } from "../../src/domain/ids";
+import { isReserved, LOOKUP_ID, NAME_MAX_BYTES } from "../../src/domain/ids";
 import { hashSecret, type Peppers } from "../../src/domain/secret";
 import { MAX_URL_LENGTH, parseTarget, type TargetError } from "../../src/domain/url-policy";
 import { sqlString } from "../lib/sql";
@@ -41,6 +41,8 @@ export interface MigrationReport {
   invalid: { id: string; reason: InvalidReason }[];
   /** Imported `www.` targets that had no scheme and got `https://`. */
   schemeAdded: string[];
+  /** Imported ids over NAME_MAX_BYTES in UTF-8: v3 would not accept them as custom names. */
+  overlongIds: string[];
   /** Imported links the v3 creation policy would refuse; review them and `admin:block` if needed. */
   policyFlags: { id: string; code: TargetError }[];
 }
@@ -57,6 +59,7 @@ export interface TransformOptions {
 const RANDOM_ID = /^[A-Za-z0-9_-]{3,10}$/;
 /** v2 stripped zero-width spaces from the target before redirecting. */
 const ZERO_WIDTH_SPACE = /\u200b/g;
+const encoder = new TextEncoder();
 const COLUMNS = "id, target, target_host, secret_hash, expires_at, created_at, is_custom";
 /** Statements per SQL file, so one `wrangler d1 execute --file` stays small. */
 export const BATCH_SIZE = 200;
@@ -161,6 +164,7 @@ export async function transformLinks(
     expiredIds: [],
     invalid: [],
     schemeAdded: [],
+    overlongIds: [],
     policyFlags: [],
   };
   const rows: LinkRow[] = [];
@@ -218,6 +222,7 @@ export async function transformLinks(
     });
     if (hasKey) report.legacyKeys += 1;
     if (target.schemeAdded) report.schemeAdded.push(id);
+    if (encoder.encode(id).length > NAME_MAX_BYTES) report.overlongIds.push(id);
     const policy = parseTarget(target.target, { ownHosts: options.ownHosts });
     if (!policy.ok) report.policyFlags.push({ id, code: policy.code });
   }
