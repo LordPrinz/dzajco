@@ -19,8 +19,6 @@ coverage
 *.pem
 npm-debug.log*
 
-# Playwright and Lighthouse CI output
-test-results
-playwright-report
+# Lighthouse CI output
 .lighthouseci
 wrangler.log
