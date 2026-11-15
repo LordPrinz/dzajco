@@ -19,8 +19,8 @@ describe("buildDayQuery", () => {
       "sumIf(double1 * _sample_interval, (double1 != 0 OR double2 != 0)) / sumIf(_sample_interval, (double1 != 0 OR double2 != 0)) AS lat",
     );
     expect(sql).toContain("FROM dzajco_visits");
-    expect(sql).toContain("GROUP BY index1, blob1, blob2, blob3");
-    expect(sql).toContain("ORDER BY index1, blob1, blob2, blob3");
+    expect(sql).toContain("GROUP BY linkId, country, city, createdAt");
+    expect(sql).toContain("ORDER BY linkId, country, city, createdAt");
     expect(sql).toContain("LIMIT 500 OFFSET 500");
     expect(sql).toContain("timestamp >= toDateTime('2026-11-13 00:00:00')");
     expect(sql).toContain("timestamp < toDateTime('2026-11-14 00:00:00')");
@@ -145,6 +145,17 @@ describe("AeVisitSource", () => {
     expect(error).toBeInstanceOf(Error);
     expect(String((error as Error).message)).toContain("429");
     expect(String((error as Error).message)).not.toContain("secret-tok");
+  });
+
+  it("puts the start of the error body in the message", async () => {
+    const body = `Input was invalid:\n unable to find type of column: "index1" ${"x".repeat(400)}`;
+    const fetcher = (async () => new Response(body, { status: 422 })) as Fetcher;
+    const source = new AeVisitSource({ accountId: ACCOUNT, token: "secret-tok", fetch: fetcher });
+    const error = (await source.queryDay("2026-11-13", 0, 500).catch((e: unknown) => e)) as Error;
+    expect(error.message).toContain(
+      '422: Input was invalid: unable to find type of column: "index1"',
+    );
+    expect(error.message.length).toBeLessThan(260);
   });
 
   it("throws on a malformed body", async () => {

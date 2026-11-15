@@ -137,8 +137,9 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
   valid `createdAt` matches no link.
 - Rollup (hourly cron, `src/cron/rollup.ts`): it is skipped, with the cursor untouched, when `CF_ACCOUNT_ID` or
   `CF_AE_TOKEN` is missing. Day D (UTC) closes only after `D+1 01:00 UTC`, to allow for ingest delay. The query
-  is `SELECT index1, blob1, blob2, blob3, SUM(_sample_interval) … GROUP BY index1, blob1, blob2, blob3 ORDER BY
-  index1, blob1, blob2, blob3 LIMIT 500 OFFSET <offset>`. Each upsert only applies when a link with that id and
+  is `SELECT index1 AS linkId, blob1 AS country, blob2 AS city, blob3 AS createdAt, SUM(_sample_interval) …
+  GROUP BY linkId, country, city, createdAt ORDER BY linkId, country, city, createdAt LIMIT 500 OFFSET <offset>`.
+  `GROUP BY` and `ORDER BY` name the aliases, because Analytics Engine rejects the raw name of an aliased column. Each upsert only applies when a link with that id and
   that `created_at` exists. Each page is one `db.batch` with the upserts and the new cursor
   `{day, offset}`. A page with fewer than 500 rows ends the day and moves the cursor to `{D+1, 0}`. One cron
   call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
