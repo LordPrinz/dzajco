@@ -10,7 +10,7 @@ export class IdTakenError extends Error {
 }
 
 const CURSOR_KEY = "rollup_cursor";
-const MAX_EXPIRED_BATCH = 1000;
+const MAX_CLEANUP_BATCH = 1000;
 
 export interface NewLink {
   id: string;
@@ -170,21 +170,35 @@ export async function getLinkForOwner(db: D1Database, id: string): Promise<Owner
  * Deletes a link when `verify` accepts the stored hash. The comparison stays in the caller
  * (versioned HMAC cannot be compared in SQL); the DELETE re-checks the hash it verified, so a
  * concurrent change cannot slip through. Links without a hash can never be deleted this way.
+ * The same batch copies the link (without its hash) and its rolled-up visits to `deleted_links`.
  */
 export async function deleteLink(
   db: D1Database,
   id: string,
   verify: (storedHash: string) => Promise<boolean>,
+  now: number = Date.now(),
 ): Promise<"deleted" | "forbidden" | "not_found"> {
   const link = await getLinkForOwner(db, id);
   if (!link) return "not_found";
   if (link.secretHash === null || !(await verify(link.secretHash))) return "forbidden";
-  const result = await db
-    .prepare("DELETE FROM links WHERE id = ? AND secret_hash = ?")
-    .bind(id, link.secretHash)
-    .run();
-  // The hash changed between the read and the delete: treat as a failed verification.
-  return result.meta.changes > 0 ? "deleted" : "forbidden";
+  const [, result] = await db.batch([
+    db
+      .prepare(
+        `INSERT INTO deleted_links
+           (id, target, target_host, expires_at, created_at, is_custom, deleted_at, visits, countries)
+         SELECT id, target, target_host, expires_at, created_at, is_custom, ?3,
+           (SELECT COALESCE(SUM(visits), 0) FROM link_stats WHERE link_id = ?1),
+           (SELECT json_group_array(json_object('code', country, 'visits', v)) FROM (
+              SELECT country, SUM(visits) AS v FROM link_stats WHERE link_id = ?1
+              GROUP BY country ORDER BY v DESC, country))
+         FROM links WHERE id = ?1 AND secret_hash = ?2`,
+      )
+      .bind(id, link.secretHash, now),
+    db.prepare("DELETE FROM links WHERE id = ?1 AND secret_hash = ?2").bind(id, link.secretHash),
+  ]);
+  // The hash changed between the read and the delete: treat as a failed verification. The
+  // INSERT used the same condition inside the same batch, so it archived nothing either.
+  return (result?.meta.changes ?? 0) > 0 ? "deleted" : "forbidden";
 }
 
 export async function readCursor(db: D1Database): Promise<RollupCursor | null> {
@@ -346,9 +360,26 @@ export async function deleteExpired(db: D1Database, now: number, limit: number):
          SELECT id FROM links WHERE expires_at IS NOT NULL AND expires_at <= ?1 ORDER BY expires_at LIMIT ?2
        ) RETURNING id`,
     )
-    .bind(now, Math.min(Math.max(1, Math.trunc(limit) || 1), MAX_EXPIRED_BATCH))
+    .bind(now, Math.min(Math.max(1, Math.trunc(limit) || 1), MAX_CLEANUP_BATCH))
     .all<{ id: string }>();
   return results.map((r) => r.id);
+}
+
+/** Deletes up to `limit` `deleted_links` rows with `deleted_at < before` (oldest first); returns how many. */
+export async function purgeDeletedLinks(
+  db: D1Database,
+  before: number,
+  limit: number,
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `DELETE FROM deleted_links WHERE rowid IN (
+         SELECT rowid FROM deleted_links WHERE deleted_at < ?1 ORDER BY deleted_at LIMIT ?2
+       )`,
+    )
+    .bind(before, Math.min(Math.max(1, Math.trunc(limit) || 1), MAX_CLEANUP_BATCH))
+    .run();
+  return result.meta.changes;
 }
 
 /** Deletes one link only if it has expired (`expires_at <= now`); lazy cleanup on the redirect path. */
