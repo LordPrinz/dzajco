@@ -52,7 +52,7 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
 ## Conventions
 
 - **Trunk** is `dev`: feature branches merge into it and it is deployed to `test.dzaj.de`. `dev` goes to
-  `main` (production, `dzaj.de`) through a PR. `main` stays the default branch.
+  `main` (production, `dzaj.de`) through a release PR. `main` stays the default branch.
 - **Ticket** `DZAJ-<n>` is issue `#<n>` (autolinked on GitHub).
 - **Branch:** `DZAJ-<n>-short-kebab-description`.
 - **Commit / PR title:** `[DZAJ-<n>] <type>(<optional scope>): <Description>`
@@ -62,7 +62,8 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
     `migrate`, `infra`, `docs`
   - issue type labels: `type:spike` marks a spike. Its commit type is still `chore(infra)`.
   - `!` after the type/scope marks a breaking change.
-- PRs are **squash-merged**; the PR title becomes the commit on `dev`.
+- PRs into `dev` are **squash-merged**; the PR title becomes the commit on `dev`.
+- The release PR from `dev` to `main` is merged as a **merge commit**, so `dev` and `main` keep a shared history.
 - **Dependabot** keeps its own `dependabot/…` branches and targets `dev` once `dev` has reached `main` (see below).
 - Code, comments, docs and commits are in English. What the site shows to users comes from the `pl` and `en` dictionaries in `src/views/text` and `src/shared/text`; add every new string to both.
 
@@ -129,12 +130,16 @@ CI repeats every check, so `--no-verify` only moves the failure to the PR.
 
 ## Deploy
 
-Every push to `dev` deploys `https://test.dzaj.de` through `.github/workflows/deploy-dev.yml`. Production
-deploys are manual: `bun run deploy`. Steps are in `docs/DEPLOYMENT.md`.
+Every push to `dev` deploys `https://test.dzaj.de` through `.github/workflows/deploy-dev.yml`.
+
+To release, open a PR from `dev` to `main` and merge it as a merge commit. The push to `main` starts
+`.github/workflows/deploy-prod.yml`, which waits for the owner to approve the `production` environment and then
+migrates the database and deploys `dzaj.de`. `bun run deploy` stays as a manual fallback. Token setup and the
+other steps are in `docs/DEPLOYMENT.md`.
 
 ## Definition of done
 
 - Acceptance criteria in the issue are met.
 - Tests cover the change; CI is green.
-- The owner reviews and merges (squash). Never auto-merge.
+- The owner reviews and merges (squash into `dev`, merge commit for `dev` to `main`). Never auto-merge.
 - `docs/DESIGN.md` is updated if a decision changed. Larger decisions get an ADR in `docs/adr`.
