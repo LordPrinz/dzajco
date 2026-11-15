@@ -1,13 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
-import { closePages, HISTORY_KEY, openPage, type Page, uniqueTarget, v2Entry } from "./helpers";
+import { closePages, HISTORY_KEY, openPage, seedHistory, uniqueTarget, v2Entry } from "./helpers";
 
 afterEach(closePages);
-
-async function seedHistory(page: Page, entries: unknown[]): Promise<void> {
-  await page.goto("/");
-  await page.seedStorage(HISTORY_KEY, entries);
-  await page.goto("/history");
-}
 
 test("shows a message when the history is empty", async () => {
   const page = await openPage();
@@ -24,6 +18,7 @@ test("v2 entry with a key can be deleted", async () => {
   const item = page.getByRole("listitem").filter({ hasText: link.id });
   await page.expect(item.getByRole("link", { name: new RegExp(`/${link.id}$`) })).toBeVisible();
   await page.click(item.getByRole("button", { name: `Usuń link ${link.id}` }));
+  await page.click(page.getByRole("dialog").getByRole("button", { name: "Usuń", exact: true }));
 
   await page.expect(page.locator("#toasts-status")).toContainText(`Usunięto link ${link.id}`);
   await page.expect(item).toHaveCount(0);
@@ -60,6 +55,7 @@ test("a wrong key keeps the entry and reports the rejection", async () => {
   await seedHistory(page, [v2Entry({ ...link, secretKey: "wrong-key" })]);
 
   await page.click(page.getByRole("button", { name: `Usuń link ${link.id}` }));
+  await page.click(page.getByRole("dialog").getByRole("button", { name: "Usuń", exact: true }));
 
   await page.expect(page.getByText("Ten klucz nie pasuje do linku.")).toBeAttached();
   await page.expect(page.getByRole("listitem").filter({ hasText: link.id })).toBeVisible();
