@@ -11,7 +11,7 @@ test.describe("in English", () => {
 
     await page.getByLabel("Link to shorten").fill("ftp://example.com/file");
     await page.getByRole("button", { name: "Shorten" }).click();
-    await expect(page.locator("#toasts .toast--error")).toHaveText(
+    await expect(page.locator("#toasts-alert .toast--error")).toHaveText(
       /Only http and https addresses are allowed/,
     );
 
