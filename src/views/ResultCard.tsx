@@ -1,3 +1,4 @@
+import { withoutProtocol } from "../shared/short-url";
 import { usePage } from "./page-context";
 
 export interface ResultCardProps {
@@ -12,18 +13,12 @@ export interface ResultCardProps {
   expiresAt: string | null;
 }
 
-/** `https://dzaj.de/abc` as `dzaj.de/abc`: shorter to read, and what people type anyway. */
-export function withoutProtocol(url: string): string {
-  return url.replace(/^https?:\/\//, "");
-}
-
 /**
  * The result of a creation. Rendered by `Created` on the no-JS path and, empty, inside a `<template>` on
  * the home page: the browser script clones the template and fills the `data-field` elements.
  *
- * The short link is the main thing, with Copy as the one filled button next to it. The key box starts
- * as the strong warning, which is right without JavaScript; the script turns it into a quiet note once
- * the key is saved to History, and leaves the warning if saving fails.
+ * The key box starts as the strong warning, which is right without JavaScript; the script makes it a
+ * quiet note once the key is saved to History.
  */
 export function ResultCard(props: ResultCardProps) {
   const { t } = usePage();

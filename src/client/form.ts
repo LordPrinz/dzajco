@@ -13,6 +13,7 @@ import {
   normalizeUrlInput,
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
+import { withoutProtocol } from "../shared/short-url";
 import { pageLocale, pageText } from "./lib/lang";
 import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
 
@@ -119,7 +120,7 @@ function showResult(
   if (short) {
     short.href = link.shortUrl;
     short.dataset.value = link.shortUrl;
-    short.textContent = link.shortUrl.replace(/^https?:\/\//, "");
+    short.textContent = withoutProtocol(link.shortUrl);
     // The template's label ends with "Short link: "; the full URL completes it.
     short.setAttribute("aria-label", `${short.getAttribute("aria-label") ?? ""}${link.shortUrl}`);
   }

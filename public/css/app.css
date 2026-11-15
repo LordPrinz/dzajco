@@ -506,7 +506,6 @@ body {
   margin: 0;
 }
 
-/* The short link is the point of the page: big, without the protocol, with Copy right next to it. */
 .result__link {
   display: flex;
   flex-wrap: wrap;
