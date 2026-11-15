@@ -82,7 +82,7 @@ export function statsRoutes() {
     }
     if (!owner) return c.json(await loadPublicStats(c.env, id, now));
     const fresh = await loadFresh({
-      source: createVisitSource(c.env),
+      source: () => createVisitSource(c.env),
       cursor: owner.cursor,
       now,
       ttlSeconds: parseFreshTtl(c.env.AE_FRESH_TTL),

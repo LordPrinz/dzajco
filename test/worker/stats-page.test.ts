@@ -1,6 +1,8 @@
 import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
 import { env } from "cloudflare:workers";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { startCursor } from "../../src/analytics/day";
+import { freshCacheKey } from "../../src/analytics/fresh";
 import { blockHost, insertLink } from "../../src/db/queries";
 import worker from "../../src/index";
 
@@ -149,6 +151,18 @@ describe("GET /:id/stats", () => {
     } finally {
       await env.DB.prepare("DELETE FROM blocked_hosts WHERE host = 'example.com'").run();
     }
+  });
+
+  it("still serves the page, with the partial notice, when CF_ACCOUNT_ID is malformed", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const id = freshId();
+    await seed(id);
+    // The fresh rows are cached per cursor, so an earlier test's answer would hide the failure.
+    await caches.default.delete(freshCacheKey(startCursor(Date.now())));
+    const bindings = testEnv({ CF_ACCOUNT_ID: "not-an-account-id" as "", CF_AE_TOKEN: "tok" });
+    const res = await call(`/${id}/stats`, bindings);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("Najnowsze wejścia mogą jeszcze nie być widoczne.");
   });
 
   it("answers 429 when the stats limiter refuses", async () => {
