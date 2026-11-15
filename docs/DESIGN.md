@@ -445,4 +445,4 @@ Accepted risks:
 - Queues.
 - KV.
 - D1 read replication (a follow-up once latency is measured).
-- Automatic deploys from CI.
+- Deploys without the owner's approval: production deploys from CI wait for the `production` environment approval.
