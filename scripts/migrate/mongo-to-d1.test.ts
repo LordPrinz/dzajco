@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import fixture from "./fixtures/v2-links.json";
+import locationsFixture from "./fixtures/v2-locations.json";
 import { type MainDeps, main, parseArgs, redactUri, USAGE } from "./mongo-to-d1";
 
 const FIXTURE = join(import.meta.dirname, "fixtures/v2-links.json");
+const LOCATIONS = join(import.meta.dirname, "fixtures/v2-locations.json");
 const PEPPER = "cli-test-pepper-do-not-print";
 const MONGO_URI = "mongodb://admin:hunter2@localhost:27017/dzajco";
 const NOW = Date.parse("2026-11-14T00:00:00Z");
@@ -24,7 +26,7 @@ let out: string;
 let logs: string[];
 let errors: string[];
 let spawned: { command: string[]; env: Record<string, string | undefined> }[];
-let mongoCalls: { uri: string; db: string | undefined }[];
+let mongoCalls: { uri: string; db: string | undefined; collection: string }[];
 
 beforeEach(() => {
   out = mkdtempSync(join(tmpdir(), "migrate-test-"));
@@ -47,9 +49,9 @@ function deps(overrides: Partial<MainDeps> = {}): MainDeps {
       spawned.push({ command, env });
       return 0;
     },
-    readMongo: async (uri, db) => {
-      mongoCalls.push({ uri, db });
-      return fixture;
+    readMongo: async (uri, db, collection) => {
+      mongoCalls.push({ uri, db, collection });
+      return collection === "links" ? fixture : locationsFixture;
     },
     readConfig: () => CONFIG,
     ...overrides,
@@ -75,6 +77,18 @@ describe("parseArgs", () => {
   it("needs --yes for --remote", () => {
     expect(() => parseArgs(["--from-json", "f", "--remote"])).toThrow("--yes");
     expect(parseArgs(["--from-json", "f", "--remote", "--yes"])).toMatchObject({ remote: true });
+  });
+  it("takes --locations only together with --visits", () => {
+    expect(() => parseArgs(["--from-json", "f", "--dry-run", "--locations", "l"])).toThrow(
+      "--locations needs --visits",
+    );
+    expect(
+      parseArgs(["--from-json", "f", "--dry-run", "--visits", "--locations", "l"]),
+    ).toMatchObject({ visits: true, locations: "l" });
+    expect(parseArgs(["--from-json", "f", "--dry-run"])).toMatchObject({
+      visits: false,
+      locations: null,
+    });
   });
   it("refuses two sources, unknown options and missing values", () => {
     expect(() => parseArgs(["--from-json", "f", "--mongo-uri", "u", "--local"])).toThrow(
@@ -222,13 +236,13 @@ describe("main", () => {
   it("reads MongoDB from MONGODB_URI and never prints the URI", async () => {
     const env = { SECRET_PEPPER_VERSION: "1", SECRET_PEPPER_V1: PEPPER, MONGODB_URI: MONGO_URI };
     expect(await run(["--dry-run", "--mongo-db", "legacy"], deps({ env }))).toBe(0);
-    expect(mongoCalls).toEqual([{ uri: MONGO_URI, db: "legacy" }]);
+    expect(mongoCalls).toEqual([{ uri: MONGO_URI, db: "legacy", collection: "links" }]);
     expect(allOutput()).not.toContain("hunter2");
   });
 
   it("accepts --mongo-uri with a note that MONGODB_URI keeps it out of shell history", async () => {
     expect(await run(["--mongo-uri", MONGO_URI, "--dry-run"])).toBe(0);
-    expect(mongoCalls).toEqual([{ uri: MONGO_URI, db: undefined }]);
+    expect(mongoCalls).toEqual([{ uri: MONGO_URI, db: undefined, collection: "links" }]);
     expect(errors.join("\n")).toContain("MONGODB_URI");
     expect(allOutput()).not.toContain("hunter2");
   });
@@ -260,5 +274,46 @@ describe("main", () => {
     writeFileSync(notArray, "{}");
     expect(await run(["--from-json", notArray, "--dry-run"])).toBe(1);
     expect(errors.join("\n")).toContain("JSON array");
+  });
+
+  it("writes the visit import after the links with --visits, and reports it", async () => {
+    const args = ["--from-json", FIXTURE, "--visits", "--locations", LOCATIONS];
+    expect(await run([...args, "--dry-run"])).toBe(0);
+    expect(sqlFiles()).toEqual(["links-0001.sql", "visits-0001.sql"]);
+    const sql = readFileSync(join(out, "visits-0001.sql"), "utf8");
+    expect(sql.trimEnd().split("\n")).toHaveLength(7);
+    expect(sql).toContain("INSERT INTO v2_visit_import");
+    const report = JSON.parse(readFileSync(join(out, "report.json"), "utf8"));
+    expect(report.visits).toMatchObject({ links: 3, rows: 7, visits: 22, unknownVisits: 5 });
+    const text = logs.join("\n");
+    expect(text).toContain("visits: 22 on 3 link(s), 7 row(s)");
+    expect(text).toContain('unmapped country names: 1 ["Atlantis"]');
+    for (const key of KEYS) expect(allOutput()).not.toContain(key);
+
+    expect(await run([...args, "--local"])).toBe(0);
+    expect(spawned.map((s) => s.command.at(-1))).toEqual([
+      join(out, "links-0001.sql"),
+      join(out, "visits-0001.sql"),
+    ]);
+  });
+
+  it("drops stale visit files when a later run has no --visits", async () => {
+    await run(["--from-json", FIXTURE, "--visits", "--locations", LOCATIONS, "--dry-run"]);
+    await run(["--from-json", FIXTURE, "--dry-run"]);
+    expect(sqlFiles()).toEqual(["links-0001.sql"]);
+    expect(JSON.parse(readFileSync(join(out, "report.json"), "utf8")).visits).toBeUndefined();
+  });
+
+  it("looks for locations.json next to --from-json and says so when it is missing", async () => {
+    const d = deps({ exists: (path) => path !== join(dirname(FIXTURE), "locations.json") });
+    expect(await run(["--from-json", FIXTURE, "--visits", "--dry-run"], d)).toBe(1);
+    expect(errors.join("\n")).toContain("pass --locations");
+  });
+
+  it("reads the locations collection from MongoDB with --visits", async () => {
+    const env = { SECRET_PEPPER_VERSION: "1", SECRET_PEPPER_V1: PEPPER, MONGODB_URI: MONGO_URI };
+    expect(await run(["--dry-run", "--visits"], deps({ env }))).toBe(0);
+    expect(mongoCalls.map((c) => c.collection)).toEqual(["links", "locations"]);
+    expect(sqlFiles()).toEqual(["links-0001.sql", "visits-0001.sql"]);
   });
 });

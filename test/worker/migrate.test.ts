@@ -2,7 +2,9 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import fixture from "../../scripts/migrate/fixtures/v2-links.json";
+import locations from "../../scripts/migrate/fixtures/v2-locations.json";
 import { buildSqlFiles, type LinkRow, transformLinks } from "../../scripts/migrate/transform";
+import { buildVisitSqlFiles, parseLocations, transformVisits } from "../../scripts/migrate/visits";
 import worker from "../../src/index";
 
 const PEPPER = "migrate-worker-pepper";
@@ -42,6 +44,7 @@ const docs = fixture as { _id: string; secretKey?: string | null }[];
 let rows: LinkRow[];
 let firstRun: number;
 let secondRun: number;
+let visitRuns: number[];
 
 beforeAll(async () => {
   const result = await transformLinks(fixture, {
@@ -54,6 +57,9 @@ beforeAll(async () => {
   const files = buildSqlFiles(rows);
   firstRun = await apply(files);
   secondRun = await apply(files);
+  const visits = transformVisits(rows, result.sources, parseLocations(locations));
+  const visitFiles = buildVisitSqlFiles(visits.rows);
+  visitRuns = [await apply(visitFiles), await apply(visitFiles)];
 });
 
 describe("migrated v2 links in the Worker", () => {
@@ -103,6 +109,40 @@ describe("migrated v2 links in the Worker", () => {
     }
     const api = await env.DB.prepare("SELECT 1 FROM links WHERE id = 'api'").first();
     expect(api).toBeNull();
+  });
+
+  it("writes each v2 visit row once; a second run writes 0", () => {
+    // D1 counts the ledger row and the link_stats row its trigger writes: 7 rows, 14 changes.
+    expect(visitRuns).toEqual([14, 0]);
+  });
+
+  it("shows the v2 visits in the public stats", async () => {
+    const res = await call(`/api/v1/links/${encodeURIComponent("o'brien")}/stats`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      visits: number;
+      countries: { code: string; visits: number }[];
+      cities?: unknown;
+    };
+    expect(body.visits).toBe(10);
+    expect(body.countries).toEqual([
+      { code: "PL", visits: 6 },
+      { code: "", visits: 3 },
+      { code: "DE", visits: 1 },
+    ]);
+    expect(body.cities).toBeUndefined();
+  });
+
+  it("shows the v2 cities with coordinates in the owner stats", async () => {
+    const res = await call(`/api/v1/links/${encodeURIComponent("my link")}/stats`, {
+      headers: { authorization: "Bearer Kk1_-aaBBcc9" },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { visits: number; cities: unknown[] };
+    expect(body.visits).toBe(9);
+    expect(body.cities).toEqual([
+      { country: "NL", city: "Amsterdam", lat: 52.37, lon: 4.9, visits: 9 },
+    ]);
   });
 
   it("deletes a migrated link with its original 12 character v2 key", async () => {
