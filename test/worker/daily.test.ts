@@ -125,7 +125,7 @@ it("clears a backlog over several hourly runs and writes the day marker only aft
     .bind(total, DAY1 - 1)
     .run();
   const count = async () =>
-    (await db.prepare("SELECT COUNT(*) AS n FROM links").first<{ n: number }>())!.n;
+    (await db.prepare("SELECT COUNT(*) AS n FROM links").first<{ n: number }>())?.n ?? -1;
 
   // A full last batch leaves the marker unset, so the next hour continues.
   expect((await runDaily(db, DAY1 + H, false)).expired).toBe(false);
