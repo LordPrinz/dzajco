@@ -130,4 +130,5 @@ jobs:
       - run: bun run build:client
       - run: bun run check:size
       # Builds the Worker without credentials and prints its bundle size.
-      - run: bunx wrangler deploy --dry-run --outdir dist
+      - run: bunx wrangler deploy --env="" --dry-run --outdir dist
+      - run: bunx wrangler deploy --env dev --dry-run --outdir dist-dev

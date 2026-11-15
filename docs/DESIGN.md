@@ -23,7 +23,7 @@ describes the target design. Larger decisions have an ADR in [`adr/`](adr). Plan
 ### Repository layout
 
 ```
-dzajco/                          (trunk: v3.0)
+dzajco/                          (trunk: dev)
 ├── src/
 │   ├── domain/        # pure code: url-policy, ids, reserved, expiry, secret, bots, schemas (+ *.test.ts, bun test)
 │   ├── db/            # queries.ts (D1)

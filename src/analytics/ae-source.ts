@@ -26,7 +26,7 @@ function checkInt(name: string, value: number, min: number, max: number): number
 
 /** The dataset name goes into the SQL text, so it is checked against a strict pattern first. */
 function checkDataset(dataset: string): string {
-  if (typeof dataset !== "string" || !DATASET_PATTERN.test(dataset)) {
+  if (!DATASET_PATTERN.test(dataset)) {
     throw new Error("Invalid AE_DATASET");
   }
   return dataset;
@@ -207,7 +207,7 @@ export function createVisitSource(
   return new AeVisitSource({
     accountId: env.CF_ACCOUNT_ID,
     token: env.CF_AE_TOKEN,
-    dataset: env.AE_DATASET,
+    dataset: env.AE_DATASET || undefined,
     fetch: fetcher,
   });
 }

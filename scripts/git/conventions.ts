@@ -1,6 +1,6 @@
 /** Shared naming rules for branches, commits and PR titles. */
 
-/** The long-lived branch PRs merge into. It deploys to test.dzaj.de; `dev` goes to `main` for production. */
+/** The long-lived branch PRs merge into. */
 export const TRUNK = "dev";
 
 /** Branches that PRs target. */

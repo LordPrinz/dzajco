@@ -317,6 +317,20 @@ describe("dataset name", () => {
     expect(body).toBe(buildDayQuery("2026-11-13", 0, 500, "dzajco_visits_dev"));
   });
 
+  it("falls back to the default dataset for an empty AE_DATASET", async () => {
+    let body: unknown;
+    const fetcher: Fetcher = async (_url, init) => {
+      body = init.body;
+      return new Response(JSON.stringify({ data: [] }));
+    };
+    const source = createVisitSource(
+      { CF_ACCOUNT_ID: ACCOUNT, CF_AE_TOKEN: "t", AE_DATASET: "" },
+      fetcher,
+    );
+    await source.queryDay("2026-11-13", 0, 500);
+    expect(body).toBe(buildDayQuery("2026-11-13", 0, 500));
+  });
+
   it("refuses a bad AE_DATASET from the environment", () => {
     expect(() =>
       createVisitSource({ CF_ACCOUNT_ID: ACCOUNT, CF_AE_TOKEN: "t", AE_DATASET: "x; y" }),

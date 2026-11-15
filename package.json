@@ -20,7 +20,7 @@
     "types": "wrangler types --env-file .env.example",
     "prepare": "husky",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --env=\"\"",
     "db:migrate:dev": "wrangler d1 migrations apply DB --remote --env dev",
     "gh:setup": "bun scripts/gh/setup.ts",
     "gh:setup-repo": "bun scripts/gh/setup-repo.ts",

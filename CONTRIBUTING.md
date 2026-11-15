@@ -44,14 +44,15 @@ gh pr create --base dev --draft --title "[DZAJ-12] feat(api): Add stats endpoint
 ```
 
 PRs into `dev` use `Refs #<n>` in the body, not `Closes #<n>`. GitHub closes issues automatically only
-when the PR targets the default branch, and the default stays `main` until the cutover.
+when the PR targets the default branch, and the default stays `main`.
 `project-sync.yml` closes the issue and sets Done when the PR is merged into `dev`.
 
 Open PRs as drafts. Never enable auto-merge. The owner merges.
 
 ## Conventions
 
-- **Trunk** is `dev`: feature branches merge into it and it is deployed to `test.dzaj.de`. `dev` goes to `main` (production, `dzaj.de`) through a PR. `main` stays the default branch.
+- **Trunk** is `dev`: feature branches merge into it and it is deployed to `test.dzaj.de`. `dev` goes to
+  `main` (production, `dzaj.de`) through a PR. `main` stays the default branch.
 - **Ticket** `DZAJ-<n>` is issue `#<n>` (autolinked on GitHub).
 - **Branch:** `DZAJ-<n>-short-kebab-description`.
 - **Commit / PR title:** `[DZAJ-<n>] <type>(<optional scope>): <Description>`
@@ -62,8 +63,19 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
   - issue type labels: `type:spike` marks a spike. Its commit type is still `chore(infra)`.
   - `!` after the type/scope marks a breaking change.
 - PRs are **squash-merged**; the PR title becomes the commit on `dev`.
-- **Dependabot** keeps its own `dependabot/…` branches and targets `dev`.
+- **Dependabot** keeps its own `dependabot/…` branches and targets `dev` once `dev` has reached `main` (see below).
 - Code, comments, docs and commits are in English. What the site shows to users is in Polish.
+
+## Switching the trunk to dev
+
+Do this once after the PR that introduces `dev` is merged:
+
+- [ ] Run `bun run gh:setup-repo` and confirm the `trunk` ruleset lists `refs/heads/dev`.
+- [ ] Retarget open PRs from `v3.0` to `dev`.
+- [ ] Merge `dev` into `main`. Dependabot reads `dependabot.yml` only from the default branch, so it
+      targets `dev` only after that. Until then it keeps opening PRs against `v3.0`.
+- [ ] Close leftover `dependabot/*/v3.0/*` branches and their PRs.
+- [ ] Decide whether to delete or lock `v3.0`.
 
 ## Local development
 

@@ -39,8 +39,8 @@ The `dzajco_visits` dataset is created by the first write. There is nothing to r
 ```sh
 openssl rand -base64 32          # generate once, store in a password manager
 read -rs SECRET_PEPPER_V1 && export SECRET_PEPPER_V1   # paste the pepper, no echo
-printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1
-bunx wrangler secret put CF_AE_TOKEN                   # prompts for the value
+printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1 --env=""
+bunx wrangler secret put CF_AE_TOKEN --env=""         # prompts for the value
 ```
 
 Never put a secret value on a command line (`VAR=value cmd`): it lands in shell history and the process list. Keep `SECRET_PEPPER_V1` exported in this shell only for the import in section 5, which needs the same value.
@@ -132,9 +132,15 @@ bunx wrangler tail
 
 ### Dev environment (test.dzaj.de)
 
-Branch flow: feature branches merge into `dev`, `dev` is deployed to `https://test.dzaj.de`, and `dev` goes to `main` (production, `dzaj.de`) through a PR. The dev environment is `env.dev` in `wrangler.jsonc`: Worker `dzajco-dev`, custom domain `test.dzaj.de`, its own D1 database `dzajco-dev`, Analytics Engine dataset `dzajco_visits_dev` and rate limit namespaces `2001` to `2004`. `workers_dev` and `preview_urls` are off, and the hourly cron runs. Wrangler does not inherit bindings or vars into an environment, so `env.dev` repeats them.
+Branch flow: feature branches merge into `dev`, `dev` is deployed to `https://test.dzaj.de`, and `dev` goes to `main` (production, `dzaj.de`) through a PR.
 
-`AE_DATASET` names the dataset the SQL queries read. It is set to `dzajco_visits_dev` in `env.dev` and left out of the top-level `vars`, where the Worker falls back to `dzajco_visits`. The name must match `^[a-z0-9_]{1,64}$`; anything else makes the query builder throw before any SQL is built. Keep it equal to the `dataset` of the `VISITS` binding of the same environment.
+The dev environment is `env.dev` in `wrangler.jsonc`: Worker `dzajco-dev`, custom domain `test.dzaj.de`, its own D1 database `dzajco-dev`, Analytics Engine dataset `dzajco_visits_dev` and rate limit namespaces `2001` to `2004`. `workers_dev` and `preview_urls` are off, and the hourly cron runs.
+
+Wrangler does not inherit bindings or vars into an environment, so `env.dev` repeats them.
+
+`AE_DATASET` names the dataset the SQL queries read. It is set to `dzajco_visits_dev` in `env.dev` and left out of the top-level `vars`, where the Worker falls back to `dzajco_visits`. An empty value also falls back to the default.
+
+The name must match `^[a-z0-9_]{1,64}$`; anything else makes the query builder throw before any SQL is built. Keep it equal to the `dataset` of the `VISITS` binding of the same environment.
 
 One-time setup, with a Cloudflare account that has `dzaj.de` as an active zone:
 
@@ -143,7 +149,9 @@ printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1 --en
 bunx wrangler secret put CF_AE_TOKEN --env dev     # prompts for the value
 ```
 
-Use a pepper of its own for dev, not the production one. The `dzajco-dev` database already exists and is empty. The custom domain and its DNS record are created by the first deploy, because the route in `wrangler.jsonc` has `custom_domain: true`. The `dzajco_visits_dev` dataset appears after the first redirect.
+Use a pepper of its own for dev, not the production one. Create a separate `CF_AE_TOKEN` for dev too (_Account Analytics: Read_), so it can be revoked on its own. Analytics Engine tokens are account-wide, so a dev token can read the production dataset; keep it out of anything shared.
+
+The `dzajco-dev` database already exists and is empty. The custom domain and its DNS record are created by the first deploy, because the route in `wrangler.jsonc` has `custom_domain: true`. The `dzajco_visits_dev` dataset appears after the first redirect.
 
 Deploy, always migrating first:
 
@@ -310,7 +318,7 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
 
    ```sh
    openssl rand -base64 32
-   bunx wrangler secret put SECRET_PEPPER_V2
+   bunx wrangler secret put SECRET_PEPPER_V2 --env=""
    ```
 
 2. Set `SECRET_PEPPER_VERSION` to `"2"` in `wrangler.jsonc` and run `bun run deploy`.
