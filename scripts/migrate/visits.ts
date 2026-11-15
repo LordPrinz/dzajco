@@ -1,7 +1,8 @@
 // Pure part of the v2 visit import: turns the `visits` and `visitsLocation` of imported links,
-// plus the `locations` collection, into rows of the v2_visit_import ledger (migration 0003).
+// plus the `locations` collection, into rows of the v2_visit_import ledger (DESIGN.md, D1 schema).
 // No Node or Bun APIs here, so the worker test can run it inside workerd.
 
+import { MAX_CITY_LENGTH, UNKNOWN_COUNTRY } from "../../src/analytics/ae-source";
 import { roundCoord } from "../../src/domain/geo";
 import { sqlString } from "../lib/sql";
 import { countryCode } from "./countries";
@@ -9,9 +10,10 @@ import { BATCH_SIZE, compareCodePoints, type LinkRow } from "./transform";
 
 export interface VisitImportRow {
   linkId: string;
-  /** Target of the imported link; the SQL only applies while D1 holds the same link. */
+  /** Target and key hash of the imported link; the SQL only applies while D1 holds that link. */
   target: string;
-  /** ISO 3166 code, or "" when v2 did not know the country. */
+  secretHash: string | null;
+  /** ISO 3166 code, or UNKNOWN_COUNTRY (`??`, as the rollup stores it) when it is not known. */
   country: string;
   city: string;
   lat: number | null;
@@ -24,9 +26,9 @@ export interface VisitReport {
   links: number;
   rows: number;
   visits: number;
-  /** Visits without a usable location, written to the unknown-country row. */
+  /** Visits without a usable location or country, written to the unknown-country row. */
   unknownVisits: number;
-  /** v2 country names with no ISO code; their visits keep the city under the unknown country. */
+  /** v2 country names with no ISO code; their visits go to the unknown-country row. */
   unmappedCountries: string[];
   /** `visitsLocation` ids missing from the `locations` collection; imported without coordinates. */
   missingLocations: string[];
@@ -70,11 +72,14 @@ export function parseLocations(docs: Iterable<unknown>): Map<string, Coordinates
   return locations;
 }
 
-/** Country name and city of a v2 location id: `City_Region_Country`. */
-function splitLocation(id: string): { countryName: string; city: string } {
+/** Country name and city of a v2 location id `City_Region_Country`; the city may hold `_` itself. */
+export function splitLocation(id: string): { countryName: string; city: string } {
   const parts = id.split("_");
-  if (parts.length < 2) return { countryName: parts[0] ?? "", city: "" };
-  return { countryName: parts[parts.length - 1] as string, city: (parts[0] as string).trim() };
+  const countryName = parts[parts.length - 1] as string;
+  const city =
+    parts.length < 3 ? (parts.length === 2 ? parts[0] : "") : parts.slice(0, -2).join("_");
+  // Same cap as the rollup applies to Analytics Engine cities.
+  return { countryName, city: [...(city ?? "").trim()].slice(0, MAX_CITY_LENGTH).join("") };
 }
 
 interface Place {
@@ -90,7 +95,7 @@ interface Place {
 /**
  * Ledger rows for the imported links (`rows`, with their v2 documents in `sources`). Visits of one
  * link that land on the same country and city are merged. Visits not covered by `visitsLocation`
- * go to the unknown-country row (`country` and `city` empty).
+ * go to the unknown-country row (UNKNOWN_COUNTRY, no city), and so do those with an unmapped country.
  */
 export function transformVisits(
   rows: readonly LinkRow[],
@@ -140,22 +145,24 @@ export function transformVisits(
       const { visits, location } = entry as Record<string, unknown>;
       const n = visitCount(visits);
       if (!n || typeof location !== "string" || location === "") continue;
+      located += n;
       const { countryName, city } = splitLocation(location);
-      let country = countryCode(countryName);
+      const country = countryCode(countryName);
       if (country === null) {
         unmapped.add(countryName);
-        country = "";
+        add(UNKNOWN_COUNTRY, "", n, undefined);
+        report.unknownVisits += n;
+        continue;
       }
       const at = locations.get(location);
       if (!at) missing.add(location);
       add(country, city, n, at);
-      located += n;
     }
     const total = visitCount(doc.visits) ?? 0;
     if (located > total) report.locatedOverTotal.push(link.id);
     const unknown = Math.max(0, total - located);
     if (unknown > 0) {
-      add("", "", unknown, undefined);
+      add(UNKNOWN_COUNTRY, "", unknown, undefined);
       report.unknownVisits += unknown;
     }
     if (places.size === 0) continue;
@@ -168,6 +175,7 @@ export function transformVisits(
       out.push({
         linkId: link.id,
         target: link.target,
+        secretHash: link.secretHash,
         country: place.country,
         city: place.city,
         lat: place.weight > 0 ? roundCoord(place.latSum / place.weight) : null,
@@ -188,11 +196,7 @@ function sqlNumber(value: number | null): string {
   return value === null ? "NULL" : String(value);
 }
 
-/**
- * One ledger row, written only while D1 holds the link with the same target and the ledger does
- * not have the row yet. The trigger of migration 0003 adds the visits to `link_stats` in the same
- * statement, so the statement is safe to run any number of times.
- */
+/** One ledger row, guarded as DESIGN.md (D1 schema, `v2_visit_import`) describes. */
 export function visitSql(row: VisitImportRow): string {
   const id = sqlString(row.linkId);
   const country = sqlString(row.country);
@@ -200,7 +204,8 @@ export function visitSql(row: VisitImportRow): string {
   const values = [id, country, city, sqlNumber(row.lat), sqlNumber(row.lon), String(row.visits)];
   return (
     `INSERT INTO v2_visit_import (link_id, country, city, lat, lon, visits) SELECT ${values.join(", ")} ` +
-    `WHERE EXISTS (SELECT 1 FROM links WHERE id = ${id} AND target = ${sqlString(row.target)}) ` +
+    `WHERE EXISTS (SELECT 1 FROM links WHERE id = ${id} AND target = ${sqlString(row.target)} ` +
+    `AND secret_hash IS ${row.secretHash === null ? "NULL" : sqlString(row.secretHash)}) ` +
     `AND NOT EXISTS (SELECT 1 FROM v2_visit_import WHERE link_id = ${id} AND country = ${country} AND city = ${city});`
   );
 }

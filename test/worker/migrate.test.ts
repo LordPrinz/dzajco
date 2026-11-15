@@ -44,7 +44,7 @@ const docs = fixture as { _id: string; secretKey?: string | null }[];
 let rows: LinkRow[];
 let firstRun: number;
 let secondRun: number;
-let visitRuns: number[];
+let visitRuns: { rows: number; visits: number }[];
 
 beforeAll(async () => {
   const result = await transformLinks(fixture, {
@@ -59,7 +59,14 @@ beforeAll(async () => {
   secondRun = await apply(files);
   const visits = transformVisits(rows, result.sources, parseLocations(locations));
   const visitFiles = buildVisitSqlFiles(visits.rows);
-  visitRuns = [await apply(visitFiles), await apply(visitFiles)];
+  const ledger = async () => {
+    await apply(visitFiles);
+    const row = await env.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM v2_visit_import) AS rows, (SELECT SUM(visits) FROM link_stats) AS visits",
+    ).first<{ rows: number; visits: number }>();
+    return row as { rows: number; visits: number };
+  };
+  visitRuns = [await ledger(), await ledger()];
 });
 
 describe("migrated v2 links in the Worker", () => {
@@ -111,9 +118,11 @@ describe("migrated v2 links in the Worker", () => {
     expect(api).toBeNull();
   });
 
-  it("writes each v2 visit row once; a second run writes 0", () => {
-    // D1 counts the ledger row and the link_stats row its trigger writes: 7 rows, 14 changes.
-    expect(visitRuns).toEqual([14, 0]);
+  it("writes each v2 visit row once; a second run changes nothing", () => {
+    expect(visitRuns).toEqual([
+      { rows: 6, visits: 22 },
+      { rows: 6, visits: 22 },
+    ]);
   });
 
   it("shows the v2 visits in the public stats", async () => {
@@ -127,7 +136,7 @@ describe("migrated v2 links in the Worker", () => {
     expect(body.visits).toBe(10);
     expect(body.countries).toEqual([
       { code: "PL", visits: 6 },
-      { code: "", visits: 3 },
+      { code: "??", visits: 3 },
       { code: "DE", visits: 1 },
     ]);
     expect(body.cities).toBeUndefined();

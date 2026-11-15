@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { MAX_CITY_LENGTH } from "../../src/analytics/ae-source";
 import { countryCode } from "./countries";
 import fixture from "./fixtures/v2-links.json";
 import locationsFixture from "./fixtures/v2-locations.json";
@@ -9,6 +10,7 @@ import { buildSqlFiles, type LinkRow, transformLinks } from "./transform";
 import {
   buildVisitSqlFiles,
   parseLocations,
+  splitLocation,
   transformVisits,
   type VisitImportRow,
   visitCount,
@@ -94,30 +96,32 @@ describe("transformVisits on the v2 fixture", () => {
       visits,
     }));
     expect(view).toEqual([
-      { linkId: "aB3dE", country: "", city: "", lat: null, lon: null, visits: 3 },
+      { linkId: "aB3dE", country: "??", city: "", lat: null, lon: null, visits: 3 },
       { linkId: "my link", country: "NL", city: "Amsterdam", lat: 52.37, lon: 4.9, visits: 9 },
-      { linkId: "o'brien", country: "", city: "", lat: null, lon: null, visits: 2 },
-      { linkId: "o'brien", country: "", city: "Atlantis", lat: 1, lon: 2, visits: 1 },
+      { linkId: "o'brien", country: "??", city: "", lat: null, lon: null, visits: 3 },
       { linkId: "o'brien", country: "DE", city: "Ghost Town", lat: null, lon: null, visits: 1 },
       { linkId: "o'brien", country: "PL", city: "Gliwice", lat: 50.29, lon: 18.67, visits: 4 },
       { linkId: "o'brien", country: "PL", city: "Ujazd", lat: 50.39, lon: 18.35, visits: 2 },
     ]);
   });
 
-  it("carries the target of the imported link", async () => {
+  it("carries the target and key hash of the imported link", async () => {
     const { rows, links } = await fixtureVisits();
     for (const row of rows) {
-      expect(row.target).toBe(links.find((l) => l.id === row.linkId)?.target as string);
+      const link = links.find((l) => l.id === row.linkId) as LinkRow;
+      expect(row.target).toBe(link.target);
+      expect(row.secretHash).toBe(link.secretHash);
     }
+    expect(rows[0]?.secretHash).toStartWith("v1:");
   });
 
   it("reports totals, unknown names, missing locations and over-located links", async () => {
     const { report } = await fixtureVisits();
     expect(report).toEqual({
       links: 3,
-      rows: 7,
+      rows: 6,
       visits: 22,
-      unknownVisits: 5,
+      unknownVisits: 6,
       unmappedCountries: ["Atlantis"],
       missingLocations: ["Ghost Town_Nowhere_Germany"],
       locatedOverTotal: ["my link"],
@@ -145,8 +149,28 @@ describe("transformVisits on the v2 fixture", () => {
     });
     const result = transformVisits([a, b], new Map([aDoc, bDoc]), new Map());
     expect(result.rows.map((r) => [r.linkId, r.country, r.city, r.visits])).toEqual([
-      ["b", "", "", 2],
+      ["b", "??", "", 2],
     ]);
+  });
+});
+
+describe("splitLocation", () => {
+  it("takes the country from the end and keeps underscores in the city", () => {
+    expect(splitLocation("Gliwice_Silesia_Poland")).toEqual({
+      countryName: "Poland",
+      city: "Gliwice",
+    });
+    expect(splitLocation("Saint_Martin_Region_France")).toEqual({
+      countryName: "France",
+      city: "Saint_Martin",
+    });
+    expect(splitLocation("Gliwice_Poland")).toEqual({ countryName: "Poland", city: "Gliwice" });
+    expect(splitLocation("Poland")).toEqual({ countryName: "Poland", city: "" });
+  });
+
+  it("caps the city at the length the rollup keeps", () => {
+    const { city } = splitLocation(`${"ż".repeat(150)}_Region_Poland`);
+    expect([...city]).toHaveLength(MAX_CITY_LENGTH);
   });
 });
 
@@ -154,6 +178,7 @@ describe("visit SQL", () => {
   const row: VisitImportRow = {
     linkId: "o'brien",
     target: "https://example.com/it's",
+    secretHash: "v1:ab",
     country: "PL",
     city: "Gliwice",
     lat: 50.29,
@@ -164,16 +189,17 @@ describe("visit SQL", () => {
   it("guards on the link and its target, and on the ledger row, in one statement", () => {
     expect(visitSql(row)).toBe(
       "INSERT INTO v2_visit_import (link_id, country, city, lat, lon, visits) SELECT 'o''brien', 'PL', 'Gliwice', 50.29, 18.67, 4 " +
-        "WHERE EXISTS (SELECT 1 FROM links WHERE id = 'o''brien' AND target = 'https://example.com/it''s') " +
+        "WHERE EXISTS (SELECT 1 FROM links WHERE id = 'o''brien' AND target = 'https://example.com/it''s' AND secret_hash IS 'v1:ab') " +
         "AND NOT EXISTS (SELECT 1 FROM v2_visit_import WHERE link_id = 'o''brien' AND country = 'PL' AND city = 'Gliwice');",
     );
     expect(visitSql({ ...row, lat: null, lon: null })).toContain("'Gliwice', NULL, NULL, 4");
+    expect(visitSql({ ...row, secretHash: null })).toContain("AND secret_hash IS NULL)");
     expect(() => visitSql({ ...row, city: "a\nb" })).toThrow("Control characters");
   });
 
   it("splits rows into files and is the same on a second run", async () => {
     const first = buildVisitSqlFiles((await fixtureVisits()).rows, 5);
-    expect(first.map((f) => f.trimEnd().split("\n").length)).toEqual([5, 2]);
+    expect(first.map((f) => f.trimEnd().split("\n").length)).toEqual([5, 1]);
     expect(buildVisitSqlFiles((await fixtureVisits()).rows, 5)).toEqual(first);
     expect(buildVisitSqlFiles([])).toEqual([]);
   });
@@ -231,8 +257,7 @@ describe("visit SQL against the D1 schema", () => {
       )
       .all();
     expect(byPlace).toEqual([
-      { country: "", city: "", lat: null, lon: null, visits: 2 },
-      { country: "", city: "Atlantis", lat: 1, lon: 2, visits: 1 },
+      { country: "??", city: "", lat: null, lon: null, visits: 3 },
       { country: "DE", city: "Ghost Town", lat: null, lon: null, visits: 1 },
       { country: "FR", city: "Paris", lat: 48.86, lon: 2.35, visits: 5 },
       { country: "PL", city: "Gliwice", lat: 50.3, lon: 18.68, visits: 8 },
@@ -253,12 +278,26 @@ describe("visit SQL against the D1 schema", () => {
     run(db, files);
     expect(total(db)).toBe(22);
 
-    // The owner deletes the link and someone creates a new one with the same id and target.
+    // The link is deleted and comes back with the same id, target and key: the ledger still
+    // holds its rows, so the visits are not added again.
+    const hash = links.find((l) => l.id === "aB3dE")?.secretHash ?? null;
     db.run("DELETE FROM links WHERE id = 'aB3dE'");
-    db.run(
-      "INSERT INTO links (id, target, target_host, created_at) VALUES ('aB3dE', 'https://example.com/plain', 'example.com', 2)",
-    );
+    db.query(
+      "INSERT INTO links (id, target, target_host, secret_hash, created_at) VALUES ('aB3dE', 'https://example.com/plain', 'example.com', ?, 2)",
+    ).run(hash);
     run(db, files);
+    expect(db.query("SELECT COUNT(*) AS n FROM link_stats WHERE link_id = 'aB3dE'").get()).toEqual({
+      n: 0,
+    });
+  });
+
+  it("skips a link with the same id and target but another key", async () => {
+    const db = database();
+    const { rows } = await fixtureVisits();
+    db.run(
+      "INSERT INTO links (id, target, target_host, secret_hash, created_at) VALUES ('aB3dE', 'https://example.com/plain', 'example.com', 'v1:other', 1)",
+    );
+    run(db, buildVisitSqlFiles(rows));
     expect(db.query("SELECT COUNT(*) AS n FROM link_stats WHERE link_id = 'aB3dE'").get()).toEqual({
       n: 0,
     });
