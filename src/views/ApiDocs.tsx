@@ -79,14 +79,16 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
                 <table class="table">
                   <thead>
                     <tr>
-                      <th scope="col">{a.status}</th>
+                      <th scope="col" class="table__status">
+                        {a.status}
+                      </th>
                       <th scope="col">{a.body}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {endpoint.statuses.map((status) => (
                       <tr>
-                        <td>
+                        <td class="table__status">
                           <code>{status}</code>
                         </td>
                         <td>{text.responses[status]}</td>
@@ -106,7 +108,9 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
           <table class="table">
             <thead>
               <tr>
-                <th scope="col">{a.status}</th>
+                <th scope="col" class="table__status">
+                  {a.status}
+                </th>
                 <th scope="col">{a.code}</th>
                 <th scope="col">{a.meaning}</th>
               </tr>
@@ -114,7 +118,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
             <tbody>
               {ERROR_CODES.map((error) => (
                 <tr>
-                  <td>
+                  <td class="table__status">
                     <code>{error.status}</code>
                   </td>
                   <td>

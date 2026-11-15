@@ -138,6 +138,7 @@
 }
 
 .button--danger:hover {
+  border-color: var(--danger-text);
   color: var(--danger-bg);
   background: var(--danger-text);
 }
@@ -329,6 +330,13 @@
   text-align: start;
   vertical-align: top;
   overflow-wrap: anywhere;
+}
+
+/* Status codes stay whole on phones instead of breaking into "20" and "1". */
+.table .table__status {
+  width: 1%;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .table th {
