@@ -20,7 +20,7 @@ export function History({ nonce }: { nonce: string }) {
           <p class="notice notice--warning">{t.history.noscript}</p>
         </noscript>
         <ul class="history" id="history-list" />
-        <p class="history__empty" id="history-empty" hidden>
+        <p class="history__empty" id="history-empty" tabIndex={-1} hidden>
           {t.history.empty} <a href="/">{t.history.emptyLink}</a>.
         </p>
         <p class="doc__note">{t.history.note}</p>
