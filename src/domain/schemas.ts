@@ -40,5 +40,22 @@ export const formBodySchema = v.strictObject({
   ),
 });
 
+/**
+ * Maps a failed create-link parse to the error code the API and the form both report. The length caps
+ * bound work on hostile input, so they stay in the schema; this keeps their specific codes.
+ */
+export function createFailureCode(
+  issues: readonly v.BaseIssue<unknown>[],
+): "url_too_long" | "name_too_long" | "invalid_body" {
+  const tooLong = (field: string) =>
+    issues.some(
+      (issue) =>
+        issue.type === "max_length" && issue.path?.length === 1 && issue.path[0]?.key === field,
+    );
+  if (tooLong("url")) return "url_too_long";
+  if (tooLong("customName")) return "name_too_long";
+  return "invalid_body";
+}
+
 export type CreateLinkInput = v.InferOutput<typeof createLinkSchema>;
 export type FormBodyInput = v.InferOutput<typeof formBodySchema>;

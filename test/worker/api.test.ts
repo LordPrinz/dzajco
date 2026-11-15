@@ -180,7 +180,21 @@ describe("POST /api/v1/links", () => {
   ])("returns 400 invalid_body for %s", async (_label, body) => {
     const res = await call(post(body));
     expect(res.status).toBe(400);
-    expect(await errorCode(res)).toBe("invalid_body");
+    const error = ((await res.json()) as { error: { code: string; message: string } }).error;
+    expect(error.code).toBe("invalid_body");
+    expect(error.message).toBe("Request body is invalid");
+  });
+
+  it("returns 400 url_too_long for a url over 2048 characters", async () => {
+    const res = await call(post({ url: `https://example.com/${"a".repeat(2100)}` }));
+    expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe("url_too_long");
+  });
+
+  it("returns 400 name_too_long for a customName over 128 characters", async () => {
+    const res = await call(post({ url: "https://example.com", customName: "a".repeat(200) }));
+    expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe("name_too_long");
   });
 
   it("returns 413 for a body over the size cap", async () => {
