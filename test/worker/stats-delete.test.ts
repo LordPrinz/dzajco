@@ -410,6 +410,18 @@ describe("GET /api/v1/links/:id/stats", () => {
     });
   });
 
+  it("answers from D1 with partial: true when CF_ACCOUNT_ID is malformed", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { id, key } = await linkWithStats();
+    const bindings = testEnv({ CF_ACCOUNT_ID: "not-an-account-id" as "" });
+    for (const headers of [{}, { authorization: `Bearer ${key}` }] as Record<string, string>[]) {
+      const res = await call(stats(id, headers), bindings);
+      expect(res.status).toBe(200);
+      expect(((await res.json()) as StatsBody).partial).toBe(true);
+    }
+    expect(ae.queries).toEqual([]);
+  });
+
   it("the 61st stats request from one IP returns 429 with Retry-After (RL_STATS)", async () => {
     const { id } = await create();
     const bindings = testEnv({ RL_STATS: fakeLimiter(60), RL_REDIRECT: fakeLimiter(0) });

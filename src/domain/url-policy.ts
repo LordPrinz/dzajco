@@ -54,6 +54,8 @@ function isPrivateIPv4(a: number, b: number, c: number): boolean {
     (a === 192 && b === 168) ||
     // IETF protocol assignments, TEST-NET-1/2/3 and benchmarking (198.18.0.0/15).
     (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    // Deprecated 6to4 relay anycast (192.88.99.0/24), the IPv4 side of the refused 2002::/16.
+    (a === 192 && b === 88 && c === 99) ||
     (a === 198 && (b === 18 || b === 19)) ||
     (a === 198 && b === 51 && c === 100) ||
     (a === 203 && b === 0 && c === 113)
@@ -81,26 +83,30 @@ function ipv6Groups(host: string): number[] | null {
 function isPrivateIPv6(host: string): boolean {
   const g = ipv6Groups(host);
   if (!g) return true;
-  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0, g6 = 0, g7 = 0] = g;
-  const embeddedV4 = isPrivateIPv4(g6 >> 8, g6 & 0xff, g7 >> 8);
+  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0] = g;
   const zeroPrefix = g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0;
-  if (zeroPrefix && g5 === 0 && (g6 === 0 || embeddedV4)) return true;
-  if (zeroPrefix && g5 === 0xffff && embeddedV4) return true;
-  // IPv4-translated (::ffff:0:a.b.c.d).
-  if (g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0xffff && g5 === 0 && embeddedV4) {
-    return true;
-  }
-  if (g0 === 0x64 && g1 === 0xff9b && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0 && embeddedV4) {
-    return true;
-  }
+  // IPv4-compatible (::/96) and IPv4-mapped (::ffff:0:0/96) literals are refused whatever IPv4 they embed:
+  // the stored host would be the IPv6 text, so an IPv4 blocklist entry could never match it.
+  if (zeroPrefix && (g5 === 0 || g5 === 0xffff)) return true;
+  // IPv4-translated (::ffff:0:0:0/96) and well-known NAT64 (64:ff9b::/96), refused for the same reason.
+  if (g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0xffff && g5 === 0) return true;
+  if (g0 === 0x64 && g1 === 0xff9b && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0) return true;
   // Local-use NAT64 (64:ff9b:1::/48) maps into networks we cannot see, so it is refused whatever it embeds.
   if (g0 === 0x64 && g1 === 0xff9b && g2 === 1) return true;
   // Documentation (3fff::/20, RFC 9637).
   if (g0 === 0x3fff && g1 < 0x1000) return true;
   if (g0 === 0x2002) return true;
-  // Teredo (2001::/32, can carry any IPv4), documentation (2001:db8::/32), discard (100::/64).
+  // Teredo (2001::/32, can carry any IPv4), and documentation (2001:db8::/32).
   if (g0 === 0x2001 && (g1 === 0 || g1 === 0x0db8)) return true;
-  if (g0 === 0x0100 && g1 === 0 && g2 === 0 && g3 === 0) return true;
+  // Reserved space with no public sites: ::/8 (g0 < 0x100) and 0100::/8 (discard and its neighbours),
+  // then 5f00::/16 and, below, benchmarking 2001:2::/48, ORCHID 2001:10::/28 and ORCHIDv2 2001:20::/28.
+  if (g0 < 0x0200 || g0 === 0x5f00) return true;
+  if (
+    g0 === 0x2001 &&
+    ((g1 === 2 && g2 === 0) || (g1 & 0xfff0) === 0x10 || (g1 & 0xfff0) === 0x20)
+  ) {
+    return true;
+  }
   // Multicast (ff00::/8) and the deprecated site-local range (fec0::/10).
   if ((g0 & 0xff00) === 0xff00 || (g0 & 0xffc0) === 0xfec0) return true;
   return (g0 & 0xfe00) === 0xfc00 || (g0 & 0xffc0) === 0xfe80;
@@ -110,6 +116,8 @@ function isPrivateIPv6(host: string): boolean {
 export function isPrivateHost(host: string): boolean {
   if (host.startsWith("[")) return isPrivateIPv6(host.slice(1, -1));
   if (hostSuffixes(host).includes("localhost")) return true;
+  // A host without a dot (a trailing one does not count) only resolves inside a local network.
+  if (!host.replace(/\.+$/, "").includes(".")) return true;
   const v4 = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(host);
   return v4 ? isPrivateIPv4(Number(v4[1]), Number(v4[2]), Number(v4[3])) : false;
 }

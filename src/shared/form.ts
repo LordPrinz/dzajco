@@ -24,6 +24,8 @@ export function expiresAtFrom(
 ): string | null {
   if (expiry === "" || expiry === "never") return null;
   if (expiry === CUSTOM_EXPIRY) {
+    // An empty string would read as "no expiry" to the form schema, so pass a value the API rejects.
+    if (customDate === "") return `invalid:${CUSTOM_EXPIRY}`;
     const withSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(customDate)
       ? `${customDate}:00${zone}`
       : customDate;
