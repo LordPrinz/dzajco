@@ -37,7 +37,7 @@ dzajco/                          (trunk: v3.0)
 │   ├── views/         # Hono JSX: Layout, Header, Home, Created, ResultCard, History, Stats, About, ApiDocs, Privacy, LinkError, Notice
 │   ├── client/        # browser scripts, built with `bun build` into public/assets
 │   └── index.ts       # fetch + scheduled
-├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql
+├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql, 0003_v2_visit_import.sql
 ├── public/            # _headers, css, img, assets/ (build output)
 ├── test/worker/       # vitest-pool-workers (+ cf fixtures, applyD1Migrations)
 ├── test/e2e/          # Playwright
@@ -47,7 +47,7 @@ dzajco/                          (trunk: v3.0)
 │   ├── git/           # commit and branch conventions (+ tests)
 │   ├── ci/            # coverage.ts, size.ts, smoke.ts
 │   ├── lib/           # jsonc.ts, sql.ts
-│   └── migrate/       # mongo-to-d1.ts
+│   └── migrate/       # mongo-to-d1.ts, transform.ts, visits.ts, countries.ts
 ├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:7)
 ├── Dockerfile                 # dev/test: node:24-bookworm-slim + bun + wrangler (workerd needs glibc)
 ├── wrangler.jsonc  vitest.config.ts  biome.json  bunfig.toml  tsconfig.json  .editorconfig  .env.example
@@ -88,7 +88,17 @@ CREATE TABLE link_stats (
 CREATE TABLE global_stats (id INTEGER PRIMARY KEY CHECK (id = 1), links INTEGER, visits INTEGER, countries TEXT, updated_at INTEGER);   -- countries: JSON list of the top 20 {code, visits}
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID;   -- rollup cursor {day, offset}
 CREATE TABLE blocked_hosts (host TEXT PRIMARY KEY, reason TEXT, created_at INTEGER NOT NULL) WITHOUT ROWID;
+CREATE TABLE v2_visit_import (
+  link_id TEXT NOT NULL, country TEXT NOT NULL, city TEXT NOT NULL, lat REAL, lon REAL,
+  visits INTEGER NOT NULL, PRIMARY KEY (link_id, country, city)
+) WITHOUT ROWID;   -- + trigger v2_visit_import_apply: adds each new row to link_stats
 ```
+
+`v2_visit_import` is the ledger of the v2 visit counters the importer has added to `link_stats`
+(`migrate:mongo --visits`, see DEPLOYMENT.md section 5). A row is inserted at most once, and its trigger
+adds the visits to `link_stats` in the same statement, so the import never counts a v2 visit twice and
+leaves visits counted by v3 alone. It has no foreign key: the rows outlive their link, so a later link
+with the same id does not get the old v2 visits.
 
 `target_host` is the lowercased punycode host of the target. The cache-miss query uses it to check
 `blocked_hosts` in the same batch as the link read.
