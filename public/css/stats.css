@@ -158,8 +158,34 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .stats__map {
-    color-scheme: light;
-  }
+/* Leaflet ships light controls; these follow the page tokens so the map matches either theme. Its
+   stylesheet loads after this one, hence the extra `.stats` in each selector. */
+.stats .stats__map .leaflet-tile-pane {
+  filter: var(--map-tiles);
+}
+
+.stats .stats__map {
+  background: var(--bg);
+}
+
+.stats .stats__map .leaflet-bar a,
+.stats .stats__map .leaflet-popup-content-wrapper,
+.stats .stats__map .leaflet-popup-tip {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.stats .stats__map .leaflet-bar a:hover,
+.stats .stats__map .leaflet-bar a:focus {
+  background: var(--bg);
+}
+
+.stats .stats__map .leaflet-control-attribution {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+
+.stats .stats__map a:not(.leaflet-control-zoom-in, .leaflet-control-zoom-out) {
+  color: var(--link);
 }

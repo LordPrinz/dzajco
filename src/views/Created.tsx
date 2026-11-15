@@ -16,7 +16,7 @@ function formatExpiry(iso: string | null): string | null {
 
 export function Created({ nonce, link }: { nonce: string; link: Created }) {
   return (
-    <Layout nonce={nonce} title="Link utworzony" scripts={["form.js"]}>
+    <Layout nonce={nonce} title="Link utworzony" scripts={["form.js"]} settings={false}>
       <Header />
       <ResultCard
         id={link.id}

@@ -1,5 +1,6 @@
 import type { Context, ErrorHandler, NotFoundHandler } from "hono";
 import type { AppEnv } from "../lib/app-env";
+import { renderPage } from "../lib/page";
 import { Notice } from "../views/Notice";
 
 const ERROR_PAGE =
@@ -27,10 +28,10 @@ export const onError: ErrorHandler<AppEnv> = (error, c) => {
 
 export const notFound: NotFoundHandler<AppEnv> = (c) => {
   if (isApi(c)) return apiError(c, 404, "not_found", "Not found");
-  const page = Notice({
+  const page = renderPage(c, Notice, {
     nonce: c.var.nonce,
     title: "Nie znaleziono strony",
     message: "Taka strona nie istnieje.",
   });
-  return c.html(`<!doctype html>${page}`, 404, { "Cache-Control": "no-store" });
+  return c.html(page, 404, { "Cache-Control": "no-store" });
 };

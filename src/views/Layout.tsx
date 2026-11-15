@@ -1,4 +1,6 @@
 import type { Child } from "hono/jsx";
+import { usePage } from "./page-context";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 const SITE_NAME = "dzajco";
 const DESCRIPTION =
@@ -25,13 +27,27 @@ export interface LayoutProps {
   scripts?: readonly string[];
   /** Extra stylesheets under `/css` (`pages.css`, `stats.css`), loaded after `app.css`. */
   styles?: readonly PageStylesheet[];
+  /**
+   * False hides the theme and language switches. The result page does this: they post and redirect,
+   * and the redirect would lose the secret key that the page shows only once.
+   */
+  settings?: boolean;
   children?: Child;
 }
 
-export function Layout({ nonce, title, scripts = [], styles = [], children }: LayoutProps) {
+export function Layout({
+  nonce,
+  title,
+  scripts = [],
+  styles = [],
+  settings = true,
+  children,
+}: LayoutProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+  const { theme } = usePage();
   return (
-    <html lang="pl">
+    // Set on the server, so the first paint already has the chosen theme. `system` leaves it to CSS.
+    <html lang="pl" data-theme={theme === "system" ? undefined : theme}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,6 +74,11 @@ export function Layout({ nonce, title, scripts = [], styles = [], children }: La
         ))}
       </head>
       <body>
+        {settings && (
+          <header class="topbar">
+            <ThemeSwitch />
+          </header>
+        )}
         <main class="page">{children}</main>
         <footer class="footer">
           <nav aria-label="Nawigacja w stopce">
@@ -72,7 +93,7 @@ export function Layout({ nonce, title, scripts = [], styles = [], children }: La
             </ul>
           </nav>
         </footer>
-        {scripts.map((src) => (
+        {["theme.js", ...scripts].map((src) => (
           <script type="module" nonce={nonce} src={`/assets/${src}`} />
         ))}
       </body>
