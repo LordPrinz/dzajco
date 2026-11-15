@@ -208,6 +208,7 @@ export const en: PageText = {
     api: "API",
     privacy: "Privacy",
     footer: "Footer navigation",
+    skip: "Skip to content",
   },
   settings: {
     theme: "Theme",
@@ -289,7 +290,6 @@ export const en: PageText = {
     title: "History",
     heading: "Link history",
     lead: "Links created or added in this browser. The list is stored only here, on your device.",
-    loading: "Loading the history…",
     noscript: "The history needs JavaScript.",
     empty: "No saved links.",
     emptyLink: "Shorten your first link",

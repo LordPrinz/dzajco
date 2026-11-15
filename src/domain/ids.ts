@@ -5,8 +5,9 @@ export { LOOKUP_ID } from "./lookup-id.ts";
 export const ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 export const ID_LENGTH = 7;
 export const NAME_MAX_BYTES = 96;
+export const NAME_MAX_LENGTH = 32;
 
-const NAME_PATTERN = /^[\p{L}\p{N}_-]{3,32}$/u;
+const NAME_PATTERN = new RegExp(`^[\\p{L}\\p{N}_-]{3,${NAME_MAX_LENGTH}}$`, "u");
 const encoder = new TextEncoder();
 
 export type RandomFill = (bytes: Uint8Array) => Uint8Array;

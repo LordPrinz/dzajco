@@ -22,6 +22,17 @@ test("creates a link without JavaScript and shows the key with its warning", asy
   expect(page.requests.some((r) => r.path.startsWith("/api/"))).toBe(false);
 });
 
+test("history shows only the no-JavaScript notice", async () => {
+  const page = await openPage({ javaScript: false });
+  await page.goto("/history");
+
+  // The CSP blocks scripts but scripting stays on, so <noscript> is not rendered: read the served HTML.
+  // `request` goes through the page's proxy, so it asks for Polish like the page does.
+  const html = await (await page.request("/history")).text();
+  expect(html).toContain("Historia wymaga włączonego JavaScriptu");
+  await page.expect(page.locator("#history-note")).toBeHidden();
+});
+
 test("shows the form again with an error for an invalid link without JavaScript", async () => {
   const page = await openPage({ javaScript: false });
   await page.goto("/");

@@ -13,9 +13,6 @@ export function History({ nonce }: { nonce: string }) {
         <h1 class="doc__title">{t.history.heading}</h1>
         <p class="doc__lead">{t.history.lead}</p>
 
-        <p id="history-loading" class="history__empty">
-          {t.history.loading}
-        </p>
         <noscript>
           <p class="notice notice--warning">{t.history.noscript}</p>
         </noscript>
@@ -23,7 +20,9 @@ export function History({ nonce }: { nonce: string }) {
         <p class="history__empty" id="history-empty" tabIndex={-1} hidden>
           {t.history.empty} <a href="/">{t.history.emptyLink}</a>.
         </p>
-        <p class="doc__note">{t.history.note}</p>
+        <p class="doc__note" id="history-note" hidden>
+          {t.history.note}
+        </p>
 
         {/* Hidden until history.js runs. */}
         <form class="doc__section add-key" id="add-key-form" aria-labelledby="add-key-title" hidden>

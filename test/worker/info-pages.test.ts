@@ -54,6 +54,8 @@ describe("GET /history", () => {
     const { html } = await page("/history");
     expect(html).toContain('id="history-list"');
     expect(html).toContain('id="history-empty"');
+    expect(html).not.toContain("history-loading");
+    expect(html).toMatch(/<p[^>]*id="history-note"[^>]*\shidden/);
     expect(html).toContain('src="/assets/history.js"');
   });
 

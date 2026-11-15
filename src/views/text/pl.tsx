@@ -209,6 +209,7 @@ export const pl = {
     api: "API",
     privacy: "Prywatność",
     footer: "Nawigacja w stopce",
+    skip: "Przejdź do treści",
   },
   settings: {
     theme: "Motyw",
@@ -290,7 +291,6 @@ export const pl = {
     title: "Historia",
     heading: "Historia linków",
     lead: "Linki utworzone albo dodane w tej przeglądarce. Lista jest zapisana tylko tutaj, na Twoim urządzeniu.",
-    loading: "Wczytywanie historii…",
     noscript: "Historia wymaga włączonego JavaScriptu.",
     empty: "Brak zapisanych linków.",
     emptyLink: "Skróć pierwszy link",
