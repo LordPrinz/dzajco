@@ -47,7 +47,7 @@ const api: ApiText = {
       summary: "Zwraca adres docelowy linku bez przekierowania.",
       input: "Brak.",
       responses: {
-        200: "{ id, url, expiresAt }",
+        200: "{ id, url, expiresAt, createdAt }",
         404: "not_found",
         410: "expired albo link_disabled",
         429: "rate_limited",
@@ -180,7 +180,7 @@ const api: ApiText = {
     v1: "Endpoint w v1",
     changes: "Co się zmieniło",
     rows: [
-      "Odpowiedź { id, url, expiresAt } zamiast { fullLink }.",
+      "Odpowiedź { id, url, expiresAt, createdAt } zamiast { fullLink }.",
       "Odpowiedź { visits, countries, partial }. Miasta (cities) tylko z kluczem. Strona /:id/info przekierowuje (301) na /:id/stats.",
       "Pole expire to teraz expiresAt (ISO 8601 lub null). Odpowiedź 201: { id, shortUrl, url, secretKey, expiresAt }, bez message. Błędy walidacji mają status 400 zamiast 422, zajęta nazwa 409. Wymagany Content-Type: application/json.",
       "Klucz idzie w nagłówku Authorization: Bearer <klucz>, nie w ciele { secretKey } i nigdy w adresie. Sukces to 204 bez treści.",

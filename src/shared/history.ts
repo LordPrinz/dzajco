@@ -117,16 +117,24 @@ export function withKey(
   return entries.map((entry) => (entry.id === id ? { ...entry, secretKey } : entry));
 }
 
-/**
- * A new entry from the `GET /api/v1/links/:id` body; null when the body is not a link. The API does
- * not say when the link was made, so `createdAt` stays empty.
- */
+/** A new entry from the `GET /api/v1/links/:id` body; null when the body is not a link. */
 export function entryFromLink(body: unknown, secretKey: string): HistoryEntry | null {
-  const link = (body ?? {}) as { id?: unknown; url?: unknown; expiresAt?: unknown };
+  const link = (body ?? {}) as {
+    id?: unknown;
+    url?: unknown;
+    expiresAt?: unknown;
+    createdAt?: unknown;
+  };
   const id = text(link.id);
   const url = text(link.url);
   if (id === null || url === null) return null;
-  return { id, url, expire: text(link.expiresAt) ?? "never", createdAt: "", secretKey };
+  return {
+    id,
+    url,
+    expire: text(link.expiresAt) ?? "never",
+    createdAt: text(link.createdAt) ?? "",
+    secretKey,
+  };
 }
 
 /** The entries to draw: newest first, at most `MAX_RENDERED`. */

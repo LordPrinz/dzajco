@@ -223,19 +223,27 @@ describe("adding a link with its key", () => {
   it("builds an entry from the link details", () => {
     expect(
       entryFromLink(
-        { id: "abcd", url: "https://example.com/", expiresAt: "2099-01-01T00:00:00.000Z" },
+        {
+          id: "abcd",
+          url: "https://example.com/",
+          expiresAt: "2099-01-01T00:00:00.000Z",
+          createdAt: "2026-11-01T10:00:00.000Z",
+        },
         "k",
       ),
     ).toEqual({
       id: "abcd",
       url: "https://example.com/",
       expire: "2099-01-01T00:00:00.000Z",
-      createdAt: "",
+      createdAt: "2026-11-01T10:00:00.000Z",
       secretKey: "k",
     });
+  });
+
+  it("reads a missing expiry as never and a missing date as unknown", () => {
     expect(
       entryFromLink({ id: "abcd", url: "https://example.com/", expiresAt: null }, "k"),
-    ).toEqual(expect.objectContaining({ expire: "never" }));
+    ).toEqual(expect.objectContaining({ expire: "never", createdAt: "" }));
   });
 
   it("rejects a body that is not a link", () => {

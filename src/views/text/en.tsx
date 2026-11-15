@@ -46,7 +46,7 @@ const api: ApiText = {
       summary: "Returns the link's target without redirecting.",
       input: "None.",
       responses: {
-        200: "{ id, url, expiresAt }",
+        200: "{ id, url, expiresAt, createdAt }",
         404: "not_found",
         410: "expired or link_disabled",
         429: "rate_limited",
@@ -179,7 +179,7 @@ const api: ApiText = {
     v1: "v1 endpoint",
     changes: "What changed",
     rows: [
-      "The response is { id, url, expiresAt } instead of { fullLink }.",
+      "The response is { id, url, expiresAt, createdAt } instead of { fullLink }.",
       "The response is { visits, countries, partial }. Cities only with the key. The /:id/info page redirects (301) to /:id/stats.",
       "The expire field is now expiresAt (ISO 8601 or null). The 201 response is { id, shortUrl, url, secretKey, expiresAt }, without message. Validation errors are 400 instead of 422, a taken name is 409. Content-Type: application/json is required.",
       "The key goes in the Authorization: Bearer <key> header, not in a { secretKey } body and never in the URL. Success is 204 with no content.",

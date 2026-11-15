@@ -83,7 +83,12 @@ export function apiRoutes() {
       return apiError(c, 410, "expired", "Link has expired");
     }
     if (record.blocked) return apiError(c, 410, "link_disabled", "Link has been disabled");
-    return c.json({ id: record.id, url: record.target, expiresAt: isoOrNull(record.expiresAt) });
+    return c.json({
+      id: record.id,
+      url: record.target,
+      expiresAt: isoOrNull(record.expiresAt),
+      createdAt: new Date(record.createdAt).toISOString(),
+    });
   });
 
   return app;
