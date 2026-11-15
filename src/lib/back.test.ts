@@ -20,6 +20,13 @@ describe("safeBack", () => {
     "//evil.example/x",
     "/\\evil.example",
     "javascript:alert(1)",
+    // Dot segments that normalise into a protocol-relative URL.
+    "/.//evil.com",
+    "/x/..//evil.com",
+    "/%2e//evil.com",
+    "/.//x//attacker.com",
+    "/..//evil.example/x",
+    "/a/..//evil.example",
   ])("falls back to / for %p", (raw) => {
     expect(safeBack(raw)).toBe("/");
   });
