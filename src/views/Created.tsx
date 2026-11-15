@@ -1,13 +1,15 @@
 import type { CreateLinkResult } from "../services/links";
+import { type Lang, LOCALE } from "../shared/lang";
 import { Header } from "./Header";
 import { Layout } from "./Layout";
+import { usePage } from "./page-context";
 import { ResultCard } from "./ResultCard";
 
 type Created = Extract<CreateLinkResult, { ok: true }>;
 
-function formatExpiry(iso: string | null): string | null {
+function formatExpiry(iso: string | null, lang: Lang): string | null {
   if (iso === null) return null;
-  return `${new Date(iso).toLocaleString("pl-PL", {
+  return `${new Date(iso).toLocaleString(LOCALE[lang], {
     dateStyle: "long",
     timeStyle: "short",
     timeZone: "UTC",
@@ -15,8 +17,9 @@ function formatExpiry(iso: string | null): string | null {
 }
 
 export function Created({ nonce, link }: { nonce: string; link: Created }) {
+  const { lang, t } = usePage();
   return (
-    <Layout nonce={nonce} title="Link utworzony" scripts={["form.js"]} settings={false}>
+    <Layout nonce={nonce} title={t.created.title} scripts={["form.js"]} settings={false}>
       <Header />
       <ResultCard
         id={link.id}
@@ -26,7 +29,7 @@ export function Created({ nonce, link }: { nonce: string; link: Created }) {
         host={link.host}
         isIdn={link.isIdn}
         expiresAt={link.expiresAt}
-        expiresLabel={formatExpiry(link.expiresAt)}
+        expiresLabel={formatExpiry(link.expiresAt, lang)}
       />
     </Layout>
   );

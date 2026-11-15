@@ -1,4 +1,7 @@
-// Shared by the server-rendered stats page and its browser script, so keep it free of runtime imports.
+// Shared by the server-rendered stats page and its browser script, so keep it free of server-only imports.
+
+import type { Lang } from "./lang";
+import { SHARED_TEXT } from "./text";
 
 export interface CountryRow {
   code: string;
@@ -56,10 +59,12 @@ export function parseCities(body: unknown): CityRow[] {
 }
 
 /** Polish name of an ISO 3166 country code; the code itself when the runtime does not know it. */
-export function countryName(code: string): string {
-  if (!/^[A-Za-z]{2}$/.test(code) || code.toUpperCase() === "XX") return "Nieznany kraj";
+export function countryName(code: string, lang: Lang): string {
+  if (!/^[A-Za-z]{2}$/.test(code) || code.toUpperCase() === "XX") {
+    return SHARED_TEXT[lang].unknownCountry;
+  }
   try {
-    return new Intl.DisplayNames(["pl"], { type: "region" }).of(code.toUpperCase()) ?? code;
+    return new Intl.DisplayNames([lang], { type: "region" }).of(code.toUpperCase()) ?? code;
   } catch {
     return code;
   }

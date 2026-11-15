@@ -2,12 +2,13 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import worker from "../../src/index";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 
 async function call(req: Request): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(req, env, ctx);
+  const res = await worker.fetch(inPolish(req), env, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }

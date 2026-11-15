@@ -10,6 +10,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:8787",
     trace: "on-first-retry",
+    // Most specs check the Polish pages; lang.spec.ts switches to English itself.
+    locale: "pl-PL",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 });

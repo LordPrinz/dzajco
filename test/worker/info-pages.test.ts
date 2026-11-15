@@ -2,13 +2,14 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import worker from "../../src/index";
-import { ENDPOINTS, ERROR_CODES } from "../../src/views/ApiDocs";
+import { ENDPOINTS, ERROR_CODES } from "../../src/views/text/api";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 
 async function get(path: string, bindings: Cloudflare.Env = env): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(new Request(`${ORIGIN}${path}`), bindings, ctx);
+  const res = await worker.fetch(inPolish(new Request(`${ORIGIN}${path}`)), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -205,6 +206,8 @@ describe("GET /privacy-policy", () => {
     expect(html).toContain("tile.openstreetmap.org");
     expect(html).toContain("links-history");
     expect(html).toContain("nie trafia na nasz serwer");
+    expect(html).toContain("Archiwum usuniętych linków");
+    expect(html).toContain("30 dni");
     expect(html).toContain("<code>theme</code>");
   });
 

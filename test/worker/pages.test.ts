@@ -2,6 +2,7 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import worker from "../../src/index";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 const allowAll: RateLimit = { limit: async () => ({ success: true }) };
@@ -19,7 +20,7 @@ function testEnv(overrides: Partial<Cloudflare.Env> = {}): Cloudflare.Env {
 
 async function call(req: Request, bindings: Cloudflare.Env = testEnv()): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(req, bindings, ctx);
+  const res = await worker.fetch(inPolish(req), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }

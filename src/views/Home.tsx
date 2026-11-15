@@ -1,6 +1,7 @@
 import { CUSTOM_EXPIRY, EXPIRY_PRESETS, errorText, FIELD_OF_ERROR } from "../shared/form";
 import { Header } from "./Header";
 import { Layout } from "./Layout";
+import { usePage } from "./page-context";
 import { ResultCard } from "./ResultCard";
 
 export interface HomeValues {
@@ -26,7 +27,8 @@ export interface HomeProps {
 
 export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
   const field = error === undefined ? undefined : (FIELD_OF_ERROR[error] ?? "url");
-  const message = error === undefined ? undefined : errorText(error);
+  const { t } = usePage();
+  const message = error === undefined ? undefined : errorText(error, t.common);
   const hasOptions =
     values.customName !== "" ||
     values.expiry !== "never" ||
@@ -41,7 +43,7 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
         </p>
         <div class="pill">
           <label class="sr-only" for="url">
-            Link do skrócenia
+            {t.home.urlLabel}
           </label>
           <input
             class="input pill__input"
@@ -53,22 +55,22 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
             autocapitalize="off"
             spellcheck={false}
             maxlength={2048}
-            placeholder="Link"
+            placeholder={t.home.urlPlaceholder}
             required
             value={values.url}
             aria-invalid={field === "url" ? "true" : undefined}
             aria-describedby={field === "url" ? "form-error" : undefined}
           />
           <button class="pill__submit" type="submit">
-            Dżajcuj
+            {t.home.submit}
           </button>
         </div>
 
         <details class="options" open={hasOptions}>
-          <summary class="options__summary">Więcej opcji</summary>
+          <summary class="options__summary">{t.home.moreOptions}</summary>
           <div class="options__body">
             <label class="sr-only" for="customName">
-              Własna nazwa
+              {t.home.customName}
             </label>
             <input
               class="input"
@@ -79,7 +81,7 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
               autocapitalize="off"
               spellcheck={false}
               maxlength={128}
-              placeholder="Własna nazwa"
+              placeholder={t.home.customName}
               value={values.customName}
               aria-invalid={field === "customName" ? "true" : undefined}
               aria-describedby={field === "customName" ? "form-error" : undefined}
@@ -87,7 +89,7 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
 
             <div class="expiry">
               <label class="expiry__label" for="expiry">
-                Wygasa
+                {t.home.expiry}
               </label>
               <select
                 class="expiry__select"
@@ -98,17 +100,17 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
               >
                 {EXPIRY_PRESETS.map((preset) => (
                   <option value={preset.value} selected={values.expiry === preset.value}>
-                    {preset.label}
+                    {t.common.expiry[preset.value]}
                   </option>
                 ))}
                 <option value={CUSTOM_EXPIRY} selected={values.expiry === CUSTOM_EXPIRY}>
-                  Własna data
+                  {t.common.expiry.custom}
                 </option>
               </select>
             </div>
             <div class="custom-date" id="custom-date">
               <label class="sr-only" for="customDate" id="custom-date-label">
-                Własna data wygaśnięcia (UTC)
+                {t.home.customDateLabel}
               </label>
               <input
                 class="input"
@@ -118,7 +120,7 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
                 value={values.customDate}
               />
               <p class="hint" id="custom-date-hint">
-                Czas UTC. Używana tylko przy wyborze „Własna data”.
+                {t.home.customDateHint}
               </p>
             </div>
           </div>
@@ -128,11 +130,11 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
 
       <form class="lookup" id="lookup-form" action="/" method="get" hidden>
         <h2 class="lookup__title">
-          <span>Statystyki linku</span>
+          <span>{t.home.lookupTitle}</span>
         </h2>
         <div class="pill">
           <label class="sr-only" for="lookup-code">
-            Skrócony link lub jego kod
+            {t.home.lookupLabel}
           </label>
           <input
             class="input pill__input"
@@ -141,10 +143,10 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
             autocomplete="off"
             autocapitalize="off"
             spellcheck={false}
-            placeholder="Link lub kod"
+            placeholder={t.home.lookupPlaceholder}
           />
           <button class="pill__submit" type="submit">
-            Pokaż statystyki
+            {t.home.lookupSubmit}
           </button>
         </div>
       </form>

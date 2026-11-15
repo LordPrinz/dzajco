@@ -2,10 +2,9 @@ import type { Child } from "hono/jsx";
 import type { Theme } from "../shared/theme";
 import { usePage } from "./page-context";
 
-const OPTIONS: readonly { value: Theme; label: string; icon: Child }[] = [
+const OPTIONS: readonly { value: Theme; icon: Child }[] = [
   {
     value: "system",
-    label: "Motyw systemowy",
     icon: (
       <>
         <rect x="3" y="4" width="18" height="12" rx="2" />
@@ -15,7 +14,6 @@ const OPTIONS: readonly { value: Theme; label: string; icon: Child }[] = [
   },
   {
     value: "light",
-    label: "Jasny motyw",
     icon: (
       <>
         <circle cx="12" cy="12" r="4" />
@@ -25,7 +23,6 @@ const OPTIONS: readonly { value: Theme; label: string; icon: Child }[] = [
   },
   {
     value: "dark",
-    label: "Ciemny motyw",
     icon: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />,
   },
 ];
@@ -35,20 +32,21 @@ const OPTIONS: readonly { value: Theme; label: string; icon: Child }[] = [
  * `theme.js` applies the choice in place and saves it with the same request.
  */
 export function ThemeSwitch() {
-  const { theme, path } = usePage();
+  const { theme, path, t } = usePage();
   return (
     <form class="switch" method="post" action="/prefs/theme" data-theme-switch>
       <input type="hidden" name="back" value={path} />
       <fieldset class="switch__group">
-        <legend class="sr-only">Motyw</legend>
+        <legend class="sr-only">{t.settings.theme}</legend>
         {OPTIONS.map((option) => (
+          // `system`, `light` and `dark` are also the keys of their labels.
           <button
             class="switch__option"
             type="submit"
             name="theme"
             value={option.value}
-            title={option.label}
-            aria-label={option.label}
+            title={t.settings[option.value]}
+            aria-label={t.settings[option.value]}
             aria-pressed={option.value === theme ? "true" : "false"}
           >
             <svg
