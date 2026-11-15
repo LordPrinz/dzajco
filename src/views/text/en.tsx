@@ -23,6 +23,7 @@ const api: ApiText = {
   input: "Input.",
   status: "Status",
   body: "Body",
+  responses: "Responses",
   code: "Code",
   meaning: "Meaning",
   route: "Route",

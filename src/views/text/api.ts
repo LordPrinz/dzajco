@@ -102,6 +102,7 @@ export interface ApiText {
   input: string;
   status: string;
   body: string;
+  responses: string;
   code: string;
   meaning: string;
   route: string;

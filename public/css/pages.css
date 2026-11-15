@@ -360,11 +360,9 @@
   overflow-wrap: normal;
 }
 
-/* Status codes stay whole on phones instead of breaking into "20" and "1". */
 .table .table__status {
   width: 1%;
   white-space: nowrap;
-  overflow-wrap: normal;
 }
 
 .table th {

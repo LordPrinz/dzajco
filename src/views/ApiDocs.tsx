@@ -12,11 +12,14 @@ function Breakable({ children }: { children: string }) {
 }
 
 // Wide tables scroll inside their own box instead of squeezing the columns.
-function Table({ label, children }: { label: string; children: unknown }) {
+function Table({ caption, children }: { caption: string; children: unknown }) {
   return (
-    <section class="table-scroll" aria-label={label} tabindex={0}>
-      <table class="table">{children}</table>
-    </section>
+    <div class="table-scroll">
+      <table class="table">
+        <caption class="sr-only">{caption}</caption>
+        {children}
+      </table>
+    </div>
   );
 }
 
@@ -93,7 +96,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
                 <p>
                   <strong>{a.input}</strong> {text.input}
                 </p>
-                <Table label={`${endpoint.method} ${endpoint.path}`}>
+                <Table caption={a.responses}>
                   <thead>
                     <tr>
                       <th scope="col" class="table__status">
@@ -122,7 +125,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
           <h2 id="h-bledy">{a.sections.errors}</h2>
           <p>{a.errorShape}</p>
           <Code>{errorExample}</Code>
-          <Table label={a.sections.errors}>
+          <Table caption={a.sections.errors}>
             <thead>
               <tr>
                 <th scope="col" class="table__status">
@@ -153,7 +156,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
         <section class="doc__section" id="limity" aria-labelledby="h-limity">
           <h2 id="h-limity">{a.sections.limits}</h2>
           <p>{a.limitsIntro}</p>
-          <Table label={a.sections.limits}>
+          <Table caption={a.sections.limits}>
             <thead>
               <tr>
                 <th scope="col">{a.route}</th>
@@ -200,7 +203,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
         <section class="doc__section" id="migracja" aria-labelledby="h-migracja">
           <h2 id="h-migracja">{a.sections.migration}</h2>
           <p>{a.migration.intro}</p>
-          <Table label={a.sections.migration}>
+          <Table caption={a.sections.migration}>
             <thead>
               <tr>
                 <th scope="col">{a.migration.v2}</th>
