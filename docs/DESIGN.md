@@ -403,8 +403,9 @@ Other measures:
   only in Cloudflare's own logs. The privacy page says so. Analytics Engine stores one event per visit (time,
   link id, country, city, approximate coordinates, no IP and no User-Agent) for up to 3 months.
 - CI and tokens. Actions pinned to SHAs, `permissions: {}` at workflow level, least privilege per job.
-  Production deploys are manual (`bun run deploy`). Pushes to `dev` deploy the dev Worker on `test.dzaj.de`
-  from CI, with a Cloudflare token kept in the GitHub environment `dev`.
+  Pushes to `dev` deploy the dev Worker on `test.dzaj.de` from CI, with a Cloudflare token kept in the GitHub
+  environment `dev`. Pushes to `main` deploy production after the owner approves the environment `production`,
+  which holds its own token. `bun run deploy` stays as a manual fallback.
 
 ### Abuse
 
@@ -444,4 +445,4 @@ Accepted risks:
 - Queues.
 - KV.
 - D1 read replication (a follow-up once latency is measured).
-- Automatic deploys from CI.
+- Deploys without the owner's approval: production deploys from CI wait for the `production` environment approval.

@@ -1,6 +1,6 @@
 # Deployment
 
-How to set up, deploy, migrate to and operate dzajco on Cloudflare. Production deploys are manual. The dev environment on `test.dzaj.de` is deployed by CI on every push to `dev` (see "Dev environment").
+How to set up, deploy, migrate to and operate dzajco on Cloudflare. Production deploys run from CI on every push to `main` (see section 4). The dev environment on `test.dzaj.de` is deployed by CI on every push to `dev` (see "Dev environment").
 
 Commands use the project's own wrangler (`bunx wrangler` or `./node_modules/.bin/wrangler`). Replace `<...>` placeholders with your values.
 
@@ -116,6 +116,22 @@ The options available on the Free plan (periods, durations, characteristics) cha
 
 ## 4. Deploy
 
+Production deploys run from CI. Every push to `main` starts `.github/workflows/deploy-prod.yml`, which waits until the owner approves the GitHub environment `production`. After approval it runs the same checks as `deploy`, then `db:migrate:remote`, then `wrangler deploy --env="" --var PUBLIC_ORIGIN:https://dzaj.de`. There is no smoke check yet, because `dzaj.de` still points to the old site until the DNS switch. One deploy runs at a time and a running one is not cancelled.
+
+A release is a PR from `dev` to `main`, merged as a merge commit. The `release` ruleset allows only that merge method on `main`, and `trunk` keeps feature PRs into `dev` squash-only.
+
+Set the environment up once. In the repository settings, create the environment `production` and add the owner as required reviewer. Then add its two secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`: the account id from `wrangler.jsonc`.
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare Workers" template with _Account: D1: Edit_ added, limited to this account and the `dzaj.de` zone.
+
+```sh
+gh secret set CLOUDFLARE_ACCOUNT_ID --env production --repo LordPrinz/dzajco
+gh secret set CLOUDFLARE_API_TOKEN --env production --repo LordPrinz/dzajco   # prompts for the value
+```
+
+The manual deploy stays as a fallback, for example when CI is down:
+
 ```sh
 bun run db:migrate:remote
 PUBLIC_ORIGIN=https://dzaj.de bun run deploy
@@ -132,7 +148,7 @@ bunx wrangler tail
 
 ### Dev environment (test.dzaj.de)
 
-Branch flow: feature branches merge into `dev`, `dev` is deployed to `https://test.dzaj.de`, and `dev` goes to `main` (production, `dzaj.de`) through a PR.
+Branch flow: feature branches merge into `dev` (squash), `dev` is deployed to `https://test.dzaj.de`, and `dev` goes to `main` (production, `dzaj.de`) through a PR merged as a merge commit.
 
 The dev environment is `env.dev` in `wrangler.jsonc`: Worker `dzajco-dev`, custom domain `test.dzaj.de`, its own D1 database `dzajco-dev`, Analytics Engine dataset `dzajco_visits_dev` and rate limit namespaces `2001` to `2004`. `workers_dev` and `preview_urls` are off, and the hourly cron runs.
 
