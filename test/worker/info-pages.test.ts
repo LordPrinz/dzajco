@@ -197,7 +197,9 @@ describe("GET /privacy-policy", () => {
   });
 
   it("links the contact address only when ABUSE_EMAIL is set", async () => {
-    expect((await page("/privacy-policy")).html).not.toContain("mailto:");
+    // The committed config carries the production address, so "unset" has to be explicit.
+    const noMail = { ...env, ABUSE_EMAIL: "" } as unknown as Cloudflare.Env;
+    expect((await page("/privacy-policy", noMail)).html).not.toContain("mailto:");
     const withMail = { ...env, ABUSE_EMAIL: "abuse@dzaj.co" } as unknown as Cloudflare.Env;
     expect((await page("/privacy-policy", withMail)).html).toContain('href="mailto:abuse@dzaj.co');
   });

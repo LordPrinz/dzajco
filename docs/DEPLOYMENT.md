@@ -57,7 +57,7 @@ Edit `vars` in `wrangler.jsonc`:
 
 | Var                     | Value                                                                                                                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_ORIGIN`         | The public origin, for example `https://dzaj.co`. No trailing slash. Used for short URLs and the own-host check.                                                                            |
+| `PUBLIC_ORIGIN`         | The public origin, for example `https://dzaj.co`. No trailing slash. Used for short URLs and the own-host check. Not edited in the file: see below.                                         |
 | `SECRET_PEPPER_VERSION` | `"1"` at first deploy.                                                                                                                                                                      |
 | `CF_ACCOUNT_ID`         | 32 hex characters from `wrangler whoami` or the dashboard. Needed for the Analytics Engine SQL API. Without it (or without `CF_AE_TOKEN`) the rollup is skipped and fresh stats stay empty. |
 | `ABUSE_EMAIL`           | Address behind the "Report abuse" link on 404/410 pages. Empty hides the link.                                                                                                              |
@@ -65,7 +65,9 @@ Edit `vars` in `wrangler.jsonc`:
 | `AE_FRESH_TTL`          | Seconds to cache fresh-data queries. Default `"300"`. See [section 7](#7-limits-and-when-to-move-to-paid).                                                                                  |
 | `ROLLUP_MAX_PAGES`      | Pages (500 groups each) per hourly rollup call. Default `"10"`.                                                                                                                             |
 
-Commit the production values (`database_id`, `CF_ACCOUNT_ID`, `PUBLIC_ORIGIN`, `ABUSE_EMAIL`, `CF_ANALYTICS_TOKEN`) in `wrangler.jsonc` through a normal PR. None of them is a secret, and a later pull would otherwise restore the placeholders. Secrets stay in `wrangler secret`.
+Commit the production values (`database_id`, `CF_ACCOUNT_ID`, `ABUSE_EMAIL`, `CF_ANALYTICS_TOKEN`) in `wrangler.jsonc` through a normal PR. None of them is a secret, and a later pull would otherwise restore the placeholders. Secrets stay in `wrangler secret`.
+
+`PUBLIC_ORIGIN` stays `http://localhost:8787` in the file, because local development, the worker tests and the end-to-end tests read the same `vars`. `bun run deploy` takes the real origin from the environment and passes it to `wrangler deploy --var`. It stops with an error when `PUBLIC_ORIGIN` is not set. Every deploy needs it, since a `--var` value is not stored in the config.
 
 ### Domain and routes
 
@@ -116,7 +118,7 @@ The options available on the Free plan (periods, durations, characteristics) cha
 
 ```sh
 bun run db:migrate:remote
-bun run deploy
+PUBLIC_ORIGIN=https://dzaj.co bun run deploy
 ```
 
 - `db:migrate:remote` runs `wrangler d1 migrations apply DB --remote`. It asks for confirmation and takes a backup after applying. If a migration fails, earlier migrations of the same run stay applied. Note a Time Travel bookmark before migrating (`bunx wrangler d1 time-travel info DB`) and restore from it if needed (section 6).

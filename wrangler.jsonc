@@ -12,8 +12,7 @@
     {
       "binding": "DB",
       "database_name": "dzajco",
-      // Placeholder: docs/DEPLOYMENT.md explains how to replace it with the real database id.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "6e5a466f-0a3f-44cd-b06f-c61c870bcc7b",
       "migrations_dir": "migrations"
     }
   ],
@@ -26,14 +25,15 @@
   ],
   "triggers": { "crons": ["0 * * * *"] },
   "vars": {
+    // Local default. `bun run deploy` overrides it with the PUBLIC_ORIGIN from the environment (docs/DEPLOYMENT.md).
     "PUBLIC_ORIGIN": "http://localhost:8787",
     "ROLLUP_MAX_PAGES": "10",
     "AE_FRESH_TTL": "300",
     "SECRET_PEPPER_VERSION": "1",
     // Account id for the Analytics Engine SQL API; set per deployment (docs/DEPLOYMENT.md).
-    "CF_ACCOUNT_ID": "",
+    "CF_ACCOUNT_ID": "e72ff677d31ee953dd1dff657b75d18c",
     // Address shown as a "Report abuse" mailto link on 404/410 pages. Empty hides the link.
-    "ABUSE_EMAIL": "",
+    "ABUSE_EMAIL": "dzajlopmentdev@gmail.com",
     // Cloudflare Web Analytics token (32 hex chars or a dashed UUID). Empty omits the beacon script entirely.
     "CF_ANALYTICS_TOKEN": ""
   }
