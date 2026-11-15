@@ -148,7 +148,9 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
 - Locally there is no SQL API. Without `CF_AE_TOKEN` the code uses `LocalVisitSource`, which returns an
   empty list, so locally the fresh part of the stats is empty.
 - Global stats: one row in `global_stats`, recomputed by the cron once a day. `countries` is a JSON list of the top 20 `{code, visits}`. `GET /api/v1/stats` reads that
-  row only, so the numbers can lag by up to about 24 hours.
+  row only, so the numbers can lag by up to about 24 hours. The totals cover live links only: deleted and expired
+  links drop out together with their stats rows, and a running total would cost a D1 write per deleted row.
+  `/about` and `/docs/api` say so.
 - Each link gets its own secretKey. v2 reused a key for "never" links with the same target. v3 does not.
 
 ### API v1
