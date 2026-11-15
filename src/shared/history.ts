@@ -104,6 +104,11 @@ export function removeEntry(entries: readonly HistoryEntry[], id: string): Histo
   return entries.filter((entry) => entry.id !== id);
 }
 
+/** Adds an entry; one with the same id is replaced, because a re-created name has a new key and expiry. */
+export function upsertEntry(entries: readonly HistoryEntry[], entry: HistoryEntry): HistoryEntry[] {
+  return [...removeEntry(entries, entry.id), entry];
+}
+
 export function shortUrl(origin: string, id: string): string {
   return `${origin}/${encodeURIComponent(id)}`;
 }

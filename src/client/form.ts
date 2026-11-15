@@ -10,6 +10,7 @@ import {
   type HistoryEntry,
   normalizeUrlInput,
 } from "../shared/form";
+import { upsertEntry } from "../shared/history";
 
 interface CreatedLink {
   id: string;
@@ -33,13 +34,10 @@ function readHistory(): HistoryEntry[] {
   }
 }
 
-/** Appends an entry unless the id is already there; storage can be blocked, so failures are silent. */
+/** Stores the entry, replacing one with the same id; storage can be blocked, so failures are silent. */
 function saveToHistory(entry: HistoryEntry): void {
   try {
-    const history = readHistory();
-    if (history.some((item) => item.id === entry.id)) return;
-    history.push(entry);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(upsertEntry(readHistory(), entry)));
   } catch {
     // Private mode or a full quota: the result stays on screen, only the history misses it.
   }

@@ -41,6 +41,30 @@ function freshName(): string {
   return `pg${Date.now().toString(36)}${counter}`;
 }
 
+describe("og:image origin handling", () => {
+  it("copies a PUBLIC_ORIGIN with replacement patterns literally", async () => {
+    const origin = "https://a$&b$`c.example";
+    const res = await call(
+      new Request(`${ORIGIN}/`),
+      testEnv({ PUBLIC_ORIGIN: origin } as unknown as Partial<Cloudflare.Env>),
+    );
+    const html = await res.text();
+    const content = /property="og:image" content="([^"]*)"/.exec(html)?.[1] ?? "";
+    // The attribute is HTML-escaped, so `&` reads `&amp;`.
+    expect(content).toBe("https://a$&amp;b$`c.example/img/og.jpg");
+    expect(content).not.toContain("<");
+  });
+
+  it.each(["", "not a url"])("keeps serving pages when PUBLIC_ORIGIN is %j", async (origin) => {
+    const res = await call(
+      new Request(`${ORIGIN}/`),
+      testEnv({ PUBLIC_ORIGIN: origin } as unknown as Partial<Cloudflare.Env>),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('property="og:image" content="/img/og.jpg"');
+  });
+});
+
 describe("GET /", () => {
   it("serves the form as HTML with a nonce on every script and no inline style", async () => {
     const res = await call(new Request(`${ORIGIN}/`));
@@ -49,7 +73,8 @@ describe("GET /", () => {
     const html = await res.text();
     expect(html.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain('<html lang="pl">');
-    expect(html).toContain('property="og:image" content="/img/og.jpg"');
+    expect(html).toContain(`property="og:image" content="${env.PUBLIC_ORIGIN}/img/og.jpg"`);
+    expect(html).not.toMatch(/<details class="options"[^>]*\bopen\b/);
     expect(html).toContain('<form class="shorten"');
 
     const nonce = /nonce-([^';\s]+)/.exec(res.headers.get("content-security-policy") ?? "")?.[1];

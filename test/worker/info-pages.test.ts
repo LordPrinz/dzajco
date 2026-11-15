@@ -62,6 +62,7 @@ describe("GET /about", () => {
         JSON.stringify([
           { code: "PL", visits: 40000 },
           { code: "DE", visits: 9000 },
+          { code: "??", visits: 500 },
         ]),
         Date.parse("2026-11-13T02:30:00Z"),
       )
@@ -75,6 +76,8 @@ describe("GET /about", () => {
     expect(html).toContain("Polska");
     expect(html).toContain("Niemcy");
     expect(html.indexOf("Polska")).toBeLessThan(html.indexOf("Niemcy"));
+    expect(html).toContain("Nieznany kraj");
+    expect(html).not.toContain("??");
     expect(html).toContain('datetime="2026-11-13T02:30:00.000Z"');
     expect(html).toContain("24 godzin");
   });
