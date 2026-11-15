@@ -9,9 +9,10 @@ import { deleteExpired, readCursor, recomputeGlobalStats } from "../db/queries";
 const EXPIRED_KEY = "daily_expired";
 const GLOBAL_KEY = "daily_global_stats";
 export const EXPIRED_BATCH = 500;
-// One run deletes at most this many batches. The Free plan allows 50 D1 queries per invocation and
-// the rollup in the same run can use up to 20 (ROLLUP_MAX_PAGES), so 4 keeps the run near 32.
-export const MAX_EXPIRED_BATCHES = 4;
+// One run deletes at most this many batches. The Free plan allows 50 subrequests per invocation. At
+// ROLLUP_MAX_PAGES = 20 the rollup uses 40 (20 SQL API fetches + 20 D1 batches) and the rest of the run
+// about 7 D1 queries (marker reads and writes, cursor read, global_stats), so 3 batches make 50.
+export const MAX_EXPIRED_BATCHES = 3;
 
 const DAY_MS = 86_400_000;
 
