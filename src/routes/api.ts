@@ -14,6 +14,7 @@ import { deleteLazily, isExpired, loadRecord, parseId } from "./redirect";
 export const MAX_BODY_BYTES = 8 * 1024;
 
 const ERROR_MESSAGES: Record<string, string> = {
+  invalid_body: "Request body is invalid",
   invalid_url: "The url is not a valid URL",
   url_too_long: "The url is too long",
   unsupported_scheme: "Only http and https URLs are allowed",
