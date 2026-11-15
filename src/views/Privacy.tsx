@@ -76,7 +76,11 @@ export function Privacy({ nonce, contactHref }: PrivacyProps) {
 
         <section class="doc__section" aria-labelledby="p-cookies">
           <h2 id="p-cookies">Pliki cookie</h2>
-          <p>Serwis nie ustawia plików cookie.</p>
+          <p>
+            Serwis ustawia jeden plik cookie, <code>theme</code>, i tylko wtedy, gdy wybierzesz
+            jasny albo ciemny motyw. Zapamiętuje ten wybór na rok i nie służy do śledzenia. Powrót
+            do motywu systemowego go usuwa.
+          </p>
         </section>
 
         <section class="doc__section" aria-labelledby="p-map">
