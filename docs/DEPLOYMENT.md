@@ -175,6 +175,7 @@ The v2 data lives in MongoDB. The importer (`bun run migrate:mongo`) reads it an
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | MongoDB        | `MONGODB_URI` in the environment (preferred). `--mongo-uri` also works but lands in shell history, and the importer warns about it. Optional `--mongo-db <name>`. |
 | JSON export    | `--from-json <file>`, a `mongoexport --jsonArray` file. It contains the plaintext v2 secret keys: delete it after the import.                                     |
+| Locations      | Only for `--visits`. The `locations` collection: read from MongoDB, or `locations.json` next to the `--from-json` file, or `--locations <file>`.                  |
 | Pepper         | `SECRET_PEPPER_V1` in the environment, the same value as the Worker secret. Never written to files or logs.                                                       |
 | Pepper version | Taken from `SECRET_PEPPER_VERSION` in `wrangler.jsonc` vars, unless `SECRET_PEPPER_VERSION` is exported.                                                          |
 
@@ -193,6 +194,8 @@ read -rs MONGODB_URI && export MONGODB_URI
 | `--yes`                | Required with `--remote`. It is a guard, not a prompt.                                                                           |
 | `--delta`              | The same idempotent run (`INSERT OR IGNORE`), for links created since the last run. v2 edits and deletions are not carried over. |
 | `--own-host <host>`    | Repeatable. Hosts treated as your own for the policy flags. Default: the host of `PUBLIC_ORIGIN`.                                |
+| `--visits`             | Also import the v2 visit counters into `link_stats` (needs migration 0003). See "Visit counters" below.                          |
+| `--locations <file>`   | The `locations` export for `--visits`, when it is not `locations.json` next to the `--from-json` file.                           |
 
 ### Report
 
@@ -209,6 +212,7 @@ read -rs MONGODB_URI && export MONGODB_URI
 | `legacyKeys`         | Links imported with a legacy secret key.                                                                                      |
 | `policyFlags`        | Targets that are private, own-host or shortener URLs. They are imported but flagged. Block them with `admin:block` if needed. |
 | `schemeAdded`        | v2 targets that started with `www.` and got `https://`.                                                                       |
+| `visits`             | Only with `--visits`: planned visits, unknown-country visits, unmapped names, missing locations, over-located links.          |
 
 ### Steps
 
@@ -242,7 +246,28 @@ read -rs MONGODB_URI && export MONGODB_URI
 
 6. Switch the route. Remove the domain from the Vercel project (or point the DNS record away from Vercel) and attach it to the Worker as a custom domain (section 2). If the zone is already on Cloudflare, this is a DNS and route change only.
 7. Keep the Vercel deployment up for rollback until you trust the new site (at least a few days). Disconnect the Vercel Git integration afterwards so it stops building.
-8. Run the delta once more after the switch if v2 could still have received writes during DNS propagation. Delete any JSON export.
+8. Run the delta once more after the switch if v2 could still have received writes during DNS propagation.
+9. Import the visit counters once v2 gets no more visits (see below). Then delete any JSON export.
+
+### Visit counters
+
+The link import leaves every link at zero visits. `--visits` carries the v2 counters over: `visits` and `visitsLocation` of each imported link, with country, city and coordinates from the `locations` collection. The v2 country name becomes its ISO code, and the summary lists any name it could not map (its visits keep the city under the unknown country). Visits that `visitsLocation` does not cover go to the unknown-country row. When the located visits add up to more than `visits` (32 links in the 2026-11-10 export), the located sum is imported.
+
+The rows go through the `v2_visit_import` table (migration 0003, apply it first with `db:migrate:remote`). Each statement inserts one row for a link and place, only when the row is not there yet and D1 holds that link with the same target. A trigger adds the row to `link_stats` in the same statement. So:
+
+- A second run adds nothing: every row that is already in `v2_visit_import` is skipped. The `visits-NNNN.sql` files are safe to re-run after a failure.
+- It works after the cutover. Visits that v3 has counted since then stay in `link_stats`, and the v2 visits are added on top, once.
+- A link that is not in D1 yet is skipped without a ledger row, so a later run still imports its visits.
+- A link deleted and re-created by someone else does not get the v2 visits: the ledger rows outlive the link.
+- Each place is imported once. v2 visits that arrive after the run are not added later, so run it after the DNS switch, when v2 no longer counts.
+
+```sh
+bun run migrate:mongo --from-json links.json --visits --local --dry-run   # review report.json
+bun run migrate:mongo --from-json links.json --visits --local             # rehearse
+bun run migrate:mongo --from-json links.json --visits --remote --yes
+```
+
+With `--from-json` the importer reads `locations.json` from the same directory; export it with `mongoexport --collection locations --jsonArray`. The run also replays the link import, which inserts nothing that is already there. Public stats and the global numbers on the About page include the v2 visits; the global numbers after the next daily recompute.
 
 ## 6. Rollback
 
@@ -338,6 +363,7 @@ Migration
 - [ ] Real import done, counts match the report
 - [ ] A migrated link redirects and deletes with its original v2 secret key
 - [ ] `--delta` rerun inserts nothing new
+- [ ] `--visits` run after the DNS switch; the stats of a busy migrated link show its v2 visits, and a second run leaves them as they are
 - [ ] D1 bookmark noted before the import; `time-travel restore` tried on the rehearsal database
 
 Rollback and ops
