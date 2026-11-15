@@ -330,6 +330,8 @@ Other measures:
   WAF rule protects the request quota. Spike T9.0 showed that the bindings work on Free. They count per location
   and are eventually consistent (a limit is enforced after roughly 2.4 times its value), so they are an
   abuse cut-off, not an exact limit ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
+  `RL_REDIRECT` fails open: if the binding throws, the Worker logs one warning without the client key and
+  serves the request, because a redirect must not break when a side system fails. The other limiters fail closed.
 - No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin`. When that header is absent, `Origin` must equal an own
   origin. `Origin: null` is rejected. Anything else gets 403.
 - Security headers (middleware). On every Worker response (HTML, JSON and redirects) it sends
