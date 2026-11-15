@@ -42,7 +42,7 @@ export const en: SharedText = {
   toastClose: "Close",
   savedKey: {
     title: "Management key",
-    text: "Saved in this browser's History. Copy it if you want to delete this link or see city stats on another device.",
+    text: "Saved in this browser's History. Copy it to add the link to History on another device. There you can delete it and see city stats too.",
   },
   form: {
     sending: "Shortening…",
@@ -66,5 +66,15 @@ export const en: SharedText = {
       `The link ${short} and its stats will be deleted for good. This cannot be undone.`,
     cancel: "Cancel",
     deleteFailed: "Could not delete the link. Please try again.",
+    adding: "Checking the key…",
+    added: (id) => `Added link ${id}`,
+    keyUpdated: (id) => `Saved the key of link ${id}`,
+    addErrors: {
+      empty_code: "Enter a short link or its code.",
+      key_rejected: "This key does not match the link.",
+      not_found: "There is no such link, or it has expired.",
+      rate_limited: "Too many requests. Try again in a minute.",
+      failed: "Could not check the key. Please try again.",
+    },
   },
 };

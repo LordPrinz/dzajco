@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import {
+  addOutcome,
   buildDeleteRequest,
   canDelete,
   deleteOutcome,
+  entryFromLink,
   isExpired,
   MAX_RENDERED,
   newestFirst,
@@ -12,6 +14,7 @@ import {
   statsPath,
   upsertEntry,
   visibleEntries,
+  withKey,
 } from "./history";
 
 // What v2 and the v3 form write to localStorage: createdAt is a Date serialised to ISO.
@@ -185,5 +188,59 @@ describe("upsertEntry", () => {
 
   it("appends an entry with a new id", () => {
     expect(upsertEntry([old], { ...fresh, id: "next" })).toHaveLength(2);
+  });
+});
+
+describe("adding a link with its key", () => {
+  it("maps the stats answer to an outcome", () => {
+    expect(addOutcome(200)).toBe("ok");
+    expect(addOutcome(403)).toBe("key_rejected");
+    expect(addOutcome(404)).toBe("not_found");
+    expect(addOutcome(410)).toBe("not_found");
+    expect(addOutcome(429)).toBe("rate_limited");
+    expect(addOutcome(0)).toBe("failed");
+    expect(addOutcome(500)).toBe("failed");
+  });
+
+  it("sets the key on an entry that is already there and keeps the rest", () => {
+    const readOnly = {
+      id: "abcd",
+      url: "https://example.com",
+      expire: "never",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    };
+    const other = { ...readOnly, id: "other" };
+    expect(withKey([readOnly, other], "abcd", "k")).toEqual([
+      { ...readOnly, secretKey: "k" },
+      other,
+    ]);
+  });
+
+  it("has nothing to update when the link is not in the history", () => {
+    expect(withKey([], "abcd", "k")).toBeNull();
+  });
+
+  it("builds an entry from the link details", () => {
+    expect(
+      entryFromLink(
+        { id: "abcd", url: "https://example.com/", expiresAt: "2099-01-01T00:00:00.000Z" },
+        "k",
+      ),
+    ).toEqual({
+      id: "abcd",
+      url: "https://example.com/",
+      expire: "2099-01-01T00:00:00.000Z",
+      createdAt: "",
+      secretKey: "k",
+    });
+    expect(
+      entryFromLink({ id: "abcd", url: "https://example.com/", expiresAt: null }, "k"),
+    ).toEqual(expect.objectContaining({ expire: "never" }));
+  });
+
+  it("rejects a body that is not a link", () => {
+    expect(entryFromLink(null, "k")).toBeNull();
+    expect(entryFromLink({ error: { code: "not_found" } }, "k")).toBeNull();
+    expect(entryFromLink({ id: "abcd", url: 5 }, "k")).toBeNull();
   });
 });

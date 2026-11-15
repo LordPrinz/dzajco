@@ -13,6 +13,9 @@ export interface DeleteRequest {
 /** What to do with a history entry after `DELETE /api/v1/links/:id` answered with `status`. */
 export type DeleteOutcome = "removed" | "rate_limited" | "key_rejected" | "failed";
 
+/** What adding a link with its key does after `GET /api/v1/links/:id/stats` answered with `status`. */
+export type AddOutcome = "ok" | "key_rejected" | "not_found" | "rate_limited" | "failed";
+
 /** The page renders at most this many entries; storage keeps all of them. */
 export const MAX_RENDERED = 1000;
 
@@ -93,6 +96,37 @@ export function deleteOutcome(status: number): DeleteOutcome {
   if (status === 429) return "rate_limited";
   if (status === 400 || status === 403) return "key_rejected";
   return "failed";
+}
+
+/** 403 is a key that does not match (or is malformed); 410 is an expired or disabled link. */
+export function addOutcome(status: number): AddOutcome {
+  if (status === 200) return "ok";
+  if (status === 403) return "key_rejected";
+  if (status === 404 || status === 410) return "not_found";
+  if (status === 429) return "rate_limited";
+  return "failed";
+}
+
+/** The history with the key set on the entry for `id`; null when there is no such entry yet. */
+export function withKey(
+  entries: readonly HistoryEntry[],
+  id: string,
+  secretKey: string,
+): HistoryEntry[] | null {
+  if (!entries.some((entry) => entry.id === id)) return null;
+  return entries.map((entry) => (entry.id === id ? { ...entry, secretKey } : entry));
+}
+
+/**
+ * A new entry from the `GET /api/v1/links/:id` body; null when the body is not a link. The API does
+ * not say when the link was made, so `createdAt` stays empty.
+ */
+export function entryFromLink(body: unknown, secretKey: string): HistoryEntry | null {
+  const link = (body ?? {}) as { id?: unknown; url?: unknown; expiresAt?: unknown };
+  const id = text(link.id);
+  const url = text(link.url);
+  if (id === null || url === null) return null;
+  return { id, url, expire: text(link.expiresAt) ?? "never", createdAt: "", secretKey };
 }
 
 /** The entries to draw: newest first, at most `MAX_RENDERED`. */

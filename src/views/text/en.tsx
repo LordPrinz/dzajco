@@ -287,12 +287,19 @@ export const en: PageText = {
   history: {
     title: "History",
     heading: "Link history",
-    lead: "Links created in this browser. The list is stored only here, on your device.",
+    lead: "Links created or added in this browser. The list is stored only here, on your device.",
     loading: "Loading the history…",
     noscript: "The history needs JavaScript.",
     empty: "No saved links.",
     emptyLink: "Shorten your first link",
     note: "Only links saved together with their key can be deleted. Entries without a key are read-only.",
+    add: {
+      heading: "Add a link with its key",
+      lead: "Made the link on another device? Paste it with its management key. We check the key and save the link in this browser.",
+      codeLabel: "Short link or code",
+      keyLabel: "Management key",
+      submit: "Add link",
+    },
   },
   stats: {
     title: (id) => `Stats ${id}`,
@@ -311,7 +318,7 @@ export const en: PageText = {
     noClicks: "No clicks yet",
     noClicksHint: "Share your link and check back here.",
     ownerHint:
-      "Cities and the map show only in the browser that created the link (it needs the key from the history).",
+      "Cities and the map show only in a browser that has this link's key in its History. On another device, add the link with its key on the History page.",
   },
   about: {
     title: "About",
@@ -407,8 +414,10 @@ export const en: PageText = {
         <>
           The list of your links, with their deletion keys, is saved in your browser's local storage
           (localStorage, key <code>links-history</code>). It lives only on your device and never
-          reaches our server. Clearing the browser's data removes it for good. Deleting a link needs
-          its key, so save the key separately if you want access from another device.
+          reaches our server. Clearing the browser's data removes it for good. Deleting a link and
+          seeing its cities needs its key. Save the key separately if you want access from another
+          device: there, add the link with its key on the History page. The key then goes to the
+          server only to be checked, and the link and key stay in that browser's storage.
         </>
       ),
     },

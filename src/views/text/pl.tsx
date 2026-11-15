@@ -288,12 +288,19 @@ export const pl = {
   history: {
     title: "Historia",
     heading: "Historia linków",
-    lead: "Linki utworzone w tej przeglądarce. Lista jest zapisana tylko tutaj, na Twoim urządzeniu.",
+    lead: "Linki utworzone albo dodane w tej przeglądarce. Lista jest zapisana tylko tutaj, na Twoim urządzeniu.",
     loading: "Wczytywanie historii…",
     noscript: "Historia wymaga włączonego JavaScriptu.",
     empty: "Brak zapisanych linków.",
     emptyLink: "Skróć pierwszy link",
     note: "Usunąć można tylko linki zapisane razem z kluczem. Wpisy bez klucza są tylko do odczytu.",
+    add: {
+      heading: "Dodaj link z kluczem",
+      lead: "Link utworzony na innym urządzeniu? Wklej go razem z kluczem do zarządzania. Sprawdzimy klucz i zapiszemy link w tej przeglądarce.",
+      codeLabel: "Krótki link albo kod",
+      keyLabel: "Klucz do zarządzania",
+      submit: "Dodaj link",
+    },
   },
   stats: {
     title: (id: string) => `Statystyki ${id}`,
@@ -312,7 +319,7 @@ export const pl = {
     noClicks: "Nie ma jeszcze kliknięć",
     noClicksHint: "Udostępnij link i zajrzyj tu później.",
     ownerHint:
-      "Miasta i mapa są widoczne tylko w przeglądarce, w której utworzono link (potrzebny jest klucz z historii).",
+      "Miasta i mapa są widoczne tylko w przeglądarce, która ma klucz tego linku w Historii. Na innym urządzeniu dodaj link z kluczem na stronie Historia.",
   },
   about: {
     title: "O nas",
@@ -411,8 +418,10 @@ export const pl = {
           Lista Twoich linków, razem z kluczami do ich usuwania, jest zapisana w pamięci lokalnej
           przeglądarki (localStorage, klucz <code>links-history</code>). Mieszka tylko na Twoim
           urządzeniu i nie trafia na nasz serwer. Wyczyszczenie danych przeglądarki usuwa ją
-          bezpowrotnie. Do usunięcia linku potrzebny jest klucz, więc zapisz go osobno, jeśli chcesz
-          mieć dostęp z innego urządzenia.
+          bezpowrotnie. Do usunięcia linku i zobaczenia miast potrzebny jest klucz. Zapisz go
+          osobno, jeśli chcesz mieć dostęp z innego urządzenia: tam dodasz link z kluczem na stronie
+          Historia. Klucz idzie wtedy do serwera tylko w celu sprawdzenia, a link i klucz zostają w
+          pamięci tamtej przeglądarki.
         </>
       ),
     },
