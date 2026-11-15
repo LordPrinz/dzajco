@@ -19,6 +19,11 @@ async function page(path: string, bindings?: Cloudflare.Env) {
   return { res, html: await res.text() };
 }
 
+/** The API docs HTML without the soft line-break points inside codes. */
+async function plainDocs() {
+  return (await page("/docs/api")).html.replaceAll("<wbr/>", "");
+}
+
 describe.each(["/history", "/about", "/docs/api", "/privacy-policy"])("GET %s", (path) => {
   it("is an HTML page with nonce scripts only, no inline style, and not cached", async () => {
     const { res, html } = await page(path);
@@ -129,7 +134,7 @@ describe("GET /about", () => {
 
 describe("GET /docs/api", () => {
   it("lists every endpoint of API v1 and the contract details", async () => {
-    const { html } = await page("/docs/api");
+    const html = await plainDocs();
     expect(ENDPOINTS).toHaveLength(5);
     for (const endpoint of ENDPOINTS) {
       expect(html).toContain(`method--${endpoint.method.toLowerCase()}`);
@@ -151,8 +156,17 @@ describe("GET /docs/api", () => {
     expect(html).toContain("default-src &#39;none&#39;");
   });
 
-  it("lists every error code", async () => {
+  it("wraps codes after underscores only and puts captioned tables in scroll boxes", async () => {
     const { html } = await page("/docs/api");
+    expect(html).toContain("credentials_<wbr/>not_<wbr/>allowed");
+    expect(html).toContain("/<wbr/>api/<wbr/>v1/<wbr/>links");
+    expect(html.match(/class="table-scroll"/g)).toHaveLength(ENDPOINTS.length + 3);
+    expect(html.match(/<caption class="sr-only">/g)).toHaveLength(ENDPOINTS.length + 3);
+    expect(html).toContain('<caption class="sr-only">Odpowiedzi</caption>');
+  });
+
+  it("lists every error code", async () => {
+    const html = await plainDocs();
     for (const { code } of ERROR_CODES) expect(html).toContain(`<code>${code}</code>`);
     // The codes the design names must all be there.
     for (const code of [
@@ -183,7 +197,7 @@ describe("GET /docs/api", () => {
   });
 
   it("has a migration section that maps every v2 endpoint", async () => {
-    const { html } = await page("/docs/api");
+    const html = await plainDocs();
     expect(html).toContain("Migracja z v2");
     for (const old of [
       "GET /api/urls/{shortUrl}",

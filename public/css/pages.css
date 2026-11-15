@@ -335,9 +335,13 @@
   border: 1px solid var(--line);
 }
 
+.table-scroll {
+  margin-top: 0.75rem;
+  overflow-x: auto;
+}
+
 .table {
   width: 100%;
-  margin-top: 0.75rem;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
@@ -348,14 +352,17 @@
   border-bottom: 1px solid var(--line);
   text-align: start;
   vertical-align: top;
-  overflow-wrap: anywhere;
 }
 
-/* Status codes stay whole on phones instead of breaking into "20" and "1". */
+/* Codes and paths wrap only at the <wbr> points; the box scrolls if they still do not fit. */
+.doc .table code,
+.doc .endpoint__title code {
+  overflow-wrap: normal;
+}
+
 .table .table__status {
   width: 1%;
   white-space: nowrap;
-  overflow-wrap: normal;
 }
 
 .table th {

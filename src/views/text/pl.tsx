@@ -24,6 +24,7 @@ const api: ApiText = {
   input: "Wejście.",
   status: "Status",
   body: "Treść",
+  responses: "Odpowiedzi",
   code: "Kod",
   meaning: "Znaczenie",
   route: "Trasa",
