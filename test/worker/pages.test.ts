@@ -184,6 +184,16 @@ describe("POST / validation", () => {
     expect(await res.text()).toContain("Data wygaśnięcia musi być w przyszłości.");
   });
 
+  it("rejects a custom expiry with an empty date", async () => {
+    const res = await call(
+      submit({ url: "https://example.com", expiry: "custom", customDate: "" }),
+    );
+    expect(res.status).toBe(400);
+    const html = await res.text();
+    expect(html).toContain("Podaj istniejącą datę wygaśnięcia.");
+    expect(html).toMatch(/id="expiry"[^>]*aria-invalid="true"/);
+  });
+
   it("answers 409 for a taken name", async () => {
     const name = freshName();
     await call(submit({ url: "https://example.com", customName: name }));
