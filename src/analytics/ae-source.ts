@@ -35,12 +35,12 @@ function buildQuery(where: string, offset: number, limit: number): string {
   // the sample-weighted mean over points that have them; with none the division gives NaN (-> null).
   const mean = (col: string) =>
     `sumIf(${col} * _sample_interval, ${HAS_COORDS}) / sumIf(_sample_interval, ${HAS_COORDS})`;
-  return `SELECT index1 AS linkId, blob1 AS country, blob2 AS city,
+  return `SELECT index1 AS linkId, blob1 AS country, blob2 AS city, blob3 AS createdAt,
   SUM(_sample_interval) AS visits, ${mean("double1")} AS lat, ${mean("double2")} AS lon
 FROM ${DATASET}
 WHERE ${where}
-GROUP BY index1, blob1, blob2
-ORDER BY index1, blob1, blob2
+GROUP BY index1, blob1, blob2, blob3
+ORDER BY index1, blob1, blob2, blob3
 LIMIT ${limit} OFFSET ${offset}
 FORMAT JSON`;
 }
@@ -65,6 +65,13 @@ function toCoord(value: unknown, limit: number): number | null {
   return Number.isFinite(n) && Math.abs(n) <= limit ? n : null;
 }
 
+/** The decimal string the sink wrote; anything else (older points, garbage) is null and matches no link. */
+function toCreatedAt(value: unknown): number | null {
+  if (typeof value !== "string" || !/^\d{1,16}$/.test(value)) return null;
+  const n = Number(value);
+  return Number.isSafeInteger(n) ? n : null;
+}
+
 function parseRows(body: unknown): VisitRow[] {
   const data = (body as { data?: unknown } | null)?.data;
   if (!Array.isArray(data)) throw new Error("Analytics Engine response has no data");
@@ -86,6 +93,7 @@ function parseRows(body: unknown): VisitRow[] {
     }
     return {
       linkId: raw.linkId,
+      createdAt: toCreatedAt(raw.createdAt),
       country: /^[A-Z][A-Z0-9]$/.test(raw.country) ? raw.country : UNKNOWN_COUNTRY,
       city: [...raw.city].slice(0, MAX_CITY_LENGTH).join(""),
       visits,

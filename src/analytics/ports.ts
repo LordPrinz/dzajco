@@ -2,9 +2,13 @@
 // API source (ae-source.ts, used by cron/rollup.ts and fresh.ts), a local source that returns
 // nothing, and in-memory fakes in tests.
 
-/** One visit, as written to the dataset: `indexes: [linkId]`, `blobs: [country, city]`, `doubles: [lat, lon]`. */
+/**
+ * One visit, as written to the dataset: `indexes: [linkId]`, `blobs: [country, city, createdAt]`,
+ * `doubles: [lat, lon]`. `createdAt` is the link's `created_at` (ms), so a re-created id is a new link.
+ */
 export interface VisitPoint {
   linkId: string;
+  createdAt: number;
   country: string;
   city: string;
   lat: number | null;
@@ -17,12 +21,14 @@ export interface VisitSink {
 }
 
 /**
- * One aggregated group: `SUM(_sample_interval)` grouped by link, country and city. `lat` and `lon`
+ * One aggregated group: `SUM(_sample_interval)` grouped by link, `createdAt`, country and city. `createdAt`
+ * is null for a point without a valid one, which matches no link. `lat` and `lon`
  * come from an aggregate over the group's doubles (for example `any(double1)`), or are null when
  * the source has none.
  */
 export interface VisitRow {
   linkId: string;
+  createdAt: number | null;
   country: string;
   city: string;
   visits: number;
@@ -37,7 +43,7 @@ export interface RollupCursor {
 }
 
 export interface VisitSource {
-  /** Groups of one UTC day ordered by `index1, blob1, blob2`, from `offset`, at most `limit` rows. */
+  /** Groups of one UTC day ordered by `index1, blob1, blob2, blob3`, from `offset`, at most `limit` rows. */
   queryDay(day: string, offset: number, limit: number): Promise<VisitRow[]>;
   /**
    * Groups of everything with `timestamp >= day 00:00 UTC`, same grouping and order. Returns all

@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AeVisitSource } from "../../src/analytics/ae-source";
 import { type FreshData, freshCacheKey, loadFresh } from "../../src/analytics/fresh";
+import { mergeCountries } from "../../src/analytics/merge";
 import type { RollupCursor } from "../../src/analytics/ports";
 import { d1RollupStore, PAGE_SIZE, runRollup } from "../../src/cron/rollup";
 import { insertLink, publicStats, readCursor, upsertStatsBatch } from "../../src/db/queries";
@@ -44,6 +45,7 @@ async function addLinks(...ids: string[]) {
 function groups(linkId: string, n: number, at = AT_D): FakePoint[] {
   return Array.from({ length: n }, (_, i) => ({
     linkId,
+    createdAt: AT_D,
     country: "PL",
     city: `c${String(i).padStart(5, "0")}`,
     at,
@@ -94,8 +96,26 @@ describe("rollup cron", () => {
   it("sums _sample_interval, not point counts", async () => {
     await addLinks("a");
     ae.points = [
-      { linkId: "a", country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, at: AT_D, sample: 10 },
-      { linkId: "a", country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, at: AT_D, sample: 3 },
+      {
+        linkId: "a",
+        createdAt: AT_D,
+        country: "PL",
+        city: "Warsaw",
+        lat: 52.23,
+        lon: 21.01,
+        at: AT_D,
+        sample: 10,
+      },
+      {
+        linkId: "a",
+        createdAt: AT_D,
+        country: "PL",
+        city: "Warsaw",
+        lat: 52.23,
+        lon: 21.01,
+        at: AT_D,
+        sample: 3,
+      },
     ];
     await rollup(CLOSED);
     expect(ae.queries[0]).toContain("SUM(_sample_interval)");
@@ -145,11 +165,29 @@ describe("rollup cron", () => {
   it("averages coordinates only over points that have them", async () => {
     await addLinks("a");
     ae.points = [
-      { linkId: "a", country: "PL", city: "Warsaw", lat: 52, lon: 21, at: AT_D, sample: 1 },
-      { linkId: "a", country: "PL", city: "Warsaw", lat: 53, lon: 22, at: AT_D, sample: 3 },
-      { linkId: "a", country: "PL", city: "Warsaw", at: AT_D, sample: 5 },
-      { linkId: "a", country: "PL", city: "Nowhere", at: AT_D },
-      { linkId: "a", country: "PL", city: "Nowhere", at: AT_D, sample: 2 },
+      {
+        linkId: "a",
+        createdAt: AT_D,
+        country: "PL",
+        city: "Warsaw",
+        lat: 52,
+        lon: 21,
+        at: AT_D,
+        sample: 1,
+      },
+      {
+        linkId: "a",
+        createdAt: AT_D,
+        country: "PL",
+        city: "Warsaw",
+        lat: 53,
+        lon: 22,
+        at: AT_D,
+        sample: 3,
+      },
+      { linkId: "a", createdAt: AT_D, country: "PL", city: "Warsaw", at: AT_D, sample: 5 },
+      { linkId: "a", createdAt: AT_D, country: "PL", city: "Nowhere", at: AT_D },
+      { linkId: "a", createdAt: AT_D, country: "PL", city: "Nowhere", at: AT_D, sample: 2 },
     ];
     await rollup(CLOSED);
     const { results } = await db
@@ -163,7 +201,7 @@ describe("rollup cron", () => {
 
   it("stores an empty country as ?? and keeps an empty city", async () => {
     await addLinks("a");
-    ae.points = [{ linkId: "a", country: "", city: "", at: AT_D }];
+    ae.points = [{ linkId: "a", createdAt: AT_D, country: "", city: "", at: AT_D }];
     await rollup(CLOSED);
     const row = await db
       .prepare("SELECT country, city FROM link_stats WHERE link_id = 'a'")
@@ -192,13 +230,51 @@ describe("rollup cron", () => {
   });
 });
 
+describe("an id that was deleted and created again", () => {
+  const OLD = AT_D - 86_400_000;
+
+  it("the rollup writes nothing for points of the earlier link", async () => {
+    await addLinks("a");
+    ae.points = [
+      { linkId: "a", createdAt: OLD, country: "PL", city: "Warsaw", at: AT_D, sample: 5 },
+      { linkId: "a", createdAt: null, country: "PL", city: "Warsaw", at: AT_D },
+      { linkId: "a", createdAt: AT_D, country: "DE", city: "Berlin", at: AT_D, sample: 2 },
+    ];
+    await rollup(CLOSED);
+    expect(await d1Total()).toBe(2);
+    expect((await publicStats(db, "a")).countries).toEqual([{ code: "DE", visits: 2 }]);
+    expect(await readCursor(db)).toEqual({ day: D1, offset: 0 });
+  });
+
+  it("the live merge counts only fresh rows of the current link", async () => {
+    await addLinks("a");
+    ae.points = [
+      { linkId: "a", createdAt: OLD, country: "PL", city: "Warsaw", at: AT_D, sample: 5 },
+      { linkId: "a", createdAt: AT_D, country: "DE", city: "Berlin", at: AT_D, sample: 2 },
+    ];
+    const stats = await publicStats(db, "a");
+    expect(stats.createdAt).toBe(AT_D);
+    const fresh = await loadFresh({
+      source: source(),
+      cursor: stats.cursor,
+      now: CLOSED,
+      ttlSeconds: 300,
+      cache: await newCache(),
+    });
+    expect(mergeCountries(stats, fresh.rows, "a", stats.createdAt)).toEqual({
+      visits: 2,
+      countries: [{ code: "DE", visits: 2 }],
+    });
+  });
+});
+
 describe("fresh data", () => {
   it("D1 + AE equals the written points at cursors {D, 0}, {D, 500} and {D+1, 0}", async () => {
     await addLinks("a", "b");
     ae.points = [
       ...groups("a", 400),
       ...groups("b", 300),
-      { linkId: "a", country: "PL", city: "c00000", at: AT_D, sample: 4 },
+      { linkId: "a", createdAt: AT_D, country: "PL", city: "c00000", at: AT_D, sample: 4 },
       ...groups("b", 5, AT_D1),
     ];
     const total = ae.total();
@@ -307,6 +383,7 @@ describe("fresh data", () => {
         calls++;
         return Array.from({ length: limit }, () => ({
           linkId: "a",
+          createdAt: AT_D,
           country: "PL",
           city: "",
           visits: 1,
@@ -333,7 +410,16 @@ describe("fresh data", () => {
     ae.points = groups("a", 2);
     const cache = await newCache();
     const key = freshCacheKey({ day: D, offset: 0 });
-    for (const bad of [[{ linkId: 1 }], { rows: [{ linkId: "a" }], partial: false }, "x"]) {
+    const oldShape = {
+      rows: [{ linkId: "a", country: "PL", city: "", visits: 99, lat: null, lon: null }],
+      partial: false,
+    };
+    for (const bad of [
+      [{ linkId: 1 }],
+      { rows: [{ linkId: "a" }], partial: false },
+      oldShape,
+      "x",
+    ]) {
       await cache.put(key, Response.json(bad, { headers: { "cache-control": "max-age=300" } }));
       const fresh = await loadFresh({
         source: source(),

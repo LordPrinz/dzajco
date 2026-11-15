@@ -5,6 +5,8 @@ export interface FakePoint {
   linkId: string;
   country: string;
   city: string;
+  /** The link's `created_at`, written as blob3; null for a point without one (older data). */
+  createdAt: number | null;
   lat?: number;
   lon?: number;
   /** Unix ms. */
@@ -32,6 +34,8 @@ export class FakeAe {
 
   #run(sql: string) {
     if (!sql.includes("SUM(_sample_interval)")) throw new Error("query must sum _sample_interval");
+    if (!sql.includes("GROUP BY index1, blob1, blob2, blob3"))
+      throw new Error("query must group by blob3");
     const weighted = "sumIf(double1 * _sample_interval, (double1 != 0 OR double2 != 0))";
     if (!sql.includes(weighted)) throw new Error("query must average only points with coordinates");
     const time = (op: string) => {
@@ -48,6 +52,7 @@ export class FakeAe {
       string,
       {
         linkId: string;
+        createdAt: string;
         country: string;
         city: string;
         visits: number;
@@ -58,9 +63,10 @@ export class FakeAe {
     >();
     for (const p of this.points) {
       if (p.at < from || (to !== null && p.at >= to)) continue;
-      const key = JSON.stringify([p.linkId, p.country, p.city]);
+      const key = JSON.stringify([p.linkId, p.country, p.city, p.createdAt]);
       const g = groups.get(key) ?? {
         linkId: p.linkId,
+        createdAt: p.createdAt === null ? "" : String(p.createdAt),
         country: p.country,
         city: p.city,
         visits: 0,
@@ -81,10 +87,17 @@ export class FakeAe {
     }
     const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
     return [...groups.values()]
-      .sort((a, b) => cmp(a.linkId, b.linkId) || cmp(a.country, b.country) || cmp(a.city, b.city))
+      .sort(
+        (a, b) =>
+          cmp(a.linkId, b.linkId) ||
+          cmp(a.country, b.country) ||
+          cmp(a.city, b.city) ||
+          cmp(a.createdAt, b.createdAt),
+      )
       .slice(Number(page[2]), Number(page[2]) + Number(page[1]))
       .map((g) => ({
         linkId: g.linkId,
+        createdAt: g.createdAt,
         country: g.country,
         city: g.city,
         // ClickHouse JSON output quotes 64-bit integers.

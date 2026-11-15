@@ -8,10 +8,18 @@ function coordinate(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Builds the visit for `linkId` from `request.cf`, whose latitude and longitude are strings. */
-export function visitPoint(linkId: string, cf: GeoFields | undefined): VisitPoint {
+/**
+ * Builds the visit for `linkId` from `request.cf`, whose latitude and longitude are strings.
+ * `createdAt` is the link's creation time: it tells apart two links that used the same id.
+ */
+export function visitPoint(
+  linkId: string,
+  createdAt: number,
+  cf: GeoFields | undefined,
+): VisitPoint {
   return {
     linkId,
+    createdAt,
     country: typeof cf?.country === "string" ? cf.country : "",
     city: typeof cf?.city === "string" ? cf.city : "",
     lat: coordinate(cf?.latitude),
@@ -26,7 +34,7 @@ export function aeSink(dataset: Pick<AnalyticsEngineDataset, "writeDataPoint">):
       try {
         dataset.writeDataPoint({
           indexes: [point.linkId],
-          blobs: [point.country, point.city],
+          blobs: [point.country, point.city, String(point.createdAt)],
           doubles: point.lat !== null && point.lon !== null ? [point.lat, point.lon] : [],
         });
       } catch {

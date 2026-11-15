@@ -87,9 +87,14 @@ export function statsRoutes() {
       now,
       ttlSeconds: parseFreshTtl(c.env.AE_FRESH_TTL),
     });
-    const { visits, countries } = mergeCountries(owner, fresh.rows, id);
+    const { visits, countries } = mergeCountries(owner, fresh.rows, id, owner.createdAt);
     return c.json(
-      { visits, countries, cities: mergeCities(owner, fresh.rows, id), partial: fresh.partial },
+      {
+        visits,
+        countries,
+        cities: mergeCities(owner, fresh.rows, id, owner.createdAt),
+        partial: fresh.partial,
+      },
       200,
       { "Cache-Control": "no-store" },
     );

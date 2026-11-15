@@ -45,7 +45,17 @@ it("without analytics configured the daily step runs once per UTC day after 01:0
   await addLink("live", null);
   await upsertStatsBatch(
     db,
-    [{ linkId: "live", country: "PL", city: "", visits: 7, lat: null, lon: null }],
+    [
+      {
+        linkId: "live",
+        createdAt: DAY1 - 86_400_000,
+        country: "PL",
+        city: "",
+        visits: 7,
+        lat: null,
+        lon: null,
+      },
+    ],
     null,
     { day: "2026-11-13", offset: 0 },
   );

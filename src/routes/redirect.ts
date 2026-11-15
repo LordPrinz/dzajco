@@ -49,7 +49,9 @@ async function readCached(id: string): Promise<LinkRecord | null> {
   const hit = await caches.default.match(linkCacheKey(id));
   if (!hit) return null;
   try {
-    return (await hit.json()) as LinkRecord;
+    const record = (await hit.json()) as LinkRecord;
+    // An entry cached before records carried createdAt counts as a miss.
+    return Number.isSafeInteger(record.createdAt) ? record : null;
   } catch {
     return null;
   }
@@ -147,7 +149,11 @@ export function redirectRoutes(options: RedirectOptions = {}) {
       }
 
       if (c.req.method !== "HEAD" && !isBot(c.req.header("user-agent"))) {
-        const point = visitPoint(id, c.req.raw.cf as IncomingRequestCfProperties | undefined);
+        const point = visitPoint(
+          id,
+          record.createdAt,
+          c.req.raw.cf as IncomingRequestCfProperties | undefined,
+        );
         c.executionCtx.waitUntil(writeVisit(makeSink(c.env), point));
       }
       return new Response(null, {

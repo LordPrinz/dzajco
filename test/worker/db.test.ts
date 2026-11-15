@@ -36,7 +36,7 @@ function link(id: string, extra: Partial<Parameters<typeof insertLink>[1]> = {})
 }
 
 function row(linkId: string, country: string, city: string, visits: number): VisitRow {
-  return { linkId, country, city, visits, lat: 52.23, lon: 21.01 };
+  return { linkId, createdAt: NOW, country, city, visits, lat: 52.23, lon: 21.01 };
 }
 
 async function count(table: string, where = "1=1"): Promise<number> {
@@ -118,6 +118,7 @@ describe("getLinkRecord", () => {
       id: "fine",
       target: "https://good.org/x",
       expiresAt: null,
+      createdAt: NOW,
       blocked: false,
     });
   });
@@ -332,7 +333,15 @@ describe("upsertStatsBatch", () => {
       row("a", "XX", "", -1),
       row("a", "XX", "", 1.5),
       row("a", "XX", "", Number.NaN),
-      { linkId: "a", country: "PL", city: "Warsaw", visits: 1, lat: 52.23456, lon: Number.NaN },
+      {
+        linkId: "a",
+        createdAt: NOW,
+        country: "PL",
+        city: "Warsaw",
+        visits: 1,
+        lat: 52.23456,
+        lon: Number.NaN,
+      },
     ];
     await upsertStatsBatch(db, bad, null, c1);
     expect(await count("link_stats", "country = 'XX'")).toBe(0);
@@ -349,10 +358,23 @@ describe("upsertStatsBatch", () => {
     expect(await readCursor(db)).toEqual(c1);
   });
 
+  it("skips rows whose createdAt is not the link's, or missing", async () => {
+    await insertLink(db, link("a"));
+    const rows = [
+      { ...row("a", "PL", "", 4), createdAt: NOW - 1 },
+      { ...row("a", "PL", "", 8), createdAt: null },
+      row("a", "PL", "", 2),
+    ];
+    await upsertStatsBatch(db, rows, null, c1);
+    expect((await publicStats(db, "a")).visits).toBe(2);
+    expect(await readCursor(db)).toEqual(c1);
+  });
+
   it("keeps a visit-weighted mean of the coordinates across pages", async () => {
     await insertLink(db, link("a"));
     const at = (visits: number, lat: number | null, lon: number | null): VisitRow => ({
       linkId: "a",
+      createdAt: NOW,
       country: "PL",
       city: "Warsaw",
       visits,

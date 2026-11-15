@@ -61,7 +61,9 @@ function stats(id: string, headers: Record<string, string> = {}): Request {
   return request(`/api/v1/links/${encodeURIComponent(id)}/stats`, { headers });
 }
 
-async function create(url = "https://example.com/stats"): Promise<{ id: string; key: string }> {
+async function create(
+  url = "https://example.com/stats",
+): Promise<{ id: string; key: string; createdAt: number }> {
   const res = await call(
     request("/api/v1/links", {
       method: "POST",
@@ -71,7 +73,10 @@ async function create(url = "https://example.com/stats"): Promise<{ id: string; 
   );
   expect(res.status).toBe(201);
   const body = (await res.json()) as { id: string; secretKey: string };
-  return { id: body.id, key: body.secretKey };
+  const row = await env.DB.prepare("SELECT created_at AS createdAt FROM links WHERE id = ?")
+    .bind(body.id)
+    .first<{ createdAt: number }>();
+  return { id: body.id, key: body.secretKey, createdAt: row?.createdAt ?? 0 };
 }
 
 async function linkExists(id: string): Promise<boolean> {
@@ -102,8 +107,11 @@ async function addStats(
   );
 }
 
-function point(linkId: string, p: Omit<FakePoint, "linkId">): FakePoint {
-  return { linkId, ...p };
+function point(
+  link: { id: string; createdAt: number },
+  p: Omit<FakePoint, "linkId" | "createdAt">,
+): FakePoint {
+  return { linkId: link.id, createdAt: link.createdAt, ...p };
 }
 
 type StatsBody = {
@@ -250,7 +258,7 @@ describe("DELETE /api/v1/links/:id", () => {
 });
 
 describe("GET /api/v1/links/:id/stats", () => {
-  async function linkWithStats(): Promise<{ id: string; key: string }> {
+  async function linkWithStats(): Promise<{ id: string; key: string; createdAt: number }> {
     const link = await create();
     await addStats(link.id, [
       { country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, visits: 2 },
@@ -258,7 +266,7 @@ describe("GET /api/v1/links/:id/stats", () => {
       { country: "US", city: "", visits: 1 },
     ]);
     ae.points = [
-      point(link.id, {
+      point(link, {
         country: "PL",
         city: "Warsaw",
         lat: 52.2297,
@@ -266,8 +274,11 @@ describe("GET /api/v1/links/:id/stats", () => {
         at: AT_D,
         sample: 3,
       }),
-      point(link.id, { country: "PL", city: "Krakow", lat: 50.06143, lon: 19.93658, at: AT_D1 }),
-      point("other-link", { country: "FR", city: "Paris", lat: 48.85, lon: 2.35, at: AT_D1 }),
+      point(link, { country: "PL", city: "Krakow", lat: 50.06143, lon: 19.93658, at: AT_D1 }),
+      point(
+        { id: "other-link", createdAt: 1 },
+        { country: "FR", city: "Paris", lat: 48.85, lon: 2.35, at: AT_D1 },
+      ),
     ];
     return link;
   }
@@ -368,15 +379,16 @@ describe("GET /api/v1/links/:id/stats", () => {
   });
 
   it("adds only fresh rows after the cursor offset, so nothing is counted twice", async () => {
-    const { id, key } = await create();
+    const link = await create();
+    const { id, key } = link;
     // The rollup already wrote the first group of day D (offset 1): it is in D1 and must not be added again.
     await addStats(id, [{ country: "DE", city: "Berlin", lat: 52.52, lon: 13.4, visits: 5 }]);
     const cursor = { day: D, offset: 1 };
     await setCursor(cursor);
     ae.points = [
-      point(id, { country: "DE", city: "Berlin", lat: 52.52, lon: 13.4, at: AT_D, sample: 5 }),
-      point(id, { country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, at: AT_D, sample: 2 }),
-      point(id, { country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, at: AT_D1, sample: 3 }),
+      point(link, { country: "DE", city: "Berlin", lat: 52.52, lon: 13.4, at: AT_D, sample: 5 }),
+      point(link, { country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, at: AT_D, sample: 2 }),
+      point(link, { country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, at: AT_D1, sample: 3 }),
     ];
     const body = (await (
       await call(stats(id, { authorization: `Bearer ${key}` }))
@@ -391,6 +403,33 @@ describe("GET /api/v1/links/:id/stats", () => {
       { country: "DE", city: "Berlin", lat: 52.52, lon: 13.4, visits: 5 },
       { country: "PL", city: "Warsaw", lat: 52.23, lon: 21.01, visits: 5 },
     ]);
+  });
+
+  it("a re-created id shows zero for the earlier link's un-rolled visits, then counts its own", async () => {
+    const id = `again${Date.now().toString(36)}`;
+    const make = (createdAt: number) =>
+      insertLink(env.DB, {
+        id,
+        target: "https://example.com/again",
+        secretHash: null,
+        expiresAt: null,
+        createdAt,
+        isCustom: true,
+      });
+    await make(AT_D - 1000);
+    await env.DB.prepare("DELETE FROM links WHERE id = ?").bind(id).run();
+    await make(AT_D);
+    await setCursor(CURSOR);
+    const earlier = { id, createdAt: AT_D - 1000 };
+    ae.points = [point(earlier, { country: "PL", city: "Warsaw", at: AT_D, sample: 4 })];
+    const empty = (await (await call(stats(id))).json()) as StatsBody;
+    expect(empty.visits).toBe(0);
+    expect(empty.countries).toEqual([]);
+
+    ae.points.push(point({ id, createdAt: AT_D }, { country: "DE", city: "Berlin", at: AT_D }));
+    await caches.default.delete(freshCacheKey(CURSOR));
+    const counted = (await (await call(stats(id))).json()) as StatsBody;
+    expect(counted.countries).toEqual([{ code: "DE", visits: 1 }]);
   });
 
   it("answers from D1 with partial: true when the SQL API fails", async () => {

@@ -96,7 +96,7 @@ link deleted before the rollup are skipped and do not fail the batch.
 
 1. Look up the link record in the Cache API (JSON record, TTL at most 60 s and at most the time left until
    expiry). On a miss, read the link and its `blocked` flag in one D1 batch and store both in the cached
-   record. The flag says whether the target host or one of its parent domains is in `blocked_hosts`, so a
+   record, together with `created_at`. The flag says whether the target host or one of its parent domains is in `blocked_hosts`, so a
    cache hit needs no extra read.
 2. Expired link: 410 (and lazy delete). Blocked target: 410 "link disabled". Unknown id: 404. Otherwise 302
    to the target.
@@ -125,12 +125,16 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
 
 - Dataset `dzajco_visits`. Secrets and vars: `CF_ACCOUNT_ID` (var) and `CF_AE_TOKEN` (token with the
   _Account Analytics Read_ permission).
-- Data point: `indexes: [linkId]` (at most 96 bytes, enforced in the domain layer), `blobs: [country, city]`,
-  `doubles: [lat, lon]`. Latitude and longitude are parsed from the `request.cf` strings.
+- Data point: `indexes: [linkId]` (at most 96 bytes, enforced in the domain layer), `blobs: [country, city, createdAt]`,
+  `doubles: [lat, lon]`. Latitude and longitude are parsed from the `request.cf` strings. `createdAt` is the
+  link's `created_at` as a decimal string. An id can be deleted and created again, and the new link must not
+  inherit the old one's visits, so stats only count rows whose `createdAt` equals the link's. A row without a
+  valid `createdAt` matches no link.
 - Rollup (hourly cron, `src/cron/rollup.ts`): it is skipped, with the cursor untouched, when `CF_ACCOUNT_ID` or
   `CF_AE_TOKEN` is missing. Day D (UTC) closes only after `D+1 01:00 UTC`, to allow for ingest delay. The query
-  is `SELECT index1, blob1, blob2, SUM(_sample_interval) … GROUP BY index1, blob1, blob2 ORDER BY index1,
-  blob1, blob2 LIMIT 500 OFFSET <offset>`. Each page is one `db.batch` with the upserts and the new cursor
+  is `SELECT index1, blob1, blob2, blob3, SUM(_sample_interval) … GROUP BY index1, blob1, blob2, blob3 ORDER BY
+  index1, blob1, blob2, blob3 LIMIT 500 OFFSET <offset>`. Each upsert only applies when a link with that id and
+  that `created_at` exists. Each page is one `db.batch` with the upserts and the new cursor
   `{day, offset}`. A page with fewer than 500 rows ends the day and moves the cursor to `{D+1, 0}`. One cron
   call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
   `batch()` counts as one query toward the per-invocation limit (Free: 50), but the per-statement limits (100
@@ -141,7 +145,7 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache
   API for 5 minutes under a key that contains the cursor, so a moved cursor never matches an old entry and
   nothing is counted twice. The stats request reads the cursor and `link_stats` in one `db.batch`, then
-  filters the cached result per link in the Worker. The rollup keeps a visit-weighted mean of the coordinates
+  filters the cached result per link (id and `created_at`) in the Worker. The rollup keeps a visit-weighted mean of the coordinates
   in `link_stats`, by the same rule as the live merge.
 - If the SQL API fails or is rate limited, stats come from D1 only and the response has `partial: true`. The
   outage is cached as partial for 30 seconds, so a failing API is not queried on every request.

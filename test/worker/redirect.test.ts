@@ -90,7 +90,14 @@ describe("GET /:id", () => {
     const sink = new RecordingSink();
     await run(appWith(sink), request(`/${id}`));
     expect(sink.points).toEqual([
-      { linkId: id, country: "PL", city: "Warsaw", lat: 52.22977, lon: 21.01178 },
+      {
+        linkId: id,
+        createdAt: expect.any(Number),
+        country: "PL",
+        city: "Warsaw",
+        lat: 52.22977,
+        lon: 21.01178,
+      },
     ]);
   });
 
@@ -215,7 +222,7 @@ describe("GET /:id", () => {
     await caches.default.put(
       linkCacheKey(id),
       Response.json(
-        { id, target: TARGET, expiresAt: Date.now() - 1000, blocked: false },
+        { id, target: TARGET, expiresAt: Date.now() - 1000, createdAt: 1700, blocked: false },
         { headers: { "cache-control": "max-age=60" } },
       ),
     );
@@ -223,12 +230,37 @@ describe("GET /:id", () => {
     expect(res.status).toBe(410);
   });
 
+  it("writes the link's created_at into the visit", async () => {
+    const id = freshId();
+    await seedLink(id);
+    const row = await env.DB.prepare("SELECT created_at AS createdAt FROM links WHERE id = ?")
+      .bind(id)
+      .first<{ createdAt: number }>();
+    const sink = new RecordingSink();
+    await run(appWith(sink), request(`/${id}`));
+    expect(sink.points[0]?.createdAt).toBe(row?.createdAt);
+  });
+
+  it("treats a cached record without createdAt as a miss and reads D1", async () => {
+    const id = freshId();
+    await seedLink(id);
+    await caches.default.put(
+      linkCacheKey(id),
+      Response.json(
+        { id, target: "https://stale.example/", expiresAt: null, blocked: false },
+        { headers: { "cache-control": "max-age=60" } },
+      ),
+    );
+    const res = await run(appWith(new RecordingSink()), request(`/${id}`));
+    expect(res.headers.get("location")).toBe(TARGET);
+  });
+
   it("serves a cache hit with 0 D1 reads, blocked flag included", async () => {
     const id = freshId();
     await caches.default.put(
       linkCacheKey(id),
       Response.json(
-        { id, target: TARGET, expiresAt: null, blocked: true },
+        { id, target: TARGET, expiresAt: null, createdAt: 1700, blocked: true },
         { headers: { "cache-control": "max-age=60" } },
       ),
     );
