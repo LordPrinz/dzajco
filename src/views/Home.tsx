@@ -37,10 +37,10 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
     <Layout nonce={nonce} scripts={["form.js"]}>
       <Header />
 
+      {/* Before the forms, so a result shows right under the hero; the script hides the forms then. */}
+      <div id="result-slot" />
+
       <form class="shorten" id="shorten-form" method="post" action="/" novalidate>
-        <p class="error" id="form-error" role="alert" hidden={message === undefined}>
-          {message}
-        </p>
         <div class="pill">
           <label class="sr-only" for="url">
             {t.home.urlLabel}
@@ -65,6 +65,10 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
             {t.home.submit}
           </button>
         </div>
+        {/* Right under the field it describes; role=alert reads it out when it appears. */}
+        <p class="error" id="form-error" role="alert" hidden={message === undefined}>
+          {message}
+        </p>
 
         <details class="options" open={hasOptions}>
           <summary class="options__summary">{t.home.moreOptions}</summary>
@@ -151,7 +155,6 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
         </div>
       </form>
 
-      <div id="result-slot" />
       <template id="result-template">
         <ResultCard
           id=""

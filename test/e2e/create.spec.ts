@@ -12,6 +12,10 @@ test("creates a link with JavaScript and shows the result card", async ({ page }
   await expect(card.locator('[data-field="target"]')).toHaveText(target);
   await expect(card.locator('[data-field="secretKey"]')).not.toBeEmpty();
   await expect(card.getByText("Zapisz klucz")).toBeVisible();
+  // The result takes the place of the forms.
+  await expect(page.locator("#shorten-form")).toBeHidden();
+  await expect(page.locator("#lookup-form")).toBeHidden();
+  await expect(card).toBeInViewport();
 });
 
 test("saves the new link and its key to the history", async ({ page }) => {
@@ -48,24 +52,47 @@ test("copy button puts the short link on the clipboard", async ({ page }) => {
   expect(await page.evaluate(() => (globalThis as { __copied?: string }).__copied)).toBe(shortUrl);
 });
 
-test("shows an error for an invalid link and creates nothing", async ({ page }) => {
+test("shows an error for an invalid link under the field and creates nothing", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("Link do skrócenia").fill("ftp://example.com/file");
+  const field = page.getByLabel("Link do skrócenia");
+  await field.fill("ftp://example.com/file");
   await page.getByRole("button", { name: "Dżajcuj" }).click();
 
-  await expect(page.locator("#toasts-alert .toast--error")).toBeVisible();
-  // The field keeps the message as its description after the toast is gone.
-  await expect(page.getByLabel("Link do skrócenia")).toHaveAccessibleDescription(
-    "Dozwolone są tylko adresy http i https.",
-  );
-  await expect(page.getByLabel("Link do skrócenia")).toHaveAttribute("aria-invalid", "true");
+  const error = page.locator("#form-error");
+  await expect(error).toHaveText("Dozwolone są tylko adresy http i https.");
+  await expect(error).toHaveAttribute("role", "alert");
+  await expect(field).toHaveAccessibleDescription("Dozwolone są tylko adresy http i https.");
+  await expect(field).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator(".toasts .toast")).toHaveCount(0);
   await expect(page.locator("#result-slot [data-created]")).toHaveCount(0);
 
-  await page
-    .locator("#toasts-alert .toast--error")
-    .getByRole("button", { name: "Zamknij" })
-    .click();
+  // Typing clears the red state.
+  await field.press("End");
+  await field.pressSequentially("x");
+  await expect(error).toBeHidden();
+  await expect(field).not.toHaveAttribute("aria-invalid", "true");
+});
+
+test("asks for a link on an empty submit and calls a bare word invalid", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+  await expect(page.locator("#form-error")).toHaveText("Najpierw wklej link.");
+
+  await page.getByLabel("Link do skrócenia").fill("notaurl");
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+  await expect(page.locator("#form-error")).toHaveText("To nie wygląda na poprawny adres URL.");
+});
+
+test("a network failure shows a toast that hands focus back when closed", async ({ page }) => {
+  await page.route("**/api/v1/links", (route) => route.abort());
+  await page.goto("/");
+  await page.getByLabel("Link do skrócenia").fill(uniqueTarget());
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+
+  const toast = page.locator("#toasts-alert .toast--error");
+  await expect(toast).toBeVisible();
+  await toast.getByRole("button", { name: "Zamknij" }).focus();
+  await toast.getByRole("button", { name: "Zamknij" }).press("Enter");
   await expect(page.locator(".toasts .toast")).toHaveCount(0);
-  // Closing the toast hands focus back to the field, not to <body>.
   await expect(page.getByLabel("Link do skrócenia")).toBeFocused();
 });

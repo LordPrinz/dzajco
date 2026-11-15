@@ -230,10 +230,20 @@ describe("POST / validation", () => {
     expect(await res.text()).toContain("Ta nazwa jest już zajęta.");
   });
 
-  it("rejects an empty url", async () => {
+  it("asks for a link when the url is empty", async () => {
     const res = await call(submit({ url: "" }));
     expect(res.status).toBe(400);
-    expect(await res.text()).toContain("To nie wygląda na poprawny adres URL.");
+    expect(await res.text()).toContain("Najpierw wklej link.");
+  });
+
+  it("calls a bare word an invalid link, not a private address", async () => {
+    const res = await call(submit({ url: "notaurl" }));
+    expect(res.status).toBe(400);
+    const html = await res.text();
+    expect(html).toContain("To nie wygląda na poprawny adres URL.");
+    expect(html).not.toContain("prywatne");
+    // The message sits right after the pill, where the field is.
+    expect(html.indexOf('id="form-error"')).toBeGreaterThan(html.indexOf('class="pill__submit"'));
   });
 
   it("answers 415 to another content type", async () => {
