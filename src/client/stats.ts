@@ -10,6 +10,7 @@ import {
   ownerRequest,
   parseCities,
 } from "../shared/stats";
+import { enableCopy } from "./lib/copy";
 import { pageLang } from "./lib/lang";
 
 function readKey(id: string): string | null {
@@ -93,8 +94,11 @@ async function init(): Promise<void> {
   const owner = root?.querySelector<HTMLElement>("[data-owner]");
   const id = root?.dataset.id;
   if (!root || !owner || !id) return;
+  enableCopy(root);
   const key = readKey(id);
   if (key === null) return;
+  // This browser made the link: reporting it as abuse makes no sense for its owner.
+  for (const report of root.querySelectorAll("[data-report]")) report.setAttribute("hidden", "");
   const cities = await fetchCities(id, key);
   if (cities === null) return;
 

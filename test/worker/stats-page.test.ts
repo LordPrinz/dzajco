@@ -75,6 +75,42 @@ describe("GET /:id/stats", () => {
     expect(html).not.toContain("52.23");
   });
 
+  it("opens with the short link, a Copy button, the target and the dates", async () => {
+    const id = freshId();
+    await seed(id, { expiresAt: Date.parse("2030-01-02T03:04:00Z") });
+    const html = await (await call(`/${id}/stats`)).text();
+    const short = `${new URL(env.PUBLIC_ORIGIN).origin}/${id}`;
+    expect(html).toContain(`data-value="${short}"`);
+    expect(html).toContain(`>${short.replace(/^https?:\/\//, "")}</a>`);
+    expect(html).toContain('data-copy="shortUrl"');
+    expect(html).toContain("https://example.com/stats-target");
+    expect(html).toContain("Utworzono:");
+    expect(html).toContain('datetime="2030-01-02T03:04:00.000Z"');
+    // The report link is marked so stats.js can hide it from the owner.
+    const withMail = testEnv({
+      ABUSE_EMAIL: "abuse@dzaj.co",
+    } as unknown as Partial<Cloudflare.Env>);
+    expect(await (await call(`/${id}/stats`, withMail)).text()).toMatch(
+      /href="mailto:[^"]+" data-report/,
+    );
+  });
+
+  it("shows 'no clicks yet' with a Copy button instead of a zero gauge", async () => {
+    const id = freshId();
+    await insertLink(env.DB, {
+      id,
+      target: "https://example.com/quiet",
+      secretHash: null,
+      expiresAt: null,
+      createdAt: Date.now(),
+      isCustom: true,
+    });
+    const html = await (await call(`/${id}/stats`)).text();
+    expect(html).toContain("Nie ma jeszcze kliknięć");
+    expect(html).toContain("nigdy");
+    expect(html).not.toContain('class="counter__value"');
+  });
+
   it("returns the same numbers and no cities from the JSON endpoint without a key", async () => {
     const id = freshId();
     await seed(id);

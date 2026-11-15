@@ -12,9 +12,43 @@
   color: var(--heading);
 }
 
-.stats__id {
+/* Header card: the short link with Copy, where it goes, and its dates. */
+.stats__head {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.stats__meta {
+  margin: 0;
   overflow-wrap: anywhere;
-  color: var(--link);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.stats__target {
+  color: var(--text);
+}
+
+/* No visits yet: a nudge to share instead of a gauge stuck at zero. */
+.stats__zero {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.stats__zero p {
+  margin: 0;
+}
+
+.stats__zero-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--heading);
 }
 
 .stats__grid {

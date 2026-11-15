@@ -1,13 +1,22 @@
+import { type Lang, LOCALE } from "../shared/lang";
 import { type CountryRow, countryName } from "../shared/stats";
 import { Header } from "./Header";
 import { Layout } from "./Layout";
 import { usePage } from "./page-context";
+import { withoutProtocol } from "./ResultCard";
 
 const TOP_COUNTRIES = 10;
 
 export interface StatsProps {
   nonce: string;
   id: string;
+  /** Full short URL, e.g. `https://dzaj.de/abc`. */
+  shortUrl: string;
+  target: string;
+  /** Epoch ms. */
+  createdAt: number;
+  /** Epoch ms, or null for a link that never expires. */
+  expiresAt: number | null;
   visits: number;
   countries: readonly CountryRow[];
   partial: boolean;
@@ -19,7 +28,17 @@ export interface StatsProps {
  * Public stats of a link: the visit counter and the countries. Cities and the map belong to the owner;
  * their section stays hidden and empty until `stats.js` has fetched them with the key.
  */
-export function Stats({ nonce, id, visits, countries, partial, reportHref }: StatsProps) {
+function formatDate(ms: number, lang: Lang): string {
+  return `${new Date(ms).toLocaleString(LOCALE[lang], {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "UTC",
+  })} UTC`;
+}
+
+export function Stats(props: StatsProps) {
+  const { nonce, id, shortUrl, target, createdAt, expiresAt, visits, countries, partial } = props;
+  const { reportHref } = props;
   const top = countries.slice(0, TOP_COUNTRIES);
   const max = top[0]?.visits ?? 0;
   const { lang, t } = usePage();
@@ -27,16 +46,60 @@ export function Stats({ nonce, id, visits, countries, partial, reportHref }: Sta
     <Layout nonce={nonce} title={t.stats.title(id)} scripts={["stats.js"]} styles={["stats.css"]}>
       <Header />
       <section class="stats" data-stats data-id={id} aria-labelledby="stats-title">
-        <h2 class="stats__title" id="stats-title">
-          {t.stats.heading} <span class="stats__id">{id}</span>
-        </h2>
+        <div class="stats__head">
+          <h2 class="stats__title" id="stats-title">
+            {t.stats.heading}
+          </h2>
+          <div class="result__link">
+            <a
+              class="result__short"
+              data-field="shortUrl"
+              data-value={shortUrl}
+              href={shortUrl}
+              aria-label={`${t.result.shortLink}: ${shortUrl}`}
+            >
+              {withoutProtocol(shortUrl)}
+            </a>
+            <div class="result__share">
+              <button type="button" class="button result__copy" data-copy="shortUrl" hidden>
+                {t.common.copy.button}
+              </button>
+            </div>
+          </div>
+          <p class="stats__meta">
+            {t.result.target} <span class="stats__target">{target}</span>
+          </p>
+          <p class="stats__meta">
+            {t.stats.created}{" "}
+            <time datetime={new Date(createdAt).toISOString()}>{formatDate(createdAt, lang)}</time>
+            {" · "}
+            {t.stats.expires}{" "}
+            {expiresAt === null ? (
+              t.stats.never
+            ) : (
+              <time datetime={new Date(expiresAt).toISOString()}>
+                {formatDate(expiresAt, lang)}
+              </time>
+            )}
+          </p>
+        </div>
 
         <div class="stats__grid">
           <div class="stats__panel">
             <h3 class="stats__heading">{t.stats.visits}</h3>
-            <p class="counter">
-              <span class="counter__value">{visits}</span>
-            </p>
+            {visits === 0 ? (
+              <div class="stats__zero">
+                <p class="stats__zero-title">{t.stats.noClicks}</p>
+                <p class="stats__empty">{t.stats.noClicksHint}</p>
+                <button type="button" class="button" data-copy="shortUrl" hidden>
+                  {t.common.copy.button}
+                </button>
+              </div>
+            ) : (
+              <p class="counter">
+                <span class="counter__value">{visits}</span>
+              </p>
+            )}
           </div>
 
           <div class="stats__panel">
@@ -89,7 +152,8 @@ export function Stats({ nonce, id, visits, countries, partial, reportHref }: Sta
 
         <div class="result__actions">
           {reportHref ? (
-            <a class="button button--ghost" href={reportHref}>
+            // The owner does not need to report their own link; stats.js hides this for them.
+            <a class="button button--ghost" href={reportHref} data-report>
               {t.linkError.report}
             </a>
           ) : null}

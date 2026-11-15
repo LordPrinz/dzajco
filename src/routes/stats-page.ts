@@ -39,6 +39,10 @@ export function statsPageRoutes() {
       const html = renderPage(c, Stats, {
         nonce: c.var.nonce,
         id,
+        shortUrl: `${new URL(c.env.PUBLIC_ORIGIN).origin}/${encodeURIComponent(id)}`,
+        target: record.target,
+        createdAt: record.createdAt,
+        expiresAt: record.expiresAt,
         ...stats,
         reportHref: reportAbuseLink(c.env, { linkId: id }),
       });
