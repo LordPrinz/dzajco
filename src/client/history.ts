@@ -83,6 +83,36 @@ function copyButton(value: string): HTMLButtonElement {
   return button;
 }
 
+function confirmDelete(short: string, opener: HTMLElement): Promise<boolean> {
+  const dialog = el("dialog", "confirm");
+  dialog.setAttribute("aria-labelledby", "confirm-title");
+  dialog.setAttribute("aria-describedby", "confirm-body");
+  const title = el("h2", "confirm__title", text.history.confirmTitle);
+  title.id = "confirm-title";
+  const actions = el("div", "confirm__actions");
+  const cancel = el("button", "button button--ghost button--small", text.history.cancel);
+  cancel.type = "button";
+  cancel.autofocus = true;
+  cancel.addEventListener("click", () => dialog.close("cancel"));
+  const confirmButton = el("button", "button button--danger button--small", text.history.delete);
+  confirmButton.type = "button";
+  confirmButton.addEventListener("click", () => dialog.close("confirm"));
+  actions.append(cancel, confirmButton);
+  const body = el("p", "confirm__body", text.history.confirmBody(short));
+  body.id = "confirm-body";
+  dialog.append(title, body, actions);
+  document.body.append(dialog);
+  return new Promise((resolve) => {
+    dialog.addEventListener("close", () => {
+      dialog.remove();
+      const confirmed = dialog.returnValue === "confirm";
+      if (!confirmed) opener.focus();
+      resolve(confirmed);
+    });
+    dialog.showModal();
+  });
+}
+
 async function remove(
   entry: HistoryEntry,
   item: HTMLElement,
@@ -91,6 +121,7 @@ async function remove(
 ) {
   const request = buildDeleteRequest(entry);
   if (!request) return;
+  if (!(await confirmDelete(shortUrl(location.origin, entry.id), button))) return;
   button.disabled = true;
   let status = 0;
   try {
@@ -101,12 +132,19 @@ async function remove(
   const outcome = deleteOutcome(status);
   if (outcome === "removed") {
     save(removeEntry(load(), entry.id));
+    const neighbour = item.nextElementSibling ?? item.previousElementSibling;
     item.remove();
     toast(text.history.deleted(entry.id), "success");
-    if (page.list.children.length === 0) page.empty.hidden = false;
+    if (neighbour) {
+      neighbour.querySelector<HTMLElement>(".button--danger, a")?.focus();
+    } else {
+      page.empty.hidden = false;
+      page.empty.focus();
+    }
     return;
   }
   button.disabled = false;
+  button.focus();
   const messages = {
     rate_limited: text.history.rateLimited,
     key_rejected: text.history.keyRejected,

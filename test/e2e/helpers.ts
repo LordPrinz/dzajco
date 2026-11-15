@@ -63,8 +63,13 @@ type Step =
   | { kind: "hasText"; text: string }
   | { kind: "first" };
 
-function toName(name: string | RegExp | undefined): Name | undefined {
-  return name instanceof RegExp ? { source: name.source, flags: name.flags } : name;
+/** `exact` matches the whole name, case-sensitive, like Playwright's `exact: true`. */
+function toName(name: string | RegExp | undefined, exact = false): Name | undefined {
+  if (name instanceof RegExp) return { source: name.source, flags: name.flags };
+  if (exact && name !== undefined) {
+    return { source: `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, flags: "" };
+  }
+  return name;
 }
 
 export class Locator {
@@ -72,8 +77,11 @@ export class Locator {
   locator(selector: string): Locator {
     return new Locator([...this.steps, { kind: "css", selector }]);
   }
-  getByRole(role: string, options: { name?: string | RegExp } = {}): Locator {
-    return new Locator([...this.steps, { kind: "role", role, name: toName(options.name) }]);
+  getByRole(role: string, options: { name?: string | RegExp; exact?: boolean } = {}): Locator {
+    return new Locator([
+      ...this.steps,
+      { kind: "role", role, name: toName(options.name, options.exact) },
+    ]);
   }
   getByText(text: string): Locator {
     return new Locator([...this.steps, { kind: "text", text }]);
@@ -115,6 +123,7 @@ function pageQuery(steps: Step[]): Element[] {
     link: "a[href], [role=link]",
     heading: "h1, h2, h3, h4, h5, h6, [role=heading]",
     listitem: "li, [role=listitem]",
+    dialog: "dialog, [role=dialog]",
   };
   let roots: Element[] = [document.documentElement];
   for (const step of steps) {
@@ -393,8 +402,8 @@ export class Page {
   locator(selector: string): Locator {
     return new Locator([{ kind: "css", selector }]);
   }
-  getByRole(role: string, options: { name?: string | RegExp } = {}): Locator {
-    return new Locator([{ kind: "role", role, name: toName(options.name) }]);
+  getByRole(role: string, options: { name?: string | RegExp; exact?: boolean } = {}): Locator {
+    return new Locator([{ kind: "role", role, name: toName(options.name, options.exact) }]);
   }
   getByLabel(text: string): Locator {
     return new Locator([{ kind: "label", text }]);
@@ -558,6 +567,13 @@ export class Page {
 
 function describe(target: Locator): string {
   return target.steps.map((s) => JSON.stringify(s)).join(" > ");
+}
+
+/** Stores the entries as the browser's History and opens /history. */
+export async function seedHistory(page: Page, entries: unknown[]): Promise<void> {
+  await page.goto("/");
+  await page.seedStorage(HISTORY_KEY, entries);
+  await page.goto("/history");
 }
 
 /** Opens a page for one test; `afterEach(closePages)` closes it. */
