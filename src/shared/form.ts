@@ -60,7 +60,8 @@ export function normalizeUrlInput(input: string): string {
 export function formUrlError(input: string): "empty_url" | "invalid_url" | null {
   const trimmed = input.trim();
   if (trimmed === "") return "empty_url";
-  if (normalizeUrlInput(trimmed) === trimmed) return null;
+  // An IPv6 literal such as `[::1]` has no dot either; the URL policy names it properly.
+  if (normalizeUrlInput(trimmed) === trimmed || trimmed.startsWith("[")) return null;
   const host = trimmed.split(/[/?#:]/, 1)[0] ?? "";
   return host.includes(".") || host.toLowerCase() === "localhost" ? null : "invalid_url";
 }

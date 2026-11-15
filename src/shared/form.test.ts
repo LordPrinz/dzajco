@@ -89,6 +89,8 @@ describe("formUrlError", () => {
     "https://intranet",
     "http://127.0.0.1/",
     "ftp://example.com",
+    "[::1]",
+    "[2001:db8::1]:8080/x",
   ])("leaves %p to the URL policy", (input) => {
     expect(formUrlError(input)).toBeNull();
   });
