@@ -196,10 +196,11 @@ function render(entry: HistoryEntry, page: Page): HTMLElement {
 }
 
 function show(entries: readonly HistoryEntry[], page: Page): void {
-  page.list.replaceChildren(...visibleEntries(entries).map((entry) => render(entry, page)));
+  const shown = visibleEntries(entries);
+  page.list.replaceChildren(...shown.map((entry) => render(entry, page)));
   page.empty.hidden = entries.length > 0;
   const note = document.getElementById("history-note");
-  if (note) note.hidden = !visibleEntries(entries).some((entry) => !canDelete(entry));
+  if (note) note.hidden = !shown.some((entry) => !canDelete(entry));
 }
 
 type Added = { outcome: Exclude<AddOutcome, "ok"> } | { outcome: "ok"; entry: HistoryEntry };
