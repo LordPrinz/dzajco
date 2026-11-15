@@ -207,6 +207,11 @@ body {
   transform: none;
 }
 
+/* The skip link moves focus here; a ring around the whole page body would be noise. */
+#main:focus-visible {
+  outline: none;
+}
+
 /* Top bar with the page settings, right-aligned above the content. */
 .topbar {
   display: flex;
