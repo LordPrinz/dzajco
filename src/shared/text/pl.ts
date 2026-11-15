@@ -43,7 +43,7 @@ export const pl = {
   toastClose: "Zamknij",
   savedKey: {
     title: "Klucz do zarządzania",
-    text: "Zapisany w Historii tej przeglądarki. Skopiuj go, żeby na innym urządzeniu dodać link w Historii. Tam też będzie można go usunąć i zobaczyć miasta.",
+    text: "Zapisany w Historii tej przeglądarki. Skopiuj go, żeby dodać link do Historii na innym urządzeniu. Tam też go usuniesz i zobaczysz miasta.",
   },
   form: {
     sending: "Skracanie…",

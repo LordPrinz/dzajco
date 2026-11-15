@@ -51,6 +51,14 @@ describe("GET /history", () => {
     expect(html).toContain('id="history-empty"');
     expect(html).toContain('src="/assets/history.js"');
   });
+
+  it("renders the add-with-key form hidden until the script shows it", async () => {
+    const { html } = await page("/history");
+    expect(html).toMatch(/<form[^>]*id="add-key-form"[^>]*\shidden/);
+    expect(html).toContain('<label class="field__label" for="add-key-code">');
+    expect(html).toContain('<label class="field__label" for="add-key-secret">');
+    expect(html).toContain('id="add-key-error" role="alert"');
+  });
 });
 
 describe("GET /about", () => {

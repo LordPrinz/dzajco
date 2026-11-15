@@ -414,10 +414,11 @@ export const en: PageText = {
         <>
           The list of your links, with their deletion keys, is saved in your browser's local storage
           (localStorage, key <code>links-history</code>). It lives only on your device and never
-          reaches our server. Clearing the browser's data removes it for good. Deleting a link and
-          seeing its cities needs its key. Save the key separately if you want access from another
-          device: there, add the link with its key on the History page. The key then goes to the
-          server only to be checked, and the link and key stay in that browser's storage.
+          reaches our server. Clearing the browser's data removes it for good. You need a link's key
+          to delete it or see its cities. Save the key separately if you want access from another
+          device: there, add the link with its key on the History page. When you delete a link, view
+          its cities or add it, the key goes to the server only in a header, to be checked; the list
+          stays in this browser.
         </>
       ),
     },

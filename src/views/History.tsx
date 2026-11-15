@@ -25,15 +25,11 @@ export function History({ nonce }: { nonce: string }) {
         </p>
         <p class="doc__note">{t.history.note}</p>
 
-        {/* Shown by history.js. POST keeps the key out of the address bar if it ever submits. */}
-        <form
-          class="doc__section add-key"
-          id="add-key-form"
-          method="post"
-          aria-labelledby="add-key-title"
-          hidden
-        >
-          <h2 id="add-key-title">{t.history.add.heading}</h2>
+        {/* Hidden until history.js runs. */}
+        <form class="doc__section add-key" id="add-key-form" aria-labelledby="add-key-title" hidden>
+          <h2 id="add-key-title" tabindex={-1}>
+            {t.history.add.heading}
+          </h2>
           <p class="add-key__lead">{t.history.add.lead}</p>
           <label class="field__label" for="add-key-code">
             {t.history.add.codeLabel}

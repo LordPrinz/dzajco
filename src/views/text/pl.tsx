@@ -296,7 +296,7 @@ export const pl = {
     note: "Usunąć można tylko linki zapisane razem z kluczem. Wpisy bez klucza są tylko do odczytu.",
     add: {
       heading: "Dodaj link z kluczem",
-      lead: "Link utworzony na innym urządzeniu? Wklej go razem z kluczem do zarządzania. Sprawdzimy klucz i zapiszemy link w tej przeglądarce.",
+      lead: "Link utworzony na innym urządzeniu? Wklej go z kluczem do zarządzania. Sprawdzimy klucz i zapiszemy link w tej przeglądarce.",
       codeLabel: "Krótki link albo kod",
       keyLabel: "Klucz do zarządzania",
       submit: "Dodaj link",
@@ -420,8 +420,8 @@ export const pl = {
           urządzeniu i nie trafia na nasz serwer. Wyczyszczenie danych przeglądarki usuwa ją
           bezpowrotnie. Do usunięcia linku i zobaczenia miast potrzebny jest klucz. Zapisz go
           osobno, jeśli chcesz mieć dostęp z innego urządzenia: tam dodasz link z kluczem na stronie
-          Historia. Klucz idzie wtedy do serwera tylko w celu sprawdzenia, a link i klucz zostają w
-          pamięci tamtej przeglądarki.
+          Historia. Gdy usuwasz link, oglądasz jego miasta albo go dodajesz, klucz trafia na serwer
+          tylko w nagłówku, do sprawdzenia; lista zostaje w tej przeglądarce.
         </>
       ),
     },

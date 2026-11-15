@@ -68,11 +68,11 @@ export const en: SharedText = {
     deleteFailed: "Could not delete the link. Please try again.",
     adding: "Checking the key…",
     added: (id) => `Added link ${id}`,
-    keyUpdated: (id) => `Saved the key of link ${id}`,
+    keyUpdated: (id) => `Saved the key for link ${id}`,
     addErrors: {
       empty_code: "Enter a short link or its code.",
       key_rejected: "This key does not match the link.",
-      not_found: "There is no such link, or it has expired.",
+      not_found: "No such link, or it has expired.",
       rate_limited: "Too many requests. Try again in a minute.",
       failed: "Could not check the key. Please try again.",
     },

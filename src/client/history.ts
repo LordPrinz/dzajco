@@ -12,6 +12,7 @@ import {
   HISTORY_KEY,
   type HistoryEntry,
   isExpired,
+  isLinkId,
   parseHistory,
   removeEntry,
   shortUrl,
@@ -201,27 +202,20 @@ function show(entries: readonly HistoryEntry[], page: Page): void {
   page.empty.hidden = entries.length > 0;
 }
 
-type Added =
-  | { outcome: Exclude<AddOutcome, "ok"> }
-  | { outcome: "ok"; id: string; updated: boolean };
+type Added = { outcome: Exclude<AddOutcome, "ok"> } | { outcome: "ok"; entry: HistoryEntry };
+type AddError = keyof typeof text.history.addErrors;
 
-/** Checks the key with the owner stats, then saves the link with it, or sets the key on its entry. */
-async function addLink(code: string, secretKey: string, page: Page): Promise<Added> {
+/** Checks the key with the owner stats, then reads the link to build its entry. */
+async function addLink(id: string, secretKey: string): Promise<Added> {
   try {
-    const { url, init } = ownerRequest(code, secretKey);
+    const { url, init } = ownerRequest(id, secretKey);
     const checked = addOutcome((await fetch(url, init)).status);
     if (checked !== "ok") return { outcome: checked };
-    const response = await fetch(`/api/v1/links/${encodeURIComponent(code)}`);
+    const response = await fetch(`/api/v1/links/${encodeURIComponent(id)}`);
     const found = addOutcome(response.status);
     if (found !== "ok") return { outcome: found };
-    const entry = entryFromLink(await response.json(), secretKey);
-    if (!entry) return { outcome: "failed" };
-    const entries = load();
-    const updated = withKey(entries, entry.id, secretKey);
-    const next = updated ?? upsertEntry(entries, entry);
-    save(next);
-    show(next, page);
-    return { outcome: "ok", id: entry.id, updated: updated !== null };
+    const entry = entryFromLink(await response.json(), id, secretKey);
+    return entry ? { outcome: "ok", entry } : { outcome: "failed" };
   } catch {
     return { outcome: "failed" };
   }
@@ -231,12 +225,19 @@ function setupAddForm(page: Page): void {
   const form = document.getElementById("add-key-form") as HTMLFormElement | null;
   const code = document.getElementById("add-key-code") as HTMLInputElement | null;
   const key = document.getElementById("add-key-secret") as HTMLInputElement | null;
+  const title = document.getElementById("add-key-title");
   const error = document.getElementById("add-key-error");
   const status = document.getElementById("add-key-status");
-  const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
-  if (!form || !code || !key || !error || !status || !submit) return;
+  if (!form || !code || !key || !title || !error || !status) return;
 
+  const fieldOf: Partial<Record<AddError, HTMLInputElement>> = {
+    key_rejected: key,
+    not_found: code,
+    empty_code: code,
+  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const clear = () => {
+    clearTimeout(timer);
     error.hidden = true;
     error.textContent = "";
     for (const field of [code, key]) {
@@ -244,19 +245,14 @@ function setupAddForm(page: Page): void {
       field.removeAttribute("aria-describedby");
     }
   };
-  // Rate limits and network errors are not about a field, so they only show the message.
-  const fail = (reason: keyof typeof text.history.addErrors) => {
-    const field =
-      reason === "key_rejected"
-        ? key
-        : reason === "failed" || reason === "rate_limited"
-          ? null
-          : code;
+  const fail = (reason: AddError) => {
+    clearTimeout(timer);
     error.hidden = false;
     // Set after a moment, so a repeated message is read out again.
-    setTimeout(() => {
+    timer = setTimeout(() => {
       error.textContent = text.history.addErrors[reason];
     }, REANNOUNCE_MS);
+    const field = fieldOf[reason];
     if (!field) return;
     field.setAttribute("aria-invalid", "true");
     field.setAttribute("aria-describedby", error.id);
@@ -268,29 +264,37 @@ function setupAddForm(page: Page): void {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     clear();
-    const id = codeFromInput(code.value);
+    const id = codeFromInput(code.value).normalize("NFC");
     if (id === "") {
       fail("empty_code");
       return;
     }
-    submit.disabled = true;
+    if (!isLinkId(id)) {
+      fail("not_found");
+      return;
+    }
+    const secretKey = key.value.trim();
+    form.inert = true;
     status.textContent = text.history.adding;
-    const added = await addLink(id, key.value.trim(), page);
-    submit.disabled = false;
+    const added = await addLink(id, secretKey);
+    form.inert = false;
     status.textContent = "";
     if (added.outcome !== "ok") {
       fail(added.outcome);
       return;
     }
+    const { entry } = added;
+    const entries = load();
+    const updated = withKey(entries, entry.id, secretKey);
+    const next = updated ?? upsertEntry(entries, entry);
+    save(next);
+    show(next, page);
     form.reset();
-    toast(
-      added.updated ? text.history.keyUpdated(added.id) : text.history.added(added.id),
-      "success",
-    );
-    const short = shortUrl(location.origin, added.id);
-    for (const link of page.list.querySelectorAll<HTMLAnchorElement>(".history__short")) {
-      if (link.href === short) link.focus();
-    }
+    toast(updated ? text.history.keyUpdated(entry.id) : text.history.added(entry.id), "success");
+    const short = shortUrl(location.origin, entry.id);
+    const links = Array.from(page.list.querySelectorAll<HTMLAnchorElement>(".history__short"));
+    // Past MAX_RENDERED the new entry is not drawn, so focus goes back to the form.
+    (links.find((link) => link.href === short) ?? title).focus();
   });
   form.hidden = false;
 }

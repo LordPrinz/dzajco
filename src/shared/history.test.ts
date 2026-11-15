@@ -6,6 +6,7 @@ import {
   deleteOutcome,
   entryFromLink,
   isExpired,
+  isLinkId,
   MAX_RENDERED,
   newestFirst,
   parseHistory,
@@ -229,6 +230,7 @@ describe("adding a link with its key", () => {
           expiresAt: "2099-01-01T00:00:00.000Z",
           createdAt: "2026-11-01T10:00:00.000Z",
         },
+        "abcd",
         "k",
       ),
     ).toEqual({
@@ -242,13 +244,33 @@ describe("adding a link with its key", () => {
 
   it("reads a missing expiry as never and a missing date as unknown", () => {
     expect(
-      entryFromLink({ id: "abcd", url: "https://example.com/", expiresAt: null }, "k"),
+      entryFromLink({ id: "abcd", url: "https://example.com/", expiresAt: null }, "abcd", "k"),
     ).toEqual(expect.objectContaining({ expire: "never", createdAt: "" }));
   });
 
   it("rejects a body that is not a link", () => {
-    expect(entryFromLink(null, "k")).toBeNull();
-    expect(entryFromLink({ error: { code: "not_found" } }, "k")).toBeNull();
-    expect(entryFromLink({ id: "abcd", url: 5 }, "k")).toBeNull();
+    expect(entryFromLink(null, "abcd", "k")).toBeNull();
+    expect(entryFromLink({ error: { code: "not_found" } }, "abcd", "k")).toBeNull();
+    expect(entryFromLink({ id: "abcd", url: 5 }, "abcd", "k")).toBeNull();
+  });
+
+  it("rejects a link other than the one whose key was checked", () => {
+    expect(entryFromLink({ id: "other", url: "https://example.com/" }, "abcd", "k")).toBeNull();
+    // The checked code is NFC; a decomposed id in the body does not match it.
+    expect(entryFromLink({ id: "zółw", url: "https://example.com/" }, "zółw", "k")).toBeNull();
+  });
+
+  it("accepts only codes that can name a link", () => {
+    expect(isLinkId("abc123")).toBe(true);
+    expect(isLinkId("moje linki")).toBe(true);
+    expect(isLinkId("zażółć")).toBe(true);
+    expect(isLinkId("")).toBe(false);
+    expect(isLinkId(".")).toBe(false);
+    expect(isLinkId("..")).toBe(false);
+    expect(isLinkId("a/b")).toBe(false);
+    expect(isLinkId("a​b")).toBe(false);
+    expect(isLinkId("a\nb")).toBe(false);
+    expect(isLinkId("x".repeat(64))).toBe(true);
+    expect(isLinkId("x".repeat(65))).toBe(false);
   });
 });

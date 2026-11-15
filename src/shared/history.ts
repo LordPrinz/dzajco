@@ -1,6 +1,7 @@
 // Pure logic of the history page, shared by the browser script and the bun tests. Keep it free of
 // DOM and runtime imports.
 
+import { LOOKUP_ID } from "../domain/lookup-id";
 import { HISTORY_KEY, type HistoryEntry } from "./form";
 
 export { HISTORY_KEY, type HistoryEntry };
@@ -117,17 +118,24 @@ export function withKey(
   return entries.map((entry) => (entry.id === id ? { ...entry, secretKey } : entry));
 }
 
-/** A new entry from the `GET /api/v1/links/:id` body; null when the body is not a link. */
-export function entryFromLink(body: unknown, secretKey: string): HistoryEntry | null {
+/**
+ * Whether `id` (already NFC) can name a link, by the server's lookup rule. `.` and `..` pass it but
+ * would act as path segments in the request URL and reach another endpoint.
+ */
+export function isLinkId(id: string): boolean {
+  return LOOKUP_ID.test(id) && id !== "." && id !== "..";
+}
+
+/** A new entry from the `GET /api/v1/links/:id` body; null unless it is the link `id` that was checked. */
+export function entryFromLink(body: unknown, id: string, secretKey: string): HistoryEntry | null {
   const link = (body ?? {}) as {
     id?: unknown;
     url?: unknown;
     expiresAt?: unknown;
     createdAt?: unknown;
   };
-  const id = text(link.id);
   const url = text(link.url);
-  if (id === null || url === null) return null;
+  if (link.id !== id || url === null) return null;
   return {
     id,
     url,
