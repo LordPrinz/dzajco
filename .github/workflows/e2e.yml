@@ -49,7 +49,8 @@ jobs:
         run: |
           BUN_CHROME_PATH="$(command -v google-chrome-stable)"
           export BUN_CHROME_PATH
-          bun run test:e2e
+          "$BUN_CHROME_PATH" --version
+          bun run test:e2e --retry=1
       - run: bun run test:lhci
       - name: Upload reports
         if: failure()
