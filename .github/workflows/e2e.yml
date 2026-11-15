@@ -33,7 +33,6 @@ jobs:
           node-version: 26.13.1
       - run: bun install --frozen-lockfile
       - run: bun run build:client
-      - run: bunx playwright install --with-deps chromium
       - name: Local secrets for the test server
         run: echo "SECRET_PEPPER_V1=e2e-ci-pepper" > .dev.vars
       - run: bun run db:migrate:local
@@ -46,7 +45,11 @@ jobs:
           done
           cat wrangler.log
           exit 1
-      - run: bun run test:e2e
+      - name: End-to-end tests (Chrome)
+        run: |
+          BUN_CHROME_PATH="$(command -v google-chrome-stable)"
+          export BUN_CHROME_PATH
+          bun run test:e2e
       - run: bun run test:lhci
       - name: Upload reports
         if: failure()
@@ -54,8 +57,6 @@ jobs:
         with:
           name: e2e-reports
           path: |
-            playwright-report
-            test-results
             .lighthouseci
             wrangler.log
           if-no-files-found: ignore
