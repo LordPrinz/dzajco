@@ -24,11 +24,10 @@ import {
 import { codeFromInput } from "../shared/short-url";
 import { ownerRequest } from "../shared/stats";
 import { pageLocale, pageText } from "./lib/lang";
+import { formatLocal } from "./lib/local-time";
 import { REANNOUNCE_MS, toast } from "./lib/toast";
 
 const text = pageText();
-
-const DATE_FORMAT: Intl.DateTimeFormatOptions = { dateStyle: "long", timeStyle: "short" };
 
 function load(): HistoryEntry[] {
   try {
@@ -58,8 +57,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 function formatDate(iso: string): string {
-  const at = new Date(iso);
-  return Number.isNaN(at.getTime()) ? iso : at.toLocaleString(pageLocale(), DATE_FORMAT);
+  return formatLocal(iso, pageLocale(), iso);
 }
 
 function meta(label: string, value: string): HTMLElement {

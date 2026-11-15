@@ -11,7 +11,8 @@ import {
   parseCities,
 } from "../shared/stats";
 import { enableCopy } from "./lib/copy";
-import { pageLang } from "./lib/lang";
+import { pageLang, pageLocale } from "./lib/lang";
+import { localizeTimes } from "./lib/local-time";
 
 function readKey(id: string): string | null {
   try {
@@ -95,6 +96,7 @@ async function init(): Promise<void> {
   const id = root?.dataset.id;
   if (!root || !owner || !id) return;
   enableCopy(root);
+  localizeTimes(root, pageLocale());
   const key = readKey(id);
   if (key === null) return;
   // This browser made the link: reporting it as abuse makes no sense for its owner.
