@@ -48,7 +48,7 @@ dzajco/                          (trunk: dev)
 │   ├── ci/            # coverage.ts, size.ts, smoke.ts
 │   ├── lib/           # jsonc.ts, sql.ts
 │   └── migrate/       # mongo-to-d1.ts, transform.ts, visits.ts, countries.ts
-├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:7)
+├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:9)
 ├── Dockerfile                 # dev/test: node:24-bookworm-slim + bun + wrangler (workerd needs glibc)
 ├── wrangler.jsonc  vitest.config.ts  biome.json  bunfig.toml  tsconfig.json  .editorconfig  .env.example
 ├── docs/{DESIGN.md,ROADMAP.md,DEPLOYMENT.md,adr/}
