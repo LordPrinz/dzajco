@@ -29,19 +29,24 @@ dzajco/                          (trunk: v3.0)
 │   ├── db/            # queries.ts (D1)
 │   ├── analytics/     # sink.ts (AE writeDataPoint), ae-source.ts (SQL API), fresh.ts. Ports, mocked in tests
 │   ├── cron/          # rollup.ts, daily.ts, scheduled.ts
-│   ├── middleware/    # security-headers, rate-limit, origin-check, errors, request-id
-│   ├── routes/        # redirect.ts, api.ts, pages.ts, form.ts
-│   ├── views/         # Hono JSX: Layout, Home, Created, History, Stats, About, ApiDocs, Privacy, NotFound, Gone
+│   ├── services/      # links.ts (create a link), stats.ts
+│   ├── lib/           # app-env, abuse, body, client-ip, html, time
+│   ├── shared/        # code shared by the server and the browser scripts: events, form, history, stats
+│   ├── middleware/    # security-headers, rate-limit, cors, site-extras, errors, request-id
+│   ├── routes/        # redirect.ts, api.ts, stats.ts, pages.ts (form pages, origin check), stats-page.ts, info-pages.ts
+│   ├── views/         # Hono JSX: Layout, Header, Home, Created, ResultCard, History, Stats, About, ApiDocs, Privacy, LinkError, Notice
 │   ├── client/        # browser scripts, built with `bun build` into public/assets
 │   └── index.ts       # fetch + scheduled
-├── migrations/0001_init.sql
+├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql
 ├── public/            # _headers, css, img, assets/ (build output)
 ├── test/worker/       # vitest-pool-workers (+ cf fixtures, applyD1Migrations)
 ├── test/e2e/          # Playwright
 ├── scripts/
+│   ├── admin/         # block.ts (abuse CLI: block or unblock a host, delete a link)
 │   ├── gh/            # repo, board and issue scripts (+ tests)
 │   ├── git/           # commit and branch conventions (+ tests)
-│   ├── ci/            # coverage.ts, size.ts
+│   ├── ci/            # coverage.ts, size.ts, smoke.ts
+│   ├── lib/           # jsonc.ts, sql.ts
 │   └── migrate/       # mongo-to-d1.ts
 ├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:7)
 ├── Dockerfile                 # dev/test: node:24-bookworm-slim + bun + wrangler (workerd needs glibc)
