@@ -103,7 +103,7 @@ jobs:
       # workerd and wrangler need Node.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.3
+          node-version: 26.13.1
       - run: bun install --frozen-lockfile
       - run: bun run test:worker
 
@@ -125,7 +125,7 @@ jobs:
       # wrangler needs Node.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.3
+          node-version: 26.13.1
       - run: bun install --frozen-lockfile
       - run: bun run build:client
       - run: bun run check:size

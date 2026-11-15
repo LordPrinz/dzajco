@@ -5,8 +5,8 @@
 # oven/bun:1.4.4 is the Debian variant; only its bun binary is used.
 FROM oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d AS bun
 
-# node:24-bookworm-slim (Node 24.22.3, the version CI pins in setup-node)
-FROM node:24-bookworm-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54
+# node:26-bookworm-slim (Node 26.13.1, the version CI pins in setup-node)
+FROM node:26-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 # workerd needs the system CA store for its outbound TLS configuration; the slim image ships without it.
 RUN apt-get update \
