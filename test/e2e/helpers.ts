@@ -124,6 +124,7 @@ function pageQuery(steps: Step[]): Element[] {
     heading: "h1, h2, h3, h4, h5, h6, [role=heading]",
     listitem: "li, [role=listitem]",
     dialog: "dialog, [role=dialog]",
+    alert: "[role=alert]",
   };
   let roots: Element[] = [document.documentElement];
   for (const step of steps) {
@@ -142,6 +143,9 @@ function pageQuery(steps: Step[]): Element[] {
         const selector = roleSelectors[step.role];
         if (!selector) throw new Error(`unknown role ${step.role}`);
         for (const el of all(selector)) {
+          // Like Playwright, roles skip what is hidden from assistive tech (display: none, aria-hidden).
+          if (!el.checkVisibility({ visibilityProperty: true })) continue;
+          if (el.closest('[aria-hidden="true"]')) continue;
           const name =
             labelOf(el) ?? norm(el instanceof HTMLInputElement ? el.value : (el.textContent ?? ""));
           if (step.name === undefined || matches(name, step.name)) add(el);
@@ -283,6 +287,8 @@ export interface PageOptions {
   javaScript?: boolean;
   /** Sent as `Accept-Language`. Polish by default; most tests check the Polish pages. */
   locale?: string;
+  /** Answers a request in the proxy instead of the server when it returns a response. */
+  route?: (method: string, path: string) => Response | undefined;
 }
 
 export class Page {
@@ -303,6 +309,15 @@ export class Page {
       hostname: "localhost",
       async fetch(request) {
         const url = new URL(request.url);
+        const routed = options.route?.(request.method, url.pathname);
+        if (routed) {
+          requests.push({
+            method: request.method,
+            path: url.pathname + url.search,
+            status: routed.status,
+          });
+          return routed;
+        }
         const headers = new Headers(request.headers);
         headers.delete("host");
         headers.delete("accept-encoding");
