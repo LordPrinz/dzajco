@@ -1,6 +1,11 @@
 /** DNS limit for a host name; it also caps a host at 127 labels for the blocklist suffix walk. */
 export const MAX_HOST_LENGTH = 253;
 
+/** True when a (punycode) host has an internationalised label; the server and the browser share this rule. */
+export function hostIsIdn(hostname: string): boolean {
+  return hostname.split(".").some((label) => label.startsWith("xn--"));
+}
+
 export function normalizeHostname(hostname: string): string {
   return hostname.toLowerCase().replace(/\.+$/, "");
 }

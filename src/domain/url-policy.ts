@@ -1,5 +1,4 @@
-import { hostIsIdn } from "../shared/form";
-import { MAX_HOST_LENGTH } from "./host";
+import { hostIsIdn, MAX_HOST_LENGTH } from "./host";
 export const MAX_URL_LENGTH = 2048;
 
 export const SHORTENER_HOSTS: readonly string[] = [

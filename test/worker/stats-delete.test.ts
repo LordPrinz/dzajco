@@ -499,3 +499,24 @@ describe("GET /api/v1/stats", () => {
     expect(limited.headers.get("retry-after")).toBe("60");
   });
 });
+
+describe("CORS on the stats routes", () => {
+  it("GET stats answers with Access-Control-Allow-Origin * and no credentials", async () => {
+    const { id } = await create();
+    for (const path of [`/api/v1/links/${id}/stats`, "/api/v1/stats"]) {
+      const res = await call(request(path, { headers: { origin: "https://evil.example" } }));
+      expect(res.status).toBe(200);
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
+      expect(res.headers.get("access-control-allow-credentials")).toBeNull();
+    }
+  });
+
+  it("DELETE gets no CORS header", async () => {
+    const { id, key } = await create();
+    const res = await call(
+      del(id, { authorization: `Bearer ${key}`, origin: "https://evil.example" }),
+    );
+    expect(res.status).toBe(204);
+    expect(res.headers.get("access-control-allow-origin")).toBeNull();
+  });
+});
