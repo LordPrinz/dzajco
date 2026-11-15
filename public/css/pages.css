@@ -19,7 +19,7 @@
 }
 
 .doc__accent {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .doc__lead {
