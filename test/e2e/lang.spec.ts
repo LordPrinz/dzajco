@@ -11,14 +11,24 @@ test.describe("in English", () => {
 
     await page.getByLabel("Link to shorten").fill("ftp://example.com/file");
     await page.getByRole("button", { name: "Shorten" }).click();
-    await expect(page.locator("#toasts-alert .toast--error")).toHaveText(
-      /Only http and https addresses are allowed/,
+    await expect(page.locator("#form-error")).toHaveText(
+      "Only http and https addresses are allowed.",
     );
 
     await page.getByLabel("Link to shorten").fill(uniqueTarget());
     await page.getByRole("button", { name: "Shorten" }).click();
     await expect(page.getByRole("heading", { name: "Your link is ready" })).toBeVisible();
   });
+});
+
+test("the English home page loads only the basic Latin font", async ({ page }) => {
+  const fonts: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/fonts/")) fonts.push(request.url());
+  });
+  await page.goto("/?lang=en", { waitUntil: "networkidle" });
+  expect(fonts.some((url) => url.endsWith("open-sans-latin.woff2"))).toBe(true);
+  expect(fonts.some((url) => url.includes("latin-ext"))).toBe(false);
 });
 
 async function switchToEnglish(page: Page) {

@@ -7,13 +7,14 @@ import {
   errorText,
   expiresAtFrom,
   FIELD_OF_ERROR,
+  formUrlError,
   HISTORY_KEY,
   type HistoryEntry,
   normalizeUrlInput,
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
 import { pageLocale, pageText } from "./lib/lang";
-import { dismissAll, toast } from "./lib/toast";
+import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
 
 const text = pageText();
 
@@ -110,11 +111,14 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
   // The fragment is empty once its children move into the slot, so the copy handlers need the section.
   enableCopy(section);
   slot.replaceChildren(card);
-  slot.querySelector<HTMLElement>("#result-title")?.focus();
+  // The result takes the place of the form: the forms go, the card shows right under the hero.
+  for (const id of ["shorten-form", "lookup-form"]) byId(id)?.setAttribute("hidden", "");
+  slot.querySelector<HTMLElement>("#result-title")?.focus({ preventScroll: true });
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  section.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
 }
 
 function setupShortenForm(form: HTMLFormElement): void {
-  const serverError = byId<HTMLElement>("form-error");
   const status = byId<HTMLElement>("form-status");
   const expiry = byId<HTMLSelectElement>("expiry");
   const customDate = byId<HTMLElement>("custom-date");
@@ -132,37 +136,51 @@ function setupShortenForm(form: HTMLFormElement): void {
   syncCustomDate();
 
   const fields = ["url", "customName", "expiry"] as const;
+  const errorBoxes = [byId("form-error"), byId("options-error")];
   const clearInvalid = () => {
     for (const name of fields) {
       byId(name)?.removeAttribute("aria-invalid");
       byId(name)?.removeAttribute("aria-describedby");
     }
-    if (serverError) serverError.hidden = true;
+    for (const box of errorBoxes) if (box) box.hidden = true;
   };
+  // Network and server errors have no field to point at, so they go to a toast.
   const fail = (code: string) => {
     const message = errorText(code, text);
-    const field = byId(FIELD_OF_ERROR[code] ?? "url");
-    // The toast announces the error; the field keeps the text as its description, in the
-    // server's #form-error paragraph, hidden from sight and with its alert role dropped so the
-    // message is not read twice.
-    if (serverError) {
-      serverError.removeAttribute("role");
-      serverError.classList.add("sr-only");
-      serverError.textContent = message;
-      serverError.hidden = false;
+    const fieldName = FIELD_OF_ERROR[code];
+    const box = byId(fieldName === "url" ? "form-error" : "options-error");
+    if (fieldName === undefined || !box) {
+      // The submit button is disabled while the request runs, so focus returns to the link field.
+      toast(message, "error", { returnFocus: byId("url") });
+      return;
     }
+    const field = byId(fieldName);
+    // A field inside the closed options panel cannot take focus.
+    const panel = field?.closest("details");
+    if (panel) panel.open = true;
+    // Cleared first so a repeated message is read out again.
+    box.textContent = "";
+    box.hidden = false;
+    setTimeout(() => {
+      box.textContent = message;
+    }, REANNOUNCE_MS);
     field?.setAttribute("aria-invalid", "true");
-    if (serverError) field?.setAttribute("aria-describedby", serverError.id);
+    field?.setAttribute("aria-describedby", box.id);
     field?.focus();
-    toast(message, "error", { returnFocus: field });
   };
+  for (const name of fields) byId(name)?.addEventListener("input", clearInvalid);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    // Also hides a server-rendered error from a no-JS attempt: it is stale once the script runs.
+    // Also clears an error the server rendered for a no-JS attempt.
     clearInvalid();
     dismissAll("error");
     const data = new FormData(form);
+    const early = formUrlError(String(data.get("url") ?? ""));
+    if (early) {
+      fail(early);
+      return;
+    }
     const url = normalizeUrlInput(String(data.get("url") ?? ""));
     const customName = String(data.get("customName") ?? "").trim();
     const choice = {

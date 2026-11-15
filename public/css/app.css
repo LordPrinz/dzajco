@@ -141,8 +141,9 @@ html {
 
 body {
   margin: 0;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 4rem;
   overflow-x: hidden;
   font-family: var(--font);
   color: var(--text);
@@ -255,8 +256,9 @@ body {
 /* Layout: one centred column, as wide as the v2 eight-column grid. */
 .page {
   width: min(100% - 2 * var(--gutter), 70rem);
+  flex: 1 0 auto;
   margin-inline: auto;
-  padding-bottom: 4rem;
+  padding-bottom: 3rem;
 }
 
 .hero {
@@ -454,7 +456,7 @@ body {
 }
 
 .error {
-  margin: 0 0 1rem;
+  margin: 0.75rem 0 0;
   padding: 0.75rem 1.25rem;
   border-radius: 0.75rem;
   font-size: 0.9375rem;
@@ -591,7 +593,9 @@ body {
   transition: background-color 0.15s ease;
 }
 
+/* Border and fill change together, so the hover state has no ring of the old colour. */
 .button:hover {
+  border-color: var(--jajco-400);
   background: var(--jajco-400);
 }
 
@@ -608,14 +612,10 @@ a {
   color: var(--link);
 }
 
-/* Footer: fixed bar like v2. */
+/* Footer: at the end of the page, so it never covers content. */
 .footer {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: 50;
-  padding: 0.5rem 0.25rem;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: blur(6px);
+  padding: 0.75rem 0.25rem 1rem;
+  border-top: 1px solid var(--line);
 }
 
 .footer__list {
@@ -653,10 +653,10 @@ a {
   color: var(--link);
 }
 
-/* Toasts: stacked above the footer bar, newest at the bottom. */
+/* Toasts: stacked at the bottom of the viewport, newest last. */
 .toasts {
   position: fixed;
-  inset: auto 0 3.75rem;
+  inset: auto 0 1rem;
   z-index: 60;
   display: grid;
   justify-items: center;

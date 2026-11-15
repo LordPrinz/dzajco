@@ -8,7 +8,7 @@ import { clientIpKey } from "../lib/client-ip";
 import { renderPage } from "../lib/page";
 import { rateLimit } from "../middleware/rate-limit";
 import { createLink } from "../services/links";
-import { expiresAtFrom, normalizeUrlInput } from "../shared/form";
+import { expiresAtFrom, formUrlError, normalizeUrlInput } from "../shared/form";
 import { Created } from "../views/Created";
 import { Home, type HomeValues } from "../views/Home";
 import { Notice, type NoticeKind } from "../views/Notice";
@@ -87,6 +87,9 @@ export function pageRoutes() {
       };
       const reject = (error: string, status: 400 | 409 | 503) =>
         render(c, Home, { nonce: c.var.nonce, values, error }, status);
+
+      const early = formUrlError(values.url);
+      if (early) return reject(early, 400);
 
       const parsed = v.safeParse(formBodySchema, {
         url: normalizeUrlInput(values.url),

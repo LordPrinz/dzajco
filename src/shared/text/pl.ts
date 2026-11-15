@@ -3,6 +3,7 @@
 export const pl = {
   /** Messages for the error codes of the create form and the API. */
   errors: {
+    empty_url: "Najpierw wklej link.",
     invalid_url: "To nie wygląda na poprawny adres URL.",
     url_too_long: "Adres jest za długi (maksymalnie 2048 znaków).",
     unsupported_scheme: "Dozwolone są tylko adresy http i https.",

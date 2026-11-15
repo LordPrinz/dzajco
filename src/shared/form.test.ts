@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { parseExpiry } from "../domain/expiry.ts";
-import { expiresAtFrom, normalizeUrlInput } from "./form";
+import { expiresAtFrom, formUrlError, normalizeUrlInput } from "./form";
 
 const NOW = Date.parse("2026-01-01T00:00:00Z");
 
@@ -66,5 +66,32 @@ describe("normalizeUrlInput", () => {
     ]) {
       expect(normalizeUrlInput(input)).toBe(input);
     }
+  });
+});
+
+describe("formUrlError", () => {
+  it("asks for a link when the field is empty", () => {
+    expect(formUrlError("")).toBe("empty_url");
+    expect(formUrlError("   ")).toBe("empty_url");
+  });
+
+  it.each(["notaurl", "hello/world", "word?x=1", "Notaurl#x"])(
+    "calls the bare word %p an invalid link",
+    (input) => {
+      expect(formUrlError(input)).toBe("invalid_url");
+    },
+  );
+
+  it.each([
+    "example.com",
+    "example.com/path",
+    "localhost:3000",
+    "https://intranet",
+    "http://127.0.0.1/",
+    "ftp://example.com",
+    "[::1]",
+    "[2001:db8::1]:8080/x",
+  ])("leaves %p to the URL policy", (input) => {
+    expect(formUrlError(input)).toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import type { SharedText } from "./pl";
 
 export const en: SharedText = {
   errors: {
+    empty_url: "Paste a link first.",
     invalid_url: "That does not look like a valid URL.",
     url_too_long: "The address is too long (2048 characters at most).",
     unsupported_scheme: "Only http and https addresses are allowed.",

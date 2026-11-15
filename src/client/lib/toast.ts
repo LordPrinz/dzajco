@@ -14,7 +14,7 @@ import {
 /** How long the leave animation runs; reduced motion skips it. */
 const LEAVE_MS = 200;
 /** Long enough for a screen reader to notice the text was cleared before it comes back. */
-const REANNOUNCE_MS = 100;
+export const REANNOUNCE_MS = 100;
 
 interface Shown {
   node: HTMLElement;

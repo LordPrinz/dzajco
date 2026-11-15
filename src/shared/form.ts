@@ -51,7 +51,23 @@ export function normalizeUrlInput(input: string): string {
   return trimmed === "" || hasScheme ? trimmed : `https://${trimmed}`;
 }
 
+/**
+ * Errors the form can name before the URL policy runs. Typing a single word adds `https://` in front
+ * and makes a host without a dot, which the policy would call private; for someone who typed
+ * `notaurl` that is the wrong message, so the form says the link is not valid instead. A word with a
+ * scheme (`https://intranet`) still goes to the policy.
+ */
+export function formUrlError(input: string): "empty_url" | "invalid_url" | null {
+  const trimmed = input.trim();
+  if (trimmed === "") return "empty_url";
+  // An IPv6 literal such as `[::1]` has no dot either; the URL policy names it properly.
+  if (normalizeUrlInput(trimmed) === trimmed || trimmed.startsWith("[")) return null;
+  const host = trimmed.split(/[/?#:]/, 1)[0] ?? "";
+  return host.includes(".") || host.toLowerCase() === "localhost" ? null : "invalid_url";
+}
+
 export const FIELD_OF_ERROR: Record<string, "url" | "customName" | "expiry"> = {
+  empty_url: "url",
   invalid_url: "url",
   url_too_long: "url",
   unsupported_scheme: "url",
