@@ -10,6 +10,17 @@ test("shows a message when the history is empty", async () => {
   await page.expect(page.getByText("Brak zapisanych linków")).toBeVisible();
 });
 
+test("the read-only note shows only when an entry has no key", async () => {
+  const page = await openPage();
+  const link = await page.createViaApi();
+  await seedHistory(page, [v2Entry(link)]);
+  await page.expect(page.getByRole("listitem").filter({ hasText: link.id })).toBeVisible();
+  await page.expect(page.locator("#history-note")).toBeHidden();
+
+  await seedHistory(page, [v2Entry({ id: link.id, url: link.url })]);
+  await page.expect(page.locator("#history-note")).toBeVisible();
+});
+
 test("v2 entry with a key can be deleted", async () => {
   const page = await openPage();
   const link = await page.createViaApi();

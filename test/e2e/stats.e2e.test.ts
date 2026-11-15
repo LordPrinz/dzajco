@@ -9,10 +9,10 @@ test("public stats page shows the counters and no cities", async () => {
   expect(await page.goto(`/${link.id}/stats`)).toBe(200);
 
   await page.expect(page.getByRole("heading", { name: "Wejścia" })).toBeVisible();
-  // No gauge stuck at zero: a nudge to share, with Copy.
+  // No gauge stuck at zero: a nudge to share, and a single Copy button (the header one).
   await page.expect(page.getByText("Nie ma jeszcze kliknięć")).toBeVisible();
   await page.expect(page.locator(".counter__value")).toHaveCount(0);
-  await page.expect(page.locator('.stats__zero [data-copy="shortUrl"]')).toBeVisible();
+  await page.expect(page.locator('[data-copy="shortUrl"]')).toHaveCount(1);
   // Visitors who are not the owner can report the link.
   await page.expect(page.locator("[data-report]")).toBeVisible();
   await page.expect(page.getByRole("heading", { name: "Miasta" })).toBeHidden();
