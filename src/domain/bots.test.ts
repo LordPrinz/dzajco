@@ -10,6 +10,9 @@ describe("isBot", () => {
     "python-requests/2.31",
     "Go-http-client/2.0",
     "Slackbot-LinkExpanding 1.0",
+    "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)",
+    "Twitterbot/1.0",
+    "SomeBot/1.0",
     "UptimeRobot/2.0",
   ])("treats %p as a bot", (ua) => {
     expect(isBot(ua)).toBe(true);
@@ -21,6 +24,14 @@ describe("isBot", () => {
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
   ])("treats browser %p as human", (ua) => {
     expect(isBot(ua)).toBe(false);
+  });
+
+  it("treats CUBOT phones as human", () => {
+    expect(
+      isBot(
+        "Mozilla/5.0 (Linux; Android 12; CUBOT KINGKONG 5 Pro) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36",
+      ),
+    ).toBe(false);
   });
 
   it("an empty, blank or missing User-Agent counts as a bot", () => {
