@@ -172,10 +172,11 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
   call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
   `batch()` counts as one query toward the per-invocation limit (Free: 50), but the per-statement limits (100
   bound parameters, 100 KB) still apply, so a page is split into statements that fit. The next hours finish
-  the rest. `deleteExpired` runs after 01:00 UTC, whatever the cursor is, in batches of 500, at most 3 batches
-  per cron call (so the call stays inside the Free limit of 50 even at 20 rollup pages). Batches left over
-  from those 3 delete `deleted_links` rows older than 30 days, also 500 at a time. The day marker is
-  written only after a short batch of both, so a bigger backlog continues in the next hourly run. The `global_stats`
+  the rest. The cleanup runs after 01:00 UTC, whatever the cursor is, in batches of 500, at most 3 batches
+  per cron call (so the call stays inside the Free limit of 50 even at 20 rollup pages). `deleteExpired`
+  gets at most 2 of them. The last one, plus any `deleteExpired` leaves unused, purges `deleted_links` rows
+  older than 30 days, so an expired-link backlog cannot keep archive rows past their 30 days. The day
+  marker is written only after a short batch of both, so a bigger backlog continues in the next hourly run. The `global_stats`
   recompute runs once the cursor has reached today.
 - Fresh data (everything not yet in D1) comes from two queries with the same `GROUP BY` and `ORDER BY`: day
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache

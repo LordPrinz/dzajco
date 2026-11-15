@@ -8,13 +8,16 @@
 import { dayOf, isDayClosed } from "../analytics/day";
 import { deleteExpired, purgeDeletedLinks, readCursor, recomputeGlobalStats } from "../db/queries";
 
-const EXPIRED_KEY = "daily_expired";
+// The stored marker keeps its old name, so a deploy does not repeat a cleanup that already ran today.
+const CLEANUP_KEY = "daily_expired";
 const GLOBAL_KEY = "daily_global_stats";
-export const EXPIRED_BATCH = 500;
-// One run deletes at most this many batches, expired links and archive purge together. The Free plan
-// allows 50 subrequests per invocation. At ROLLUP_MAX_PAGES = 20 the rollup uses 40 (20 SQL API
-// fetches + 20 D1 batches) and the rest of the run about 7 D1 queries (marker reads and writes, cursor read, global_stats), so 3 batches make 50.
-export const MAX_EXPIRED_BATCHES = 3;
+export const CLEANUP_BATCH = 500;
+// One run deletes at most this many batches: expired links get all but the last, and the archive purge
+// always gets the last one (plus any the expired links leave unused), so an expired backlog cannot hold
+// archive rows past their 30 days. The Free plan allows 50 subrequests per invocation. At
+// ROLLUP_MAX_PAGES = 20 the rollup uses 40 (20 SQL API fetches + 20 D1 batches) and the rest of the
+// run about 7 D1 queries (marker reads and writes, cursor read, global_stats), so 3 batches make 50.
+export const MAX_CLEANUP_BATCHES = 3;
 
 const DAY_MS = 86_400_000;
 /** How long `deleted_links` keeps a link deleted by its owner. */
@@ -53,23 +56,20 @@ export async function runDaily(
 ): Promise<{ expired: boolean; globalStats: boolean }> {
   const today = dayOf(now);
   if (!isDayClosed(dayOf(now - DAY_MS), now)) return { expired: false, globalStats: false };
-  // Expired links first, then archive rows past their 30 days, sharing one budget of batches.
-  const expired = await oncePerDay(db, EXPIRED_KEY, today, async () => {
+  const expired = await oncePerDay(db, CLEANUP_KEY, today, async () => {
     let batches = 0;
-    let done = false;
-    while (!done && batches < MAX_EXPIRED_BATCHES) {
+    let expiredDone = false;
+    while (!expiredDone && batches < MAX_CLEANUP_BATCHES - 1) {
       batches++;
-      done = (await deleteExpired(db, now, EXPIRED_BATCH)).length < EXPIRED_BATCH;
+      expiredDone = (await deleteExpired(db, now, CLEANUP_BATCH)).length < CLEANUP_BATCH;
     }
-    // A full last batch means more may be waiting.
-    if (!done) return false;
-    while (batches < MAX_EXPIRED_BATCHES) {
+    let purgeDone = false;
+    while (!purgeDone && batches < MAX_CLEANUP_BATCHES) {
       batches++;
-      if ((await purgeDeletedLinks(db, now - ARCHIVE_MS, EXPIRED_BATCH)) < EXPIRED_BATCH) {
-        return true;
-      }
+      purgeDone = (await purgeDeletedLinks(db, now - ARCHIVE_MS, CLEANUP_BATCH)) < CLEANUP_BATCH;
     }
-    return false;
+    // A full last batch on either side means more may be waiting: the next hourly run continues.
+    return expiredDone && purgeDone;
   });
   if (analyticsConfigured) {
     const cursor = await readCursor(db);
