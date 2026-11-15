@@ -276,29 +276,47 @@ describe("main", () => {
     expect(errors.join("\n")).toContain("JSON array");
   });
 
-  it("writes the visit import after the links with --visits, and reports it", async () => {
+  it("writes and runs only the visit import with --visits, never the links", async () => {
     const args = ["--from-json", FIXTURE, "--visits", "--locations", LOCATIONS];
     expect(await run([...args, "--dry-run"])).toBe(0);
-    expect(sqlFiles()).toEqual(["links-0001.sql", "visits-0001.sql"]);
+    expect(sqlFiles()).toEqual(["visits-0001.sql"]);
     const sql = readFileSync(join(out, "visits-0001.sql"), "utf8");
-    expect(sql.trimEnd().split("\n")).toHaveLength(7);
+    expect(sql.trimEnd().split("\n")).toHaveLength(6);
     expect(sql).toContain("INSERT INTO v2_visit_import");
+    expect(sql).not.toContain("INSERT OR IGNORE INTO links");
     const report = JSON.parse(readFileSync(join(out, "report.json"), "utf8"));
-    expect(report.visits).toMatchObject({ links: 3, rows: 7, visits: 22, unknownVisits: 5 });
+    expect(Object.keys(report)).toEqual(["visits"]);
+    expect(report.visits).toMatchObject({ links: 3, rows: 6, visits: 22, unknownVisits: 6 });
     const text = logs.join("\n");
-    expect(text).toContain("visits: 22 on 3 link(s), 7 row(s)");
+    expect(text).toContain("visits: 22 on 3 link(s), 6 row(s)");
     expect(text).toContain('unmapped country names: 1 ["Atlantis"]');
+    expect(text).not.toContain("inserted:");
     for (const key of KEYS) expect(allOutput()).not.toContain(key);
 
     expect(await run([...args, "--local"])).toBe(0);
-    expect(spawned.map((s) => s.command.at(-1))).toEqual([
-      join(out, "links-0001.sql"),
-      join(out, "visits-0001.sql"),
-    ]);
+    expect(spawned.map((s) => s.command.at(-1))).toEqual([join(out, "visits-0001.sql")]);
   });
 
-  it("drops stale visit files when a later run has no --visits", async () => {
+  it("passes --env to wrangler", async () => {
+    expect(await run(["--from-json", FIXTURE, "--remote", "--yes", "--env", "dev"])).toBe(0);
+    expect(spawned[0]?.command).toEqual([
+      "/fake/wrangler",
+      "d1",
+      "execute",
+      "DB",
+      "--remote",
+      "--file",
+      join(out, "links-0001.sql"),
+      "--env",
+      "dev",
+    ]);
+    expect(parseArgs(["--from-json", "f", "--dry-run"]).env).toBeNull();
+  });
+
+  it("swaps the batch files between a links run and a visits run", async () => {
+    await run(["--from-json", FIXTURE, "--dry-run"]);
     await run(["--from-json", FIXTURE, "--visits", "--locations", LOCATIONS, "--dry-run"]);
+    expect(sqlFiles()).toEqual(["visits-0001.sql"]);
     await run(["--from-json", FIXTURE, "--dry-run"]);
     expect(sqlFiles()).toEqual(["links-0001.sql"]);
     expect(JSON.parse(readFileSync(join(out, "report.json"), "utf8")).visits).toBeUndefined();
@@ -314,6 +332,6 @@ describe("main", () => {
     const env = { SECRET_PEPPER_VERSION: "1", SECRET_PEPPER_V1: PEPPER, MONGODB_URI: MONGO_URI };
     expect(await run(["--dry-run", "--visits"], deps({ env }))).toBe(0);
     expect(mongoCalls.map((c) => c.collection)).toEqual(["links", "locations"]);
-    expect(sqlFiles()).toEqual(["links-0001.sql", "visits-0001.sql"]);
+    expect(sqlFiles()).toEqual(["visits-0001.sql"]);
   });
 });

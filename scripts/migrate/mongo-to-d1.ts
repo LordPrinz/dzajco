@@ -1,6 +1,6 @@
 // v2 (MongoDB) to D1 importer. Reads the `links` collection (driver or a mongoexport file),
 // writes INSERT OR IGNORE batches plus a report, and optionally runs them with the project's wrangler.
-// With --visits it also writes the v2 visit counters (ledger rows of migration 0003).
+// With --visits it writes only the v2 visit counters instead (ledger rows of migration 0003).
 // See USAGE below or run with --help.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -21,6 +21,7 @@ export interface MigrateArgs {
   delta: boolean;
   visits: boolean;
   locations: string | null;
+  env: string | null;
   ownHosts: string[];
 }
 
@@ -46,11 +47,11 @@ export const USAGE = [
   "  --delta             a later catch-up run. It is the same run: every statement is",
   "                      INSERT OR IGNORE, so ids already in D1 are left as they are and only",
   "                      new ids are added. Changes and deletions in v2 are not carried over.",
-  "  --visits            also import the v2 visit counters into link_stats (needs migration",
-  "                      0003). Each link and place is added once, ever: a second run, or one",
-  "                      after the cutover, adds nothing it added before and keeps new visits.",
-  "  --locations <file>  `mongoexport --collection locations --jsonArray` output for --visits",
-  "                      (default: locations.json next to --from-json; MongoDB reads it itself)",
+  "  --visits            import only the v2 visit counters (visits-NNNN.sql), no links; run it",
+  "                      after the link import. Idempotent; see docs/DEPLOYMENT.md section 5",
+  "  --locations <file>  the `locations` export for --visits (default: locations.json next to",
+  "                      --from-json; with MongoDB the collection)",
+  "  --env <name>        wrangler environment of the D1 database, for example dev",
   "  --help, -h          show this text",
   "",
   "Keys are hashed with SECRET_PEPPER_V<n> from the env. n is SECRET_PEPPER_VERSION from the env,",
@@ -75,6 +76,7 @@ export function parseArgs(argv: string[]): MigrateArgs {
     delta: false,
     visits: false,
     locations: null,
+    env: null,
     ownHosts: [],
   };
   let yes = false;
@@ -92,6 +94,7 @@ export function parseArgs(argv: string[]): MigrateArgs {
     else if (arg === "--delta") args.delta = true;
     else if (arg === "--visits") args.visits = true;
     else if (arg === "--locations") args.locations = value(++i, arg);
+    else if (arg === "--env") args.env = value(++i, arg);
     else if (arg === "--from-json") args.fromJson = value(++i, arg);
     else if (arg === "--mongo-uri") args.mongoUri = value(++i, arg);
     else if (arg === "--mongo-db") args.mongoDb = value(++i, arg);
@@ -256,7 +259,7 @@ async function loadDocs(
 function writeOutput(
   out: string,
   files: { prefix: string; sql: string[] }[],
-  report: MigrationReport & { visits?: VisitReport },
+  report: MigrationReport | { visits: VisitReport },
 ): string[] {
   mkdirSync(out, { recursive: true });
   for (const name of readdirSync(out)) {
@@ -276,7 +279,7 @@ function writeOutput(
 function visitSummary(report: VisitReport): string[] {
   const list = (items: string[]) => `${items.length} ${JSON.stringify(items)}`;
   return [
-    `visits: ${report.visits} on ${report.links} link(s), ${report.rows} row(s) (planned; rows already imported are skipped)`,
+    `visits: ${report.visits} on ${report.links} link(s), ${report.rows} row(s) (planned; rows already imported, and links not in D1 with the same target and key, are skipped)`,
     `visits without a location (unknown country): ${report.unknownVisits}`,
     `unmapped country names: ${list(report.unmappedCountries)}`,
     `locations missing coordinates: ${report.missingLocations.length}`,
@@ -330,17 +333,17 @@ export async function main(argv: string[], deps: MainDeps = defaultDeps): Promis
       peppers: peppersFromEnv(deps.env),
       ownHosts,
     });
-    const files = [{ prefix: "links", sql: buildSqlFiles(rows) }];
-    let visitReport: VisitReport | undefined;
     if (args.visits) {
+      // Visits only: replaying the link SQL after the cutover would bring back deleted links.
       const locations = parseLocations(await loadDocs(args, deps, "locations"));
       const visits = transformVisits(rows, sources, locations);
-      visitReport = visits.report;
-      files.push({ prefix: "visits", sql: buildVisitSqlFiles(visits.rows) });
+      const sql = buildVisitSqlFiles(visits.rows);
+      paths = writeOutput(args.out, [{ prefix: "visits", sql }], { visits: visits.report });
+      for (const line of visitSummary(visits.report)) deps.log(line);
+    } else {
+      paths = writeOutput(args.out, [{ prefix: "links", sql: buildSqlFiles(rows) }], report);
+      for (const line of summary(report)) deps.log(line);
     }
-    paths = writeOutput(args.out, files, { ...report, visits: visitReport });
-    for (const line of summary(report)) deps.log(line);
-    if (visitReport) for (const line of visitSummary(visitReport)) deps.log(line);
     deps.log(`wrote ${paths.length} SQL file(s) and report.json to ${args.out}`);
   } catch (error) {
     deps.error(message(error));
@@ -358,6 +361,7 @@ export async function main(argv: string[], deps: MainDeps = defaultDeps): Promis
   for (const path of paths) {
     const target = args.local ? "--local" : "--remote";
     const command = [deps.wrangler, "d1", "execute", "DB", target, "--file", path];
+    if (args.env !== null) command.push("--env", args.env);
     let code: number;
     try {
       code = await deps.spawn(command, childEnv);
