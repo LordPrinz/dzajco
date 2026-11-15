@@ -252,7 +252,7 @@ describe("deleteLink", () => {
     expect(await count("link_stats", "link_id = 'gone'")).toBe(0);
   });
 
-  it("archives the link in the same batch, and nothing when the delete does not happen", async () => {
+  it("copies the link, without its hash, and its stats summary to deleted_links", async () => {
     await insertLink(db, link("arch", { expiresAt: NOW + 99, isCustom: true }));
     await upsertStatsBatch(
       db,
@@ -278,12 +278,16 @@ describe("deleteLink", () => {
         { code: "PL", visits: 4 },
       ]),
     });
+  });
 
+  it("archives nothing when the hash changes between verify and delete", async () => {
     await insertLink(db, link("race2"));
-    await deleteLink(db, "race2", async () => {
+    const result = await deleteLink(db, "race2", async () => {
       await db.prepare("UPDATE links SET secret_hash = 'v1:other' WHERE id = 'race2'").run();
       return true;
     });
+    expect(result).toBe("forbidden");
+    expect(await count("links", "id = 'race2'")).toBe(1);
     expect(await count("deleted_links", "id = 'race2'")).toBe(0);
   });
 });
