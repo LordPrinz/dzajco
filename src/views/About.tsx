@@ -79,11 +79,11 @@ export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
             <>
               <dl class="totals">
                 <div class="totals__item">
-                  <dt>Linków</dt>
+                  <dt>Aktywnych linków</dt>
                   <dd data-stat="links">{NUMBER.format(stats.links)}</dd>
                 </div>
                 <div class="totals__item">
-                  <dt>Wejść</dt>
+                  <dt>Wejść w aktywnych linkach</dt>
                   <dd data-stat="visits">{NUMBER.format(stats.visits)}</dd>
                 </div>
               </dl>
@@ -107,6 +107,9 @@ export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
               </p>
             </>
           )}
+          <p class="doc__note">
+            Usunięte i wygasłe linki nie wchodzą do tych liczb, a razem z nimi znikają ich wejścia.
+          </p>
           <p class="doc__note">
             Liczby przelicza się raz na dobę, więc mogą się spóźniać nawet o około 24 godziny.
           </p>

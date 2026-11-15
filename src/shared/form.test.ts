@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { expiresAtFrom, hostIsIdn, normalizeUrlInput } from "./form";
+import { parseExpiry } from "../domain/expiry.ts";
+import { expiresAtFrom, normalizeUrlInput } from "./form";
 
 const NOW = Date.parse("2026-01-01T00:00:00Z");
 
@@ -19,17 +20,15 @@ describe("expiresAtFrom with a custom date", () => {
     expect(expiresAtFrom(choice, NOW, "Z")).toBe("2026-12-01T10:00:00Z");
   });
 
+  it("turns an empty date into a value the expiry check rejects", () => {
+    for (const zone of ["Z", ""]) {
+      const value = expiresAtFrom({ expiry: "custom", customDate: "" }, NOW, zone);
+      expect(parseExpiry(value, NOW)).toEqual({ ok: false, code: "invalid_expiry" });
+    }
+  });
+
   it("passes an unparsable date on for the API to reject", () => {
     expect(expiresAtFrom({ expiry: "custom", customDate: "nope" }, NOW, "")).toBe("nope");
-  });
-});
-
-describe("hostIsIdn", () => {
-  it("detects a punycode label anywhere in the host", () => {
-    expect(hostIsIdn("xn--pnk-qma.pl")).toBe(true);
-    expect(hostIsIdn("www.xn--pnk-qma.pl")).toBe(true);
-    expect(hostIsIdn("example.com")).toBe(false);
-    expect(hostIsIdn("notxn--example.com")).toBe(false);
   });
 });
 

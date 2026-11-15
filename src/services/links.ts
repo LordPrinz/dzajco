@@ -1,8 +1,9 @@
-import { IdTakenError, insertLink, isHostBlocked } from "../db/queries";
+import { deleteIfExpired, IdTakenError, insertLink, isHostBlocked } from "../db/queries";
 import { parseExpiry } from "../domain/expiry";
 import { parseCustomName, randomId } from "../domain/ids";
 import { currentVersion, generateSecretKey, hashSecret, peppersFromEnv } from "../domain/secret";
 import { parseTarget } from "../domain/url-policy";
+import { purgeLinkCache } from "../routes/redirect";
 
 const RANDOM_ID_ATTEMPTS = 5;
 
@@ -55,7 +56,8 @@ function fail(status: 400, code: string): CreateLinkFailure {
 
 /**
  * Validates and stores a new link; the API route and the HTML form both go through here. Policy
- * violations come back as a result, a failing database or an exhausted id space throws or maps to 503.
+ * violations come back as a result, a failing host lookup maps to 503, other database failures and an
+ * exhausted id space throw (a 500).
  */
 export async function createLink(
   env: Cloudflare.Env,
@@ -64,15 +66,6 @@ export async function createLink(
 ): Promise<CreateLinkResult> {
   const target = parseTarget(input.url, { ownHosts: ownHosts(env, requestUrl) });
   if (!target.ok) return fail(400, target.code);
-  let blocked: boolean;
-  try {
-    blocked = await isHostBlocked(env.DB, target.host);
-  } catch {
-    // Fail closed without claiming the target is blocked.
-    return { ok: false, status: 503, code: "service_unavailable" };
-  }
-  if (blocked) return fail(400, "blocked_target");
-
   let customName: string | undefined;
   if (input.customName !== undefined) {
     const name = parseCustomName(input.customName);
@@ -83,6 +76,15 @@ export async function createLink(
   const now = Date.now();
   const expiry = parseExpiry(input.expiresAt ?? null, now);
   if (!expiry.ok) return fail(400, expiry.code);
+
+  let blocked: boolean;
+  try {
+    blocked = await isHostBlocked(env.DB, target.host);
+  } catch {
+    // Fail closed without claiming the target is blocked.
+    return { ok: false, status: 503, code: "service_unavailable" };
+  }
+  if (blocked) return fail(400, "blocked_target");
 
   const secretKey = generateSecretKey();
   const secretHash = await hashSecret(secretKey, {
@@ -101,11 +103,19 @@ export async function createLink(
   if (customName !== undefined) {
     try {
       await insertLink(env.DB, { ...link, id: customName });
-      id = customName;
     } catch (error) {
-      if (error instanceof IdTakenError) return { ok: false, status: 409, code: "id_taken" };
-      throw error;
+      if (!(error instanceof IdTakenError)) throw error;
+      // An expired link still holds its name until cleanup; free it and retry once.
+      await deleteIfExpired(env.DB, customName, now);
+      try {
+        await insertLink(env.DB, { ...link, id: customName });
+      } catch (retryError) {
+        if (retryError instanceof IdTakenError) return { ok: false, status: 409, code: "id_taken" };
+        throw retryError;
+      }
+      await purgeLinkCache(customName).catch(() => console.warn("cache purge failed"));
     }
+    id = customName;
   } else {
     for (let attempt = 0; attempt < RANDOM_ID_ATTEMPTS && id === undefined; attempt += 1) {
       const candidate = randomId();

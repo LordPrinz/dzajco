@@ -8,6 +8,8 @@ export const DEFAULT_FRESH_TTL = 300;
 const DAY_PAGE_SIZE = 10_000;
 /** A failed read is cached briefly too, so an AE outage does not turn every stats request into a query. */
 const PARTIAL_TTL = 30;
+/** Above this many rows a stats request spends noticeable CPU merging fresh visits. */
+export const FRESH_ROWS_WARN_THRESHOLD = 20_000;
 
 export interface FreshData {
   /** Groups for all links; a group can appear twice (once for the cursor day, once after it). */
@@ -17,7 +19,8 @@ export interface FreshData {
 }
 
 export interface FreshDeps {
-  source: VisitSource;
+  /** A factory is called inside the guarded part, so a source that cannot be built is a partial answer. */
+  source: VisitSource | (() => VisitSource);
   /** The cursor read in the same D1 batch as `link_stats`. */
   cursor: RollupCursor | null;
   now: number;
@@ -101,7 +104,11 @@ export async function loadFresh({
   }
   let result: FreshData;
   try {
-    result = { rows: await queryFresh(source, at), partial: false };
+    const resolved = typeof source === "function" ? source() : source;
+    result = { rows: await queryFresh(resolved, at), partial: false };
+    if (result.rows.length > FRESH_ROWS_WARN_THRESHOLD) {
+      console.warn(`fresh visits returned ${result.rows.length} rows`);
+    }
   } catch (error) {
     console.warn("fresh visits unavailable", error instanceof Error ? error.message : error);
     result = { rows: [], partial: true };

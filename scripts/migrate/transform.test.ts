@@ -70,6 +70,17 @@ describe("transformLinks ids", () => {
   });
 });
 
+describe("transformLinks long ids", () => {
+  it("still imports ids over 96 UTF-8 bytes and lists them", async () => {
+    const edge = "世".repeat(32);
+    const over = "世".repeat(33);
+    const docs = [edge, over].map((_id) => ({ _id, full: "https://example.com/" }));
+    const { rows, report } = await transformLinks(docs, OPTIONS);
+    expect(rows.map((r) => r.id)).toEqual([edge, over]);
+    expect(report.overlongIds).toEqual([over]);
+  });
+});
+
 describe("transformLinks on the v2 fixture", () => {
   it("reports read, inserted, expired, invalid, reserved collisions, duplicates and legacy keys", async () => {
     const { rows, report } = await transformLinks(fixture, OPTIONS);

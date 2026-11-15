@@ -9,7 +9,6 @@ import { peppersFromEnv, verifySecret } from "../domain/secret";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
 import { isoOrNull } from "../lib/time";
-import { readOnlyCors } from "../middleware/cors";
 import { apiError } from "../middleware/errors";
 import { rateLimit } from "../middleware/rate-limit";
 import { loadPublicStats } from "../services/stats";
@@ -35,8 +34,6 @@ function forbidden(c: Context): Response {
 export function statsRoutes() {
   const app = new Hono<AppEnv>();
   const byIp = (c: Context<AppEnv>) => clientIpKey(c.req.raw);
-
-  app.use("*", readOnlyCors());
 
   app.delete("/links/:id", rateLimit<AppEnv>("RL_DELETE", byIp), async (c) => {
     const id = parseId(c.req.param("id"));
@@ -82,7 +79,7 @@ export function statsRoutes() {
     }
     if (!owner) return c.json(await loadPublicStats(c.env, id, now));
     const fresh = await loadFresh({
-      source: createVisitSource(c.env),
+      source: () => createVisitSource(c.env),
       cursor: owner.cursor,
       now,
       ttlSeconds: parseFreshTtl(c.env.AE_FRESH_TTL),
