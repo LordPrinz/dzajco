@@ -23,9 +23,10 @@ export function LangSwitch() {
             value={option}
             aria-pressed={option === lang ? "true" : "false"}
           >
-            <span aria-hidden="true">{option.toUpperCase()}</span>
+            {/* Accessible name "PL (polski)": it starts with the visible label, as WCAG 2.5.3 asks. */}
+            {option.toUpperCase()}
             <span class="sr-only" lang={option}>
-              {AUTONYM[option]}
+              {` (${AUTONYM[option]})`}
             </span>
           </button>
         ))}

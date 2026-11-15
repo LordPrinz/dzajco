@@ -1,9 +1,9 @@
-import { type Lang, LOCALE, parseLang } from "../../shared/lang";
+import { DEFAULT_LANG, type Lang, LOCALE, parseLang } from "../../shared/lang";
 import { SHARED_TEXT, type SharedText } from "../../shared/text";
 
 /** The language the server rendered the page in, from `<html lang>`. */
 export function pageLang(): Lang {
-  return parseLang(document.documentElement.lang) ?? "pl";
+  return parseLang(document.documentElement.lang) ?? DEFAULT_LANG;
 }
 
 export function pageText(): SharedText {
