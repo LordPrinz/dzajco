@@ -130,19 +130,33 @@ function setupShortenForm(form: HTMLFormElement): void {
 
   const fields = ["url", "customName", "expiry"] as const;
   const clearInvalid = () => {
-    for (const name of fields) byId(name)?.removeAttribute("aria-invalid");
+    for (const name of fields) {
+      byId(name)?.removeAttribute("aria-invalid");
+      byId(name)?.removeAttribute("aria-describedby");
+    }
+    if (serverError) serverError.hidden = true;
   };
   const fail = (code: string) => {
-    toast(errorText(code), "error");
+    const message = errorText(code);
     const field = byId(FIELD_OF_ERROR[code] ?? "url");
+    // The toast announces the error; the field keeps the text as its description, in the
+    // server's #form-error paragraph, hidden from sight and with its alert role dropped so the
+    // message is not read twice.
+    if (serverError) {
+      serverError.removeAttribute("role");
+      serverError.classList.add("sr-only");
+      serverError.textContent = message;
+      serverError.hidden = false;
+    }
     field?.setAttribute("aria-invalid", "true");
+    if (serverError) field?.setAttribute("aria-describedby", serverError.id);
     field?.focus();
+    toast(message, "error", { returnFocus: field });
   };
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    // A server-rendered error from a no-JS attempt is stale once the script takes over.
-    if (serverError) serverError.hidden = true;
+    // Also hides a server-rendered error from a no-JS attempt: it is stale once the script runs.
     clearInvalid();
     dismissAll("error");
     const data = new FormData(form);

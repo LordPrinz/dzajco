@@ -654,8 +654,18 @@ a {
   gap: 0.5rem;
   margin: 0;
   padding: 0 var(--gutter);
-  list-style: none;
   pointer-events: none;
+}
+
+.toasts__region {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.toasts__region:empty {
+  display: none;
 }
 
 .toast {

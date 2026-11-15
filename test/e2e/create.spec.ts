@@ -44,7 +44,7 @@ test("copy button puts the short link on the clipboard", async ({ page }) => {
   await page.locator('#result-slot [data-copy="shortUrl"]').click();
 
   await expect(page.locator('#result-slot [data-copy="shortUrl"]')).toHaveText("Skopiowano");
-  await expect(page.locator("#toasts .toast--success")).toHaveText(/Skopiowano do schowka/);
+  await expect(page.locator("#toasts-status .toast--success")).toHaveText(/Skopiowano do schowka/);
   expect(await page.evaluate(() => (globalThis as { __copied?: string }).__copied)).toBe(shortUrl);
 });
 
@@ -53,10 +53,19 @@ test("shows an error for an invalid link and creates nothing", async ({ page }) 
   await page.getByLabel("Link do skrócenia").fill("ftp://example.com/file");
   await page.getByRole("button", { name: "Dżajcuj" }).click();
 
-  await expect(page.locator("#toasts .toast--error")).toBeVisible();
+  await expect(page.locator("#toasts-alert .toast--error")).toBeVisible();
+  // The field keeps the message as its description after the toast is gone.
+  await expect(page.getByLabel("Link do skrócenia")).toHaveAccessibleDescription(
+    "Dozwolone są tylko adresy http i https.",
+  );
   await expect(page.getByLabel("Link do skrócenia")).toHaveAttribute("aria-invalid", "true");
   await expect(page.locator("#result-slot [data-created]")).toHaveCount(0);
 
-  await page.locator("#toasts .toast--error").getByRole("button", { name: "Zamknij" }).click();
-  await expect(page.locator("#toasts .toast")).toHaveCount(0);
+  await page
+    .locator("#toasts-alert .toast--error")
+    .getByRole("button", { name: "Zamknij" })
+    .click();
+  await expect(page.locator(".toasts .toast")).toHaveCount(0);
+  // Closing the toast hands focus back to the field, not to <body>.
+  await expect(page.getByLabel("Link do skrócenia")).toBeFocused();
 });
