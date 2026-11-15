@@ -29,6 +29,7 @@
     "gh:create-issues": "bun scripts/gh/create-issues.ts",
     "test:coverage": "bun test ./src --coverage --coverage-reporter=lcov && bun scripts/ci/coverage.ts",
     "admin:block": "bun scripts/admin/block.ts",
+    "admin:deleted": "bun scripts/admin/deleted.ts",
     "migrate:mongo": "bun scripts/migrate/mongo-to-d1.ts",
     "build:client": "bun build src/client/*.ts --outdir public/assets --minify --splitting --target browser",
     "check:size": "bun scripts/ci/size.ts",
