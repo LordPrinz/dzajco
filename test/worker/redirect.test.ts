@@ -336,9 +336,9 @@ describe("GET /:id", () => {
     expect(await (await run(app, request(`/${id2}`), noMail)).text()).not.toContain("mailto:");
   });
 
-  it("puts the logo, the slogan and the shorten form on dead-link pages", async () => {
+  it("puts the name, the slogan and the shorten form on dead-link pages", async () => {
     const html = await (await run(appWith(new RecordingSink()), request("/nope-missing"))).text();
-    expect(html).toContain('src="/img/logo.svg"');
+    expect(html).toContain('<h1 class="hero__title">dzajco</h1>');
     expect(html).toContain('class="hero__subtitle"');
     expect(html).toContain('id="shorten-form"');
     expect(html).toContain('action="/"');

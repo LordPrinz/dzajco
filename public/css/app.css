@@ -143,7 +143,8 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* The visible viewport on phones, so a short page shows the footer without scrolling. */
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: var(--font);
   color: var(--text);
@@ -270,19 +271,11 @@ body {
 }
 
 .hero__title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
   margin: 0 0 1.75rem;
   font-size: 3rem;
   font-weight: 700;
   line-height: 1;
   color: var(--heading);
-}
-
-.hero__logo {
-  width: 3.5rem;
-  height: 3.5rem;
 }
 
 .hero__subtitle {
@@ -308,8 +301,16 @@ body {
   color: var(--text-muted);
 }
 
+/* Rings hug the control instead of the global 2px gap. */
+.input:focus-visible,
+.expiry__select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+
 .input[aria-invalid="true"] {
   outline: 2px solid var(--danger-text);
+  outline-offset: 0;
 }
 
 .shorten,
@@ -319,53 +320,28 @@ body {
   padding: 0.25rem;
 }
 
-/* v2 form: a pill input with a pill button laid over its right end. */
+/* v2 form: the round right end of the input lies over the button, which is rounded on the right only. */
 .pill {
-  --pill-overlap: 2.25rem;
-  position: relative;
+  --pill-overlap: 2.5rem;
   display: flex;
   align-items: stretch;
-  border-radius: 9999px;
 }
 
 .pill__input {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
-  /* Keeps the text clear of the button that covers the right end. */
-  padding-inline-end: calc(var(--pill-overlap) + 1rem);
-}
-
-/* The ring goes round the whole pill: on the input alone the button would cover its right end.
-   Browsers without :has() keep the input's own ring and outline. */
-@supports selector(:has(*)) {
-  .pill__input:focus-visible,
-  .pill__input[aria-invalid="true"] {
-    outline: none;
-  }
-
-  .pill:has(.pill__input:focus-visible) {
-    outline: 3px solid var(--focus);
-    outline-offset: 2px;
-  }
-
-  .pill:has(.pill__input[aria-invalid="true"]) {
-    outline: 2px solid var(--danger-text);
-  }
-
-  /* Focused and invalid: still a full focus ring, in the error colour. */
-  .pill:has(.pill__input:focus-visible[aria-invalid="true"]) {
-    outline: 3px solid var(--danger-text);
-    outline-offset: 2px;
-  }
 }
 
 .pill__submit {
   position: relative;
   flex: none;
   margin-inline-start: calc(-1 * var(--pill-overlap));
-  padding: 0 1.75rem;
+  padding: 0 1.75rem 0 calc(var(--pill-overlap) + 1.5rem);
   border: 0;
-  border-radius: 9999px;
+  border-start-end-radius: 9999px;
+  border-end-end-radius: 9999px;
   font: inherit;
   font-weight: 600;
   color: var(--on-accent);
@@ -375,10 +351,10 @@ body {
   transition: background-color 0.15s ease;
 }
 
-/* Drawn inside the button, so the ring keeps its shape and never sticks out past the pill. */
+/* Drawn inside the visible part of the button, so the ring never sticks out past the pill. */
 .pill__submit:focus-visible {
-  outline: 3px solid var(--on-accent);
-  outline-offset: -6px;
+  outline: 2px solid var(--on-accent);
+  outline-offset: -5px;
 }
 
 .pill__submit:hover {
@@ -426,35 +402,43 @@ body {
   margin-top: 0.5rem;
 }
 
+/* One control: the select fills the row and the label sits on its left end, so a click on the
+   label opens the list and the focus ring goes round both. */
 .expiry {
-  display: flex;
-  align-items: stretch;
+  --expiry-label: 7.5rem;
+  position: relative;
+  display: grid;
 }
 
 .expiry__label {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
-  padding: 0 1.5rem;
+  justify-content: center;
+  width: var(--expiry-label);
   border-start-start-radius: 9999px;
   border-end-start-radius: 9999px;
   font-weight: 600;
   color: var(--on-accent);
   background: var(--accent);
-  box-shadow: var(--shadow);
+  pointer-events: none;
 }
 
 .expiry__select {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1rem 0.75rem calc(var(--expiry-label) + 1rem);
   border: 0;
-  border-start-end-radius: 9999px;
-  border-end-end-radius: 9999px;
+  border-radius: 9999px;
   font: inherit;
   font-size: 0.875rem;
   color: var(--text);
   background: var(--surface);
   box-shadow: var(--shadow);
+  cursor: pointer;
 }
 
 .hint {
@@ -827,11 +811,6 @@ a {
     font-size: 2.5rem;
   }
 
-  .hero__logo {
-    width: 2.75rem;
-    height: 2.75rem;
-  }
-
   .hero__subtitle {
     font-size: 1.0625rem;
   }
@@ -841,7 +820,7 @@ a {
   }
 
   .pill__submit {
-    padding-inline: 1.25rem;
+    padding-inline: calc(var(--pill-overlap) + 1rem) 1.25rem;
   }
 
   .copy-row {
