@@ -69,7 +69,7 @@ Commit the production values (`database_id`, `CF_ACCOUNT_ID`, `PUBLIC_ORIGIN`, `
 ### Domain and routes
 
 1. Dashboard, Workers & Pages, `dzajco`, Settings, Domains & Routes, Add, Custom domain. Enter the host of `PUBLIC_ORIGIN`. Cloudflare creates the DNS record and certificate.
-2. Disable the `workers.dev` route and Preview URLs in the same panel if you do not need them. Disabling them removes extra public entry points.
+2. `wrangler.jsonc` sets `workers_dev` and `preview_urls` to `false`, so every deploy keeps the `workers.dev` route and Preview URLs off. Do not turn them on in the dashboard: the next `bun run deploy` switches them off again. Both hosts bypass the WAF rule from section 3 and the Cache API.
 
 For the first rehearsal use a spare domain or subdomain you control, not the production host (see [section 10](#10-rehearsal-checklist)).
 
@@ -312,7 +312,7 @@ Setup
 - [ ] `SECRET_PEPPER_V1` set (value saved in a password manager)
 - [ ] `CF_AE_TOKEN` set, token has only _Account Analytics: Read_
 - [ ] `PUBLIC_ORIGIN`, `SECRET_PEPPER_VERSION=1`, `CF_ACCOUNT_ID`, `ABUSE_EMAIL`, `CF_ANALYTICS_TOKEN` set in vars
-- [ ] Test domain attached as custom domain; `workers.dev` and Preview URLs disabled
+- [ ] Test domain attached as custom domain; `workers_dev` and `preview_urls` are `false` in `wrangler.jsonc`, and the deploy left `workers.dev` and Preview URLs off
 - [ ] WAF rate-limiting rule created with the expression and threshold from section 3 (record the values used: ______)
 
 Deploy
