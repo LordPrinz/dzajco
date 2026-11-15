@@ -18,7 +18,7 @@ export async function loadPublicStats(
 ): Promise<PublicLinkStats> {
   const d1 = await publicStats(env.DB, id);
   const fresh = await loadFresh({
-    source: createVisitSource(env),
+    source: () => createVisitSource(env),
     cursor: d1.cursor,
     now,
     ttlSeconds: parseFreshTtl(env.AE_FRESH_TTL),

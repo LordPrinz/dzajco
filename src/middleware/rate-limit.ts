@@ -11,7 +11,7 @@ export interface RateLimitOptions<E extends { Bindings: Cloudflare.Env }> {
   /** Builds the 429 response. `Retry-After` is added when the response lacks it. */
   onLimited?: (c: Context<E>) => Response | Promise<Response>;
   /**
-   * When the binding throws, warn once (without the client key) and let the request through.
+   * When the binding throws, log a warning for each failing request (without the client key) and let the request through.
    * Only for `RL_REDIRECT`: a redirect must not break because a side system fails.
    */
   failOpen?: boolean;

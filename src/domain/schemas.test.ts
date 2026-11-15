@@ -1,6 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import * as v from "valibot";
-import { bearerSchema, createLinkSchema, formBodySchema, keySchema } from "./schemas.ts";
+import {
+  bearerSchema,
+  createFailureCode,
+  createLinkSchema,
+  formBodySchema,
+  keySchema,
+} from "./schemas.ts";
 
 const key = "A".repeat(22);
 
@@ -121,5 +127,27 @@ describe("formBodySchema", () => {
       }),
     ).toEqual({ url: "https://a.com", customName: "abc", expiresAt: "2026-01-01T00:00Z" });
     expect(v.safeParse(formBodySchema, { url: "https://a.com", x: "1" }).success).toBe(false);
+  });
+});
+
+describe("createFailureCode", () => {
+  const code = (schema: typeof createLinkSchema | typeof formBodySchema, input: unknown) => {
+    const parsed = v.safeParse(schema, input);
+    return parsed.success ? "ok" : createFailureCode(parsed.issues);
+  };
+
+  it("reports a url over the cap as url_too_long", () => {
+    expect(code(createLinkSchema, { url: "h".repeat(2049) })).toBe("url_too_long");
+    expect(code(formBodySchema, { url: "h".repeat(2049) })).toBe("url_too_long");
+  });
+
+  it("reports a customName over the cap as name_too_long", () => {
+    expect(code(createLinkSchema, { url: "x", customName: "a".repeat(129) })).toBe("name_too_long");
+    expect(code(formBodySchema, { url: "x", customName: "a".repeat(129) })).toBe("name_too_long");
+  });
+
+  it("reports other failures as invalid_body", () => {
+    expect(code(createLinkSchema, {})).toBe("invalid_body");
+    expect(code(createLinkSchema, { url: "x", extra: 1 })).toBe("invalid_body");
   });
 });

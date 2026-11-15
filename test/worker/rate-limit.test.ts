@@ -35,7 +35,7 @@ it("propagates a binding error by default", async () => {
   expect(res.status).toBe(500);
 });
 
-it("with failOpen warns once without the key and lets the request through", async () => {
+it("with failOpen warns per failure without the key and lets the request through", async () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   try {
     const app = new Hono<{ Bindings: Cloudflare.Env }>().get(

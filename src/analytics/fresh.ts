@@ -19,7 +19,8 @@ export interface FreshData {
 }
 
 export interface FreshDeps {
-  source: VisitSource;
+  /** A factory is called inside the guarded part, so a source that cannot be built is a partial answer. */
+  source: VisitSource | (() => VisitSource);
   /** The cursor read in the same D1 batch as `link_stats`. */
   cursor: RollupCursor | null;
   now: number;
@@ -103,7 +104,8 @@ export async function loadFresh({
   }
   let result: FreshData;
   try {
-    result = { rows: await queryFresh(source, at), partial: false };
+    const resolved = typeof source === "function" ? source() : source;
+    result = { rows: await queryFresh(resolved, at), partial: false };
     if (result.rows.length > FRESH_ROWS_WARN_THRESHOLD) {
       console.warn(`fresh visits returned ${result.rows.length} rows`);
     }
