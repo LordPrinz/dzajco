@@ -64,7 +64,7 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
   - `!` after the type/scope marks a breaking change.
 - PRs are **squash-merged**; the PR title becomes the commit on `dev`.
 - **Dependabot** keeps its own `dependabot/…` branches and targets `dev` once `dev` has reached `main` (see below).
-- Code, comments, docs and commits are in English. What the site shows to users is in Polish.
+- Code, comments, docs and commits are in English. What the site shows to users comes from the `pl` and `en` dictionaries in `src/views/text` and `src/shared/text`; add every new string to both.
 
 ## Switching the trunk to dev
 
