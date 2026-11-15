@@ -22,7 +22,7 @@ function render<P extends object>(
   props: P,
   status: 200 | 400 | 403 | 409 | 413 | 415 | 429 | 500 | 503,
 ) {
-  return c.html(renderPage(c, view, props), status, NO_STORE);
+  return c.html(renderPage(c, view, props, status), status, NO_STORE);
 }
 
 function notice(c: Context<AppEnv>, status: 403 | 413 | 415 | 429 | 500, kind: NoticeKind) {

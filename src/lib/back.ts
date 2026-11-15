@@ -1,5 +1,8 @@
 const BASE = "https://back.invalid";
 
+/** The query parameter that pins a page's language, used by the `hreflang` links. */
+export const LANG_PARAM = "lang";
+
 /** True for a path on this site; `//host` and `/\host` are protocol-relative URLs to another one. */
 function isSitePath(path: string): boolean {
   return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
@@ -20,4 +23,15 @@ export function safeBack(raw: string | null | undefined): string {
   } catch {
     return "/";
   }
+}
+
+/**
+ * `safeBack` without `?lang=`: a settings form returns there, and a pinned language in the URL
+ * would overrule the choice just made.
+ */
+export function safeBackWithoutLang(raw: string | null | undefined): string {
+  const url = new URL(safeBack(raw), BASE);
+  url.searchParams.delete(LANG_PARAM);
+  const path = `${url.pathname}${url.search}`;
+  return isSitePath(path) ? path : "/";
 }

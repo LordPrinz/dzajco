@@ -22,7 +22,12 @@ export const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Optio
 
 export function errorPage(c: Context<AppEnv>, kind: LinkErrorKind, linkId?: string): string {
   const reportHref = reportAbuseLink(c.env, { linkId });
-  return renderPage(c, LinkError, { nonce: c.var.nonce, kind, reportHref });
+  return renderPage(
+    c,
+    LinkError,
+    { nonce: c.var.nonce, kind, reportHref },
+    kind === "not_found" ? 404 : 410,
+  );
 }
 
 export function linkCacheKey(id: string): Request {

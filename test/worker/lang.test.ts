@@ -74,6 +74,17 @@ describe("page language", () => {
     expect(html).toContain(`hreflang="x-default" href="${origin}/docs/api"`);
   });
 
+  it("leaves hreflang off pages that are not a GET 200", async () => {
+    expect(await (await get("/no/such/page")).text()).not.toContain("hreflang");
+    expect(await (await get("/nolink123")).text()).not.toContain("hreflang");
+  });
+
+  it("gives each language button a name that starts with its visible label", async () => {
+    const html = await (await get("/")).text();
+    expect(html).toMatch(/value="pl"[^>]*>PL<span class="sr-only" lang="pl"> \(polski\)<\/span>/);
+    expect(html).toMatch(/value="en"[^>]*>EN<span class="sr-only" lang="en"> \(English\)<\/span>/);
+  });
+
   it("marks the current language in the switch and sends the switch back without ?lang=", async () => {
     const html = await (await get("/about?lang=en")).text();
     expect(html).toMatch(/value="en"[^>]*aria-pressed="true"/);
@@ -114,6 +125,7 @@ describe("POST /prefs/lang", () => {
     const cookie = res.headers.get("set-cookie") ?? "";
     expect(cookie).toMatch(/^lang=en;/);
     expect(cookie).toContain("SameSite=Lax");
+    expect(cookie).toContain("HttpOnly");
     expect(cookie).toMatch(/Max-Age=\d{8}/);
     expect(res.headers.get("cache-control")).toBe("no-store");
   });

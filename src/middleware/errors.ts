@@ -29,6 +29,6 @@ export const onError: ErrorHandler<AppEnv> = (error, c) => {
 
 export const notFound: NotFoundHandler<AppEnv> = (c) => {
   if (isApi(c)) return apiError(c, 404, "not_found", "Not found");
-  const page = renderPage(c, Notice, { nonce: c.var.nonce, kind: "notFound" });
+  const page = renderPage(c, Notice, { nonce: c.var.nonce, kind: "notFound" }, 404);
   return c.html(page, 404, { "Cache-Control": "no-store" });
 };

@@ -6,10 +6,7 @@ import { parseTheme, THEME_COOKIE } from "../shared/theme";
 import { PageContext, type PageSettings } from "../views/page-context";
 import { PAGE_TEXT } from "../views/text";
 import type { AppEnv } from "./app-env";
-import { safeBack } from "./back";
-
-/** The query parameter that pins a page's language, used by the `hreflang` links. */
-export const LANG_PARAM = "lang";
+import { LANG_PARAM, safeBackWithoutLang } from "./back";
 
 function alternates(origin: string, url: URL): PageSettings["alternates"] {
   let base: URL;
@@ -29,7 +26,8 @@ function alternates(origin: string, url: URL): PageSettings["alternates"] {
   return { ...each, "x-default": base.href };
 }
 
-export function pageSettings(c: Context<AppEnv>): PageSettings {
+/** `hreflang` alternates belong only on pages a crawler can fetch and index: GET with status 200. */
+export function pageSettings(c: Context<AppEnv>, status = 200): PageSettings {
   const url = new URL(c.req.url);
   const lang = resolveLang({
     query: url.searchParams.get(LANG_PARAM),
@@ -37,16 +35,14 @@ export function pageSettings(c: Context<AppEnv>): PageSettings {
     country: (c.req.raw.cf?.country as string | undefined) ?? null,
     acceptLanguage: c.req.header("Accept-Language"),
   });
-  // Back links drop `?lang=`, or a switch to the other language would be overruled by the URL.
-  const back = new URL(url);
-  back.searchParams.delete(LANG_PARAM);
   return {
     theme: parseTheme(getCookie(c, THEME_COOKIE)),
     lang,
     t: PAGE_TEXT[lang],
     // A form post shows its result on the page it came from, which is a GET of the same path.
-    path: safeBack(`${back.pathname}${back.search}`),
-    alternates: alternates(c.env.PUBLIC_ORIGIN, url),
+    path: safeBackWithoutLang(`${url.pathname}${url.search}`),
+    alternates:
+      c.req.method === "GET" && status === 200 ? alternates(c.env.PUBLIC_ORIGIN, url) : null,
   };
 }
 
@@ -58,8 +54,13 @@ export function pageSettings(c: Context<AppEnv>): PageSettings {
  * records, so a page rendered for one visitor's theme or language is never served to another. `Vary`
  * still names the inputs, for any cache that might keep a page anyway.
  */
-export function renderPage<P extends object>(c: Context<AppEnv>, view: FC<P>, props: P): string {
-  const settings = pageSettings(c);
+export function renderPage<P extends object>(
+  c: Context<AppEnv>,
+  view: FC<P>,
+  props: P,
+  status = 200,
+): string {
+  const settings = pageSettings(c, status);
   c.header("Content-Language", settings.lang);
   c.header("Vary", "Cookie, Accept-Language");
   const page = jsx(PageContext.Provider, { value: settings }, jsx(view, props));
