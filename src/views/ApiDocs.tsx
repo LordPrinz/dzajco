@@ -124,14 +124,15 @@ export const ERROR_CODES: readonly ErrorCode[] = [
   {
     status: 400,
     code: "invalid_name",
-    meaning: "customName ma mieć 3 do 32 liter, cyfr, znaków _ lub -.",
+    meaning:
+      "customName ma mieć 3 do 32 liter, cyfr, znaków _ lub -. Nazwa jest zapisywana w postaci NFKC, więc pełnoszerokie litery stają się zwykłymi.",
   },
   { status: 400, code: "name_too_long", meaning: "customName jest za długie." },
   { status: 400, code: "reserved_name", meaning: "customName jest zarezerwowane przez serwis." },
   {
     status: 400,
     code: "mixed_script",
-    meaning: "customName miesza alfabet łaciński z innym pismem.",
+    meaning: "customName miesza alfabet łaciński z innym pismem lub cyframi innego pisma.",
   },
   {
     status: 400,

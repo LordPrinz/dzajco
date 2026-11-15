@@ -223,10 +223,12 @@ result page and owner stats carry `Cache-Control: no-store`.
 
 - Random ids: 7 characters. They are drawn with rejection sampling over a URL-safe alphabet using
   `crypto.getRandomValues` (no nanoid). An id that is reserved is drawn again.
-- Custom names: NFC-normalized, `^[\p{L}\p{N}_-]{3,32}$` with the `u` flag, at most 96 bytes in UTF-8. They
-  stay case-sensitive. Two more rules apply:
-  - `reserved_name`: the name is rejected when its NFKC and lowercase form equals a reserved name.
-  - `mixed_script`: a name that mixes Latin with any other script is rejected.
+- Custom names: NFKC-normalized first (`ａｂｃ` is stored as `abc`, `abc²` as `abc2`), then checked against
+  `^[\p{L}\p{N}_-]{3,32}$` with the `u` flag and at most 96 bytes in UTF-8, so the limits apply to the stored
+  form. They stay case-sensitive. Two more rules apply:
+  - `reserved_name`: the name is rejected when its lowercase form equals a reserved name.
+  - `mixed_script`: a name that mixes Latin with any other script is rejected. Next to Latin letters only ASCII
+    digits are allowed (`abc٣` is rejected); a name in one non-Latin script may use that script's digits.
 - Reserved names: app routes and the top-level entries of `public/`. The list is kept by hand, and a test
   compares it with `public/`, so a new file there fails the test until the list is updated.
 - Lookup ids on redirect: 1 to 64 characters (NFC) with no `/`, control or format characters, so imported v2

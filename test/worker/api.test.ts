@@ -347,6 +347,7 @@ describe("POST /api/v1/links", () => {
     ["ab", "invalid_name"],
     ["history", "reserved_name"],
     ["abcдеф", "mixed_script"],
+    ["abc\u0663", "mixed_script"],
   ])("rejects custom name %s with 400 %s", async (customName, code) => {
     const res = await call(post({ url: "https://example.com", customName }));
     expect(res.status).toBe(400);
@@ -366,6 +367,17 @@ describe("POST /api/v1/links", () => {
   it("returns 409 id_taken for a custom name that exists", async () => {
     const name = freshName();
     expect((await call(post({ url: "https://example.com", customName: name }))).status).toBe(201);
+    const res = await call(post({ url: "https://example.org", customName: name }));
+    expect(res.status).toBe(409);
+    expect(await errorCode(res)).toBe("id_taken");
+  });
+
+  it("stores a fullwidth custom name in NFKC form, so it collides with the ASCII name", async () => {
+    const name = freshName().toLowerCase();
+    const wide = name.replace(/[a-z0-9]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0xfee0));
+    const created = await call(post({ url: "https://example.com", customName: wide }));
+    expect(created.status).toBe(201);
+    expect((await created.json<{ id: string }>()).id).toBe(name);
     const res = await call(post({ url: "https://example.org", customName: name }));
     expect(res.status).toBe(409);
     expect(await errorCode(res)).toBe("id_taken");

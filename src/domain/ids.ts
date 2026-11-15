@@ -54,18 +54,20 @@ export type NameError = "invalid_name" | "name_too_long" | "reserved_name" | "mi
 export type NameResult = { ok: true; name: string } | { ok: false; code: NameError };
 
 const LATIN = /\p{Script=Latin}/u;
-const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{N}_-]/u;
+// Only ASCII digits may sit next to Latin letters; digits of other scripts (Arabic-Indic, Devanagari) look alike.
+const NON_LATIN_LETTER = /[^\p{Script=Latin}0-9_-]/u;
 
-/** Latin letters next to letters of any other script are a look-alike risk; a single non-Latin script is fine. */
+/** Latin letters next to letters or digits of any other script are a look-alike risk; a single non-Latin script is fine. */
 function mixesScripts(name: string): boolean {
   return LATIN.test(name) && NON_LATIN_LETTER.test(name);
 }
 
 export function parseCustomName(input: string): NameResult {
-  const name = input.normalize("NFC");
+  // NFKC folds look-alikes (fullwidth letters, superscript digits) into one stored form. Every check runs on it.
+  const name = input.normalize("NFKC");
   if (!NAME_PATTERN.test(name)) return { ok: false, code: "invalid_name" };
   if (encoder.encode(name).length > NAME_MAX_BYTES) return { ok: false, code: "name_too_long" };
   if (mixesScripts(name)) return { ok: false, code: "mixed_script" };
-  if (isReserved(name.normalize("NFKC").toLowerCase())) return { ok: false, code: "reserved_name" };
+  if (isReserved(name.toLowerCase())) return { ok: false, code: "reserved_name" };
   return { ok: true, name };
 }
