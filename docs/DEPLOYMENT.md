@@ -370,7 +370,17 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
 
   Add `--dry-run` to print the SQL without running it. Cached copies of a deleted link can still redirect for up to 60 seconds.
 
-- Abuse reports arrive at `ABUSE_EMAIL`. Block the host or delete the link, then reply.
+- Look up a link its owner deleted. Deleted links stay in the `deleted_links` table for 30 days (the daily cron purges older rows), with the target, dates and a visits summary, but not the secret hash:
+
+  ```sh
+  bun run admin:deleted --remote              # the 50 most recent deletes
+  bun run admin:deleted <id> --remote         # every archived copy of one id
+  bun run admin:deleted --env dev --remote --limit 200
+  ```
+
+  It only reads. Expired links and links removed with `admin:block link` are not archived.
+
+- Abuse reports arrive at `ABUSE_EMAIL`. Block the host or delete the link, then reply. If the owner already deleted it, `admin:deleted <id>` shows where it pointed.
 - Logs: `bunx wrangler tail`, or Observability in the dashboard (enabled in `wrangler.jsonc`). The Worker does not log the `Authorization` header, form bodies or create responses. Cloudflare's own invocation logs record request details; the rehearsal checklist checks that they do not keep the `Authorization` value. Client IPs appear only in Cloudflare's own logs (request logs and Workers Logs metadata); the app never writes them.
 - Dependency updates: Dependabot opens weekly PRs (Bun, GitHub Actions, Docker) against `dev`. Merge them after CI passes, then redeploy manually.
 
@@ -417,4 +427,5 @@ Rollback and ops
 - [ ] `wrangler rollback` tested on a deliberate no-op version
 - [ ] Pepper rotation tried (V2 added, version bumped, old link still verifies)
 - [ ] `bun run admin:block host <host> --remote` and `unblock` tried
+- [ ] A link deleted with its key shows up in `bun run admin:deleted --remote`
 - [ ] Production cutover plan agreed: DNS switch time, delta run, Vercel kept for rollback
