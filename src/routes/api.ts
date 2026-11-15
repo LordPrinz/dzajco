@@ -1,6 +1,6 @@
 import { type Context, Hono } from "hono";
 import * as v from "valibot";
-import { createLinkSchema } from "../domain/schemas";
+import { createFailureCode, createLinkSchema } from "../domain/schemas";
 import type { AppEnv } from "../lib/app-env";
 import { readCapped } from "../lib/body";
 import { clientIpKey } from "../lib/client-ip";
@@ -60,7 +60,7 @@ export function apiRoutes() {
       return apiError(c, 400, "invalid_json", "Request body is not valid JSON");
     }
     const parsed = v.safeParse(createLinkSchema, json);
-    if (!parsed.success) return apiError(c, 400, "invalid_body", "Request body is invalid");
+    if (!parsed.success) return failure(c, 400, createFailureCode(parsed.issues));
     const input = parsed.output;
 
     const created = await createLink(c.env, input, c.req.url);
