@@ -68,8 +68,6 @@ export function ResultCard(props: ResultCardProps) {
         </div>
       </div>
 
-      <p class="sr-only" role="status" data-field="copied" />
-
       <div class="result__actions">
         <a class="button button--ghost" data-field="stats" href={statsHref}>
           Statystyki
