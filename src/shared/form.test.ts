@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { parseExpiry } from "../domain/expiry.ts";
 import { expiresAtFrom, hostIsIdn } from "./form";
 
 const NOW = Date.parse("2026-01-01T00:00:00Z");
@@ -19,9 +20,11 @@ describe("expiresAtFrom with a custom date", () => {
     expect(expiresAtFrom(choice, NOW, "Z")).toBe("2026-12-01T10:00:00Z");
   });
 
-  it("never reads an empty date as no expiry", () => {
-    expect(expiresAtFrom({ expiry: "custom", customDate: "" }, NOW, "Z")).not.toBe("");
-    expect(expiresAtFrom({ expiry: "custom", customDate: "" }, NOW, "")).not.toBe("");
+  it("turns an empty date into a value the expiry check rejects", () => {
+    for (const zone of ["Z", ""]) {
+      const value = expiresAtFrom({ expiry: "custom", customDate: "" }, NOW, zone);
+      expect(parseExpiry(value, NOW)).toEqual({ ok: false, code: "invalid_expiry" });
+    }
   });
 
   it("passes an unparsable date on for the API to reject", () => {
