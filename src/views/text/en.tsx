@@ -349,7 +349,7 @@ export const en: PageText = {
   },
   privacy: {
     title: "Privacy policy",
-    updated: "14 November 2026",
+    updated: "15 November 2026",
     lead: (date) => (
       <>
         Last updated: {date}. We collect as much data as a link needs to work and to show where its
@@ -362,6 +362,11 @@ export const en: PageText = {
         <>
           <strong>Links.</strong> The short name, the target address, the creation date and the
           expiry date. An expired link is deleted.
+        </>,
+        <>
+          <strong>Archive of deleted links.</strong> A link its owner deletes goes into an internal
+          archive for 30 days: the target address, the dates and the visit totals, not the key. Only
+          the service operator can see it, and the entry is removed after 30 days.
         </>,
         <>
           <strong>Deletion keys, hashed.</strong> We show the key once, when the link is created. We

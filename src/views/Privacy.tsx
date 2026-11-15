@@ -7,7 +7,7 @@ export interface PrivacyProps {
   contactHref: string | null;
 }
 
-export const PRIVACY_UPDATED = "2026-11-14";
+export const PRIVACY_UPDATED = "2026-11-15";
 
 export function Privacy({ nonce, contactHref }: PrivacyProps) {
   const { t } = usePage();

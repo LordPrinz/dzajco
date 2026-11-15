@@ -206,6 +206,8 @@ describe("GET /privacy-policy", () => {
     expect(html).toContain("tile.openstreetmap.org");
     expect(html).toContain("links-history");
     expect(html).toContain("nie trafia na nasz serwer");
+    expect(html).toContain("Archiwum usuniętych linków");
+    expect(html).toContain("30 dni");
     expect(html).toContain("<code>theme</code>");
   });
 

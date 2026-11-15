@@ -351,7 +351,7 @@ export const pl = {
   },
   privacy: {
     title: "Polityka prywatności",
-    updated: "14.11.2026",
+    updated: "15.11.2026",
     lead: (date: Child) => (
       <>
         Ostatnia aktualizacja: {date}. Zbieramy tyle danych, ile potrzeba, żeby link działał i żeby
@@ -364,6 +364,11 @@ export const pl = {
         <>
           <strong>Linki.</strong> Krótką nazwę, adres docelowy, datę utworzenia i datę wygaśnięcia.
           Link wygasły jest usuwany.
+        </>,
+        <>
+          <strong>Archiwum usuniętych linków.</strong> Link usunięty przez właściciela trafia na 30
+          dni do wewnętrznego archiwum: adres docelowy, daty i łączne liczby wejść, bez klucza.
+          Widzi je tylko operator serwisu, a po 30 dniach wpis jest usuwany.
         </>,
         <>
           <strong>Klucze do usuwania w postaci skrótu.</strong> Klucz pokazujemy raz, przy
