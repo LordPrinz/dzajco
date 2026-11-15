@@ -6,6 +6,20 @@ function Method({ method }: { method: Endpoint["method"] }) {
   return <span class={`method method--${method.toLowerCase()}`}>{method}</span>;
 }
 
+// Lets a code or path wrap after "_" and "/" only, never inside a word.
+function Breakable({ children }: { children: string }) {
+  return <>{children.split(/(?<=[_/])/).flatMap((part, i) => (i ? [<wbr />, part] : [part]))}</>;
+}
+
+// Wide tables scroll inside their own box instead of squeezing the columns.
+function Table({ label, children }: { label: string; children: unknown }) {
+  return (
+    <section class="table-scroll" aria-label={label} tabindex={0}>
+      <table class="table">{children}</table>
+    </section>
+  );
+}
+
 function Code({ children }: { children: string }) {
   return (
     <pre class="code" tabindex={0}>
@@ -70,13 +84,16 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
             return (
               <section class="endpoint" aria-label={`${endpoint.method} ${endpoint.path}`}>
                 <h3 class="endpoint__title">
-                  <Method method={endpoint.method} /> <code>{endpoint.path}</code>
+                  <Method method={endpoint.method} />{" "}
+                  <code>
+                    <Breakable>{endpoint.path}</Breakable>
+                  </code>
                 </h3>
                 <p>{text.summary}</p>
                 <p>
                   <strong>{a.input}</strong> {text.input}
                 </p>
-                <table class="table">
+                <Table label={`${endpoint.method} ${endpoint.path}`}>
                   <thead>
                     <tr>
                       <th scope="col" class="table__status">
@@ -95,7 +112,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Table>
               </section>
             );
           })}
@@ -105,7 +122,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
           <h2 id="h-bledy">{a.sections.errors}</h2>
           <p>{a.errorShape}</p>
           <Code>{errorExample}</Code>
-          <table class="table">
+          <Table label={a.sections.errors}>
             <thead>
               <tr>
                 <th scope="col" class="table__status">
@@ -122,19 +139,21 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
                     <code>{error.status}</code>
                   </td>
                   <td>
-                    <code>{error.code}</code>
+                    <code>
+                      <Breakable>{error.code}</Breakable>
+                    </code>
                   </td>
                   <td>{a.errorCodes[error.code]}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Table>
         </section>
 
         <section class="doc__section" id="limity" aria-labelledby="h-limity">
           <h2 id="h-limity">{a.sections.limits}</h2>
           <p>{a.limitsIntro}</p>
-          <table class="table">
+          <Table label={a.sections.limits}>
             <thead>
               <tr>
                 <th scope="col">{a.route}</th>
@@ -145,13 +164,15 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
               {LIMIT_ROUTES.map((route, i) => (
                 <tr>
                   <td>
-                    <code>{route}</code>
+                    <code>
+                      <Breakable>{route}</Breakable>
+                    </code>
                   </td>
                   <td>{a.limits[i]}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Table>
         </section>
 
         <section class="doc__section" id="cors" aria-labelledby="h-cors">
@@ -179,7 +200,7 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
         <section class="doc__section" id="migracja" aria-labelledby="h-migracja">
           <h2 id="h-migracja">{a.sections.migration}</h2>
           <p>{a.migration.intro}</p>
-          <table class="table">
+          <Table label={a.sections.migration}>
             <thead>
               <tr>
                 <th scope="col">{a.migration.v2}</th>
@@ -191,16 +212,20 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
               {MIGRATION.map((row, i) => (
                 <tr>
                   <td>
-                    <code>{row.v2}</code>
+                    <code>
+                      <Breakable>{row.v2}</Breakable>
+                    </code>
                   </td>
                   <td>
-                    <code>{row.v3}</code>
+                    <code>
+                      <Breakable>{row.v3}</Breakable>
+                    </code>
                   </td>
                   <td>{a.migration.rows[i]}</td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Table>
           <ul>
             <li>{a.migration.errors}</li>
           </ul>

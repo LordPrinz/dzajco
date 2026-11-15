@@ -129,7 +129,7 @@ describe("GET /about", () => {
 
 describe("GET /docs/api", () => {
   it("lists every endpoint of API v1 and the contract details", async () => {
-    const { html } = await page("/docs/api");
+    const html = (await page("/docs/api")).html.replaceAll("<wbr/>", "");
     expect(ENDPOINTS).toHaveLength(5);
     for (const endpoint of ENDPOINTS) {
       expect(html).toContain(`method--${endpoint.method.toLowerCase()}`);
@@ -151,8 +151,16 @@ describe("GET /docs/api", () => {
     expect(html).toContain("default-src &#39;none&#39;");
   });
 
-  it("lists every error code", async () => {
+  it("wraps codes after underscores only and puts tables in focusable scroll boxes", async () => {
     const { html } = await page("/docs/api");
+    expect(html).toContain("credentials_<wbr/>not_<wbr/>allowed");
+    expect(html).toContain("/<wbr/>api/<wbr/>v1/<wbr/>links");
+    const boxes = html.match(/<section class="table-scroll" aria-label="[^"]+" tabindex="0">/g);
+    expect(boxes).toHaveLength(ENDPOINTS.length + 3);
+  });
+
+  it("lists every error code", async () => {
+    const html = (await page("/docs/api")).html.replaceAll("<wbr/>", "");
     for (const { code } of ERROR_CODES) expect(html).toContain(`<code>${code}</code>`);
     // The codes the design names must all be there.
     for (const code of [
@@ -183,7 +191,7 @@ describe("GET /docs/api", () => {
   });
 
   it("has a migration section that maps every v2 endpoint", async () => {
-    const { html } = await page("/docs/api");
+    const html = (await page("/docs/api")).html.replaceAll("<wbr/>", "");
     expect(html).toContain("Migracja z v2");
     for (const old of [
       "GET /api/urls/{shortUrl}",
