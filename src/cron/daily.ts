@@ -24,7 +24,7 @@ async function oncePerDay(
   db: D1Database,
   key: string,
   today: string,
-  step: () => Promise<boolean | void>,
+  step: () => Promise<unknown>,
 ): Promise<boolean> {
   const last = await db
     .prepare("SELECT value FROM meta WHERE key = ?")
