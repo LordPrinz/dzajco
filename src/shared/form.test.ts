@@ -37,6 +37,8 @@ describe("normalizeUrlInput", () => {
   it("adds https to a host with a port", () => {
     expect(normalizeUrlInput("example.com:8080/path")).toBe("https://example.com:8080/path");
     expect(normalizeUrlInput("localhost:3000")).toBe("https://localhost:3000");
+    expect(normalizeUrlInput("127.0.0.1:80")).toBe("https://127.0.0.1:80");
+    expect(normalizeUrlInput("sub.example.com:443")).toBe("https://sub.example.com:443");
   });
 
   it("adds https to a bare host", () => {
@@ -46,6 +48,18 @@ describe("normalizeUrlInput", () => {
   it("leaves real schemes alone so the URL policy rejects them", () => {
     for (const input of [
       "ftp://example.com",
+      "tel:12345",
+      "sms:12345",
+      "mailto:1",
+      "urn:1",
+      "data:1",
+      "javascript:1",
+      "javascript:0/alert(1)",
+      "news:12/x",
+      "a:1#x",
+      "http:80",
+      "https:443",
+      "foo:1",
       "mailto:a@b.c",
       "javascript:alert(1)",
       "http://a.b",

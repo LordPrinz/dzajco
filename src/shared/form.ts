@@ -41,8 +41,8 @@ export function hostIsIdn(hostname: string): boolean {
   return hostname.split(".").some((label) => label.startsWith("xn--"));
 }
 
-/** `host:port` looks like a scheme to the check below, so it is told apart by the digits after the colon. */
-const HOST_WITH_PORT = /^[^\s/?#:@]+:\d+(?:[/?#]|$)/;
+/** `host:port` looks like a scheme to the check below, so it is told apart by a dotted host or `localhost` before the colon and digits after it. */
+const HOST_WITH_PORT = /^(?:localhost|[^\s/?#:@.]+(?:\.[^\s/?#:@.]+)+):\d+(?:[/?#]|$)/i;
 
 /** `example.com` is accepted as `https://example.com`; anything that already has a scheme is left alone. */
 export function normalizeUrlInput(input: string): string {

@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import { escapeHtml } from "../lib/html";
 import { activeEvent } from "../shared/events";
 import { OG_IMAGE_PATH } from "../views/Layout";
 import type { NonceVariables } from "./security-headers";
@@ -44,7 +45,7 @@ function absoluteOgImage(html: string, origin: string): string {
   // A function replacer, because a string would expand `$&` and `` $` `` from the origin.
   return html.replace(
     `property="og:image" content="${OG_IMAGE_PATH}"`,
-    () => `property="og:image" content="${escapeAttr(absolute)}"`,
+    () => `property="og:image" content="${escapeHtml(absolute)}"`,
   );
 }
 
