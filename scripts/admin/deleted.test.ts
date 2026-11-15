@@ -35,13 +35,14 @@ describe("parseArgs", () => {
       limit: 50,
       dryRun: false,
     });
-    expect(parseArgs(["abc", "--remote", "--env", "dev", "--limit", "10", "--dry-run"])).toEqual({
+    expect(parseArgs(["abc", "--remote", "--env", "dev", "--dry-run"])).toEqual({
       id: "abc",
       local: false,
       env: "dev",
-      limit: 10,
+      limit: 50,
       dryRun: true,
     });
+    expect(parseArgs(["--local", "--env", "my_env-2", "--limit", "10"]).limit).toBe(10);
   });
   it("rejects bad usage", () => {
     expect(() => parseArgs([])).toThrow();
@@ -50,6 +51,9 @@ describe("parseArgs", () => {
     expect(() => parseArgs(["a/b", "--local"])).toThrow();
     expect(() => parseArgs(["--local", "--env"])).toThrow();
     expect(() => parseArgs(["--local", "--env", "dev; rm"])).toThrow();
+    expect(() => parseArgs(["--local", "--env", "--remote"])).toThrow();
+    expect(() => parseArgs(["--local", "--env", "-x"])).toThrow();
+    expect(() => parseArgs(["abc", "--local", "--limit", "10"])).toThrow("--limit");
     expect(() => parseArgs(["--local", "--limit", "0"])).toThrow();
     expect(() => parseArgs(["--local", "--limit", "1001"])).toThrow();
     expect(() => parseArgs(["--local", "--limit", "2.5"])).toThrow();
@@ -111,6 +115,12 @@ describe("formatting", () => {
     expect(formatCountries(ROW.countries)).toBe("PL 5, DE 1");
     expect(formatCountries("[]")).toBe("");
     expect(formatCountries("oops")).toBe("oops");
+    const unsorted = JSON.stringify([
+      { code: "DE", visits: 1 },
+      { code: "US", visits: 5 },
+      { code: "FR", visits: 5 },
+    ]);
+    expect(formatCountries(unsorted)).toBe("FR 5, US 5, DE 1");
   });
   it("lists one line per row", () => {
     expect(formatList([ROW])).toBe(
@@ -143,6 +153,8 @@ describe("formatting", () => {
     const hostile = { ...ROW, target: "https://example.com/\u001b[2J" };
     expect(formatList([hostile])).not.toContain("\u001b");
     expect(formatOne("abc", [hostile])).toContain("https://example.com/?[2J");
+    const bidi = { ...ROW, target: "https://example.com/\u202egnp.exe\u200b" };
+    expect(formatList([bidi])).toContain("https://example.com/?gnp.exe?");
   });
 });
 
@@ -202,6 +214,11 @@ describe("main", () => {
   it("passes on a wrangler failure and reports bad output", async () => {
     const failing = deps({ run: async () => ({ code: 3, stdout: "" }) });
     expect(await main(["--local"], failing.d)).toBe(3);
+    expect(failing.err).toEqual([]);
+    const stdout = '{\n  "error": "no such table: deleted_links \u001b[0m"\n}\n';
+    const reported = deps({ run: async () => ({ code: 1, stdout }) });
+    expect(await main(["--local"], reported.d)).toBe(1);
+    expect(reported.err).toEqual(['{\n  "error": "no such table: deleted_links ?[0m"\n}']);
     const garbled = deps({ run: async () => ({ code: 0, stdout: "nope" }) });
     expect(await main(["--local"], garbled.d)).toBe(1);
     expect(garbled.err.join()).toContain("Could not");

@@ -43,7 +43,8 @@ export const USAGE = [
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 1000;
-const ENV_NAME = /^[A-Za-z0-9_-]{1,64}$/;
+// Must not start with "-", so a value can never be read by wrangler as another option.
+const ENV_NAME = /^[A-Za-z0-9_][A-Za-z0-9_-]{0,63}$/;
 const COLUMNS =
   "id, target, expires_at, created_at, is_custom, deleted_at, visits, countries FROM deleted_links";
 
@@ -53,6 +54,7 @@ export function parseArgs(argv: string[]): DeletedArgs {
   let remote = false;
   let env: string | null = null;
   let limit = DEFAULT_LIMIT;
+  let limitGiven = false;
   const positional: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] as string;
@@ -69,6 +71,7 @@ export function parseArgs(argv: string[]): DeletedArgs {
         throw new Error(`--limit needs a whole number from 1 to ${MAX_LIMIT}`);
       }
       limit = value;
+      limitGiven = true;
     } else if (arg.startsWith("--")) throw new Error(`Unknown option ${arg}`);
     else positional.push(arg);
   }
@@ -78,6 +81,7 @@ export function parseArgs(argv: string[]): DeletedArgs {
   if (positional[0] !== undefined) {
     id = positional[0].normalize("NFC");
     if (!LOOKUP_ID.test(id)) throw new Error("Not a valid link id");
+    if (limitGiven) throw new Error("--limit only applies to the list, not to one id");
   }
   return { id, local, env, limit, dryRun };
 }
@@ -111,20 +115,25 @@ export function parseRows(stdout: string): DeletedRow[] {
   return first.results as DeletedRow[];
 }
 
-/** Stored text comes from link owners: control characters would reach the terminal as escapes. */
+/**
+ * Stored text comes from link owners: control characters would reach the terminal as escapes, and
+ * format characters (bidi overrides, zero-width) could make it show something other than what is stored.
+ */
 function clean(text: string): string {
-  return text.replace(/\p{Cc}/gu, "?");
+  return text.replace(/[\p{Cc}\p{Cf}]/gu, "?");
 }
 
 function iso(ms: number | null): string {
   return ms === null ? "never" : new Date(ms).toISOString();
 }
 
-/** `PL 5, DE 1` from the stored JSON summary; the raw text when it does not parse. */
+/** `PL 5, DE 1` (most visits first) from the JSON summary; the raw text if it does not parse. */
 export function formatCountries(json: string): string {
   try {
-    const list = JSON.parse(json) as { code: string; visits: number }[];
-    return list.map((c) => `${clean(String(c.code))} ${Number(c.visits)}`).join(", ");
+    const list = (JSON.parse(json) as { code: string; visits: number }[])
+      .map((c) => ({ code: clean(String(c.code)), visits: Number(c.visits) }))
+      .sort((a, b) => b.visits - a.visits || a.code.localeCompare(b.code));
+    return list.map((c) => `${c.code} ${c.visits}`).join(", ");
   } catch {
     return clean(json);
   }
@@ -206,7 +215,12 @@ export async function main(argv: string[], deps: MainDeps = defaultDeps): Promis
       deps.wrangler,
       ...wranglerArgs(sql, args.local, args.env).slice(1),
     ]);
-    if (code !== 0) return code;
+    if (code !== 0) {
+      // With --json, wrangler reports errors on stdout.
+      const output = stdout.trim();
+      if (output !== "") deps.error(output.split("\n").map(clean).join("\n"));
+      return code;
+    }
     const rows = parseRows(stdout);
     deps.log(args.id === null ? formatList(rows) : formatOne(args.id, rows));
     return 0;
