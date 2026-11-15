@@ -103,6 +103,8 @@ function parseRows(body: unknown): VisitRow[] {
   });
 }
 
+const REQUEST_TIMEOUT_MS = 5000;
+
 export type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 
 export interface AeSourceOptions {
@@ -110,6 +112,8 @@ export interface AeSourceOptions {
   token: string;
   fetch?: Fetcher;
   sincePageSize?: number;
+  /** Per request; a stalled SQL API then fails the read instead of holding the stats request. */
+  timeoutMs?: number;
 }
 
 export class AeVisitSource implements VisitSource {
@@ -117,12 +121,14 @@ export class AeVisitSource implements VisitSource {
   readonly #token: string;
   readonly #fetch: Fetcher;
   readonly #sincePageSize: number;
+  readonly #timeoutMs: number;
 
   constructor(options: AeSourceOptions) {
     if (!/^[0-9a-f]{32}$/i.test(options.accountId)) throw new Error("Invalid CF_ACCOUNT_ID");
     this.#url = `https://api.cloudflare.com/client/v4/accounts/${options.accountId}/analytics_engine/sql`;
     this.#token = options.token;
     this.#fetch = options.fetch ?? ((url, init) => fetch(url, init));
+    this.#timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
     this.#sincePageSize = checkInt(
       "page size",
       options.sincePageSize ?? SINCE_PAGE_SIZE,
@@ -136,6 +142,7 @@ export class AeVisitSource implements VisitSource {
       method: "POST",
       headers: { authorization: `Bearer ${this.#token}` },
       body: sql,
+      signal: AbortSignal.timeout(this.#timeoutMs),
     });
     if (!res.ok) {
       await res.body?.cancel();

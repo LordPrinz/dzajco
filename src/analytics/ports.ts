@@ -22,9 +22,8 @@ export interface VisitSink {
 
 /**
  * One aggregated group: `SUM(_sample_interval)` grouped by link, `createdAt`, country and city. `createdAt`
- * is null for a point without a valid one, which matches no link. `lat` and `lon`
- * come from an aggregate over the group's doubles (for example `any(double1)`), or are null when
- * the source has none.
+ * is null for a point without a valid one, which matches no link. `lat` and `lon` are the
+ * sample-weighted mean of the group's doubles, or null when the source has none.
  */
 export interface VisitRow {
   linkId: string;

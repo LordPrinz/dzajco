@@ -24,6 +24,8 @@ export function expiresAtFrom(
 ): string | null {
   if (expiry === "" || expiry === "never") return null;
   if (expiry === CUSTOM_EXPIRY) {
+    // An empty string would read as "no expiry" to the form schema, so pass a value the API rejects.
+    if (customDate === "") return `invalid:${CUSTOM_EXPIRY}`;
     const withSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(customDate)
       ? `${customDate}:00${zone}`
       : customDate;
@@ -34,11 +36,6 @@ export function expiresAtFrom(
   const preset = EXPIRY_PRESETS.find((p) => p.value === expiry);
   // An unknown preset is passed on as a value the API rejects.
   return preset?.ms ? new Date(now + preset.ms).toISOString() : `invalid:${expiry}`;
-}
-
-/** True when a (punycode) host has an internationalised label; the server and the browser share this rule. */
-export function hostIsIdn(hostname: string): boolean {
-  return hostname.split(".").some((label) => label.startsWith("xn--"));
 }
 
 /** `example.com` is accepted as `https://example.com`; anything that already has a scheme is left alone. */

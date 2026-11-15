@@ -6,8 +6,6 @@ export const LEGACY_KEY_LENGTH = 12;
 
 const KEY_PATTERN = `(?:[A-Za-z0-9_-]{${KEY_LENGTH}}|[A-Za-z0-9_-]{${LEGACY_KEY_LENGTH}})`;
 
-export const keySchema = v.pipe(v.string(), v.regex(new RegExp(`^${KEY_PATTERN}$`), "Invalid key"));
-
 // RFC 7235: the auth scheme is case-insensitive.
 const BEARER = new RegExp(`^bearer ${KEY_PATTERN}$`, "i");
 
@@ -40,5 +38,19 @@ export const formBodySchema = v.strictObject({
   ),
 });
 
-export type CreateLinkInput = v.InferOutput<typeof createLinkSchema>;
-export type FormBodyInput = v.InferOutput<typeof formBodySchema>;
+/**
+ * Maps a failed create-link parse to the error code the API and the form both report. The length caps
+ * bound work on hostile input, so they stay in the schema; this keeps their specific codes.
+ */
+export function createFailureCode(
+  issues: readonly v.BaseIssue<unknown>[],
+): "url_too_long" | "name_too_long" | "invalid_body" {
+  const tooLong = (field: string) =>
+    issues.some(
+      (issue) =>
+        issue.type === "max_length" && issue.path?.length === 1 && issue.path[0]?.key === field,
+    );
+  if (tooLong("url")) return "url_too_long";
+  if (tooLong("customName")) return "name_too_long";
+  return "invalid_body";
+}

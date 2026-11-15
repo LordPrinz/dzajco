@@ -1,7 +1,7 @@
 import { createScheduledController } from "cloudflare:test";
 import { env } from "cloudflare:workers";
 import { beforeEach, expect, it } from "vitest";
-import { runDaily } from "../../src/cron/daily";
+import { EXPIRED_BATCH, MAX_EXPIRED_BATCHES, runDaily } from "../../src/cron/daily";
 import { globalStats, insertLink, readCursor, upsertStatsBatch } from "../../src/db/queries";
 import worker from "../../src/index";
 
@@ -121,4 +121,46 @@ it("with analytics configured global_stats waits for the rollup cursor, deleteEx
   expect(await runDaily(db, DAY1 + 3 * H, true)).toEqual({ expired: false, globalStats: true });
   expect((await globalStats(db))?.updatedAt).toBe(DAY1 + 3 * H);
   expect(await runDaily(db, DAY1 + 4 * H, true)).toEqual(none);
+});
+
+it("clears a backlog over several hourly runs and writes the day marker only after a short batch", async () => {
+  const perRun = EXPIRED_BATCH * MAX_EXPIRED_BATCHES;
+  const total = 2 * perRun + 200;
+  await db
+    .prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 0 UNION ALL SELECT i + 1 FROM n WHERE i + 1 < ?1)
+       INSERT INTO links (id, target, target_host, expires_at, created_at, is_custom)
+       SELECT 'e' || i, 'https://example.com/', 'example.com', ?2 - i, 0, 0 FROM n`,
+    )
+    .bind(total, DAY1 - 1)
+    .run();
+  const count = async () =>
+    (await db.prepare("SELECT COUNT(*) AS n FROM links").first<{ n: number }>())?.n ?? -1;
+
+  // A full last batch leaves the marker unset, so the next hour continues.
+  expect((await runDaily(db, DAY1 + H, false)).expired).toBe(false);
+  expect(await count()).toBe(total - perRun);
+  expect((await runDaily(db, DAY1 + 2 * H, false)).expired).toBe(false);
+  expect(await count()).toBe(total - 2 * perRun);
+
+  // The third run ends on a short batch: marker written, later hours skip.
+  expect((await runDaily(db, DAY1 + 3 * H, false)).expired).toBe(true);
+  expect(await count()).toBe(0);
+  await addLink("late", DAY1);
+  expect((await runDaily(db, DAY1 + 4 * H, false)).expired).toBe(false);
+  expect(await count()).toBe(1);
+});
+
+it("a backlog of exactly one full run needs one more run to see the short batch", async () => {
+  const perRun = EXPIRED_BATCH * MAX_EXPIRED_BATCHES;
+  await db
+    .prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 0 UNION ALL SELECT i + 1 FROM n WHERE i + 1 < ?1)
+       INSERT INTO links (id, target, target_host, expires_at, created_at, is_custom)
+       SELECT 'e' || i, 'https://example.com/', 'example.com', ?2 - i, 0, 0 FROM n`,
+    )
+    .bind(perRun, DAY1 - 1)
+    .run();
+  expect((await runDaily(db, DAY1 + H, false)).expired).toBe(false);
+  expect((await runDaily(db, DAY1 + 2 * H, false)).expired).toBe(true);
 });

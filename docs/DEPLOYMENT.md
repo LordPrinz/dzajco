@@ -47,6 +47,7 @@ Never put a secret value on a command line (`VAR=value cmd`): it lands in shell 
 
 - `SECRET_PEPPER_V1` is the HMAC pepper for link secret keys ([ADR 0003](adr/0003-secret-key-hashing.md)). Store a copy in a password manager. Losing it makes every stored secret key unverifiable.
 - `CF_AE_TOKEN` is a Cloudflare API token with the single permission _Account Analytics: Read_ (My Profile, API Tokens, Create Token). Grant nothing else.
+- Set `CF_AE_TOKEN` and `CF_ACCOUNT_ID` before the Worker takes traffic. The first rollup starts at the previous UTC day, so visits recorded earlier are never rolled up and stay missing from the stats.
 
 If the Worker does not exist yet, wrangler offers to create it when you set the first secret. Accept.
 
@@ -69,7 +70,7 @@ Commit the production values (`database_id`, `CF_ACCOUNT_ID`, `PUBLIC_ORIGIN`, `
 ### Domain and routes
 
 1. Dashboard, Workers & Pages, `dzajco`, Settings, Domains & Routes, Add, Custom domain. Enter the host of `PUBLIC_ORIGIN`. Cloudflare creates the DNS record and certificate.
-2. Disable the `workers.dev` route and Preview URLs in the same panel if you do not need them. Disabling them removes extra public entry points.
+2. `wrangler.jsonc` sets `workers_dev` and `preview_urls` to `false`, so every deploy keeps the `workers.dev` route and Preview URLs off. Do not turn them on in the dashboard: the next `bun run deploy` switches them off again. Both hosts bypass the WAF rule from section 3 and the Cache API.
 
 For the first rehearsal use a spare domain or subdomain you control, not the production host (see [section 10](#10-rehearsal-checklist)).
 
@@ -312,7 +313,7 @@ Setup
 - [ ] `SECRET_PEPPER_V1` set (value saved in a password manager)
 - [ ] `CF_AE_TOKEN` set, token has only _Account Analytics: Read_
 - [ ] `PUBLIC_ORIGIN`, `SECRET_PEPPER_VERSION=1`, `CF_ACCOUNT_ID`, `ABUSE_EMAIL`, `CF_ANALYTICS_TOKEN` set in vars
-- [ ] Test domain attached as custom domain; `workers.dev` and Preview URLs disabled
+- [ ] Test domain attached as custom domain; `workers_dev` and `preview_urls` are `false` in `wrangler.jsonc`, and the deploy left `workers.dev` and Preview URLs off
 - [ ] WAF rate-limiting rule created with the expression and threshold from section 3 (record the values used: ______)
 
 Deploy
@@ -322,6 +323,7 @@ Deploy
 - [ ] `curl $ORIGIN/healthz` returns `{"ok":true}`
 - [ ] Link created, redirect answers `302`, stats page shows the visit
 - [ ] Redirect `cpuTime` p50 under 5 ms in `wrangler tail`
+- [ ] Stats CPU time measured with `wrangler tail` on a link with many fresh visits; the Worker logs `fresh visits returned N rows` above 20000 rows
 - [ ] SQL API query on the real `dzajco_visits` dataset returns the test visits
 - [ ] Hourly cron ran (Triggers or Observability) and the rollup moved the cursor
 - [ ] Cache API works on the test domain (a repeated redirect is served without a D1 read)

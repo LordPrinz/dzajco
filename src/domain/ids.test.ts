@@ -101,13 +101,13 @@ describe("parseCustomName", () => {
   });
 
   it("rejects 32 four-byte characters (over 96 UTF-8 bytes)", () => {
-    // Mathematical bold letters are letters (\p{L}) of 4 UTF-8 bytes each.
-    const name = "\u{1D400}".repeat(32);
+    // Deseret letters have 4 UTF-8 bytes and no compatibility mapping, so NFKC keeps them.
+    const name = "\u{10400}".repeat(32);
     expect(parseCustomName(name)).toEqual({ ok: false, code: "name_too_long" });
   });
 
   it("accepts 24 four-byte characters (exactly 96 bytes)", () => {
-    expect(parseCustomName("\u{1D400}".repeat(24)).ok).toBe(true);
+    expect(parseCustomName("\u{10400}".repeat(24)).ok).toBe(true);
   });
 
   it.each(["API", "Api", "\uff41\uff50\uff49", "Stats", "DOCS"])(
@@ -140,6 +140,33 @@ describe("parseCustomName", () => {
     expect(parseCustomName("hello")).toEqual({ ok: true, name: "hello" });
   });
 
+  it("normalises to NFKC: fullwidth letters become ASCII", () => {
+    expect(parseCustomName("\uff41\uff42\uff43")).toEqual({ ok: true, name: "abc" });
+  });
+
+  it("normalises a superscript digit to an ASCII digit", () => {
+    expect(parseCustomName("abc\u00b2")).toEqual({ ok: true, name: "abc2" });
+  });
+
+  it("applies the 96 byte limit to the normalised name (4-byte math letters shrink to 1 byte)", () => {
+    expect(parseCustomName("\u{1D400}".repeat(32))).toEqual({ ok: true, name: "A".repeat(32) });
+  });
+
+  it.each(["abc\u0663", "\u0663abc", "abc\u0967"])(
+    "rejects non-ASCII digits next to Latin letters: %p",
+    (name) => {
+      expect(parseCustomName(name)).toEqual({ ok: false, code: "mixed_script" });
+    },
+  );
+
+  it.each([
+    "\u0663\u0664\u0665",
+    "\u043f\u0440\u0438\u0432\u0435\u0442\u0663",
+    "\u043f\u0440\u04381",
+  ])("accepts non-Latin script with digits: %p", (name) => {
+    expect(parseCustomName(name).ok).toBe(true);
+  });
+
   it("Cafe with accent in NFD and NFC gives the same name", () => {
     const nfc = parseCustomName("Café");
     const nfd = parseCustomName("Café");
@@ -155,12 +182,13 @@ describe("parseCustomName", () => {
     );
   });
 
-  it("property: an accepted name is NFC, 3-32 chars and at most 96 bytes", () => {
+  it("property: an accepted name is NFKC-stable, 3-32 chars and at most 96 bytes", () => {
     fc.assert(
       fc.property(fc.string({ unit: "grapheme", maxLength: 40 }), (s) => {
         const res = parseCustomName(s);
         if (res.ok) {
-          expect(res.name).toBe(res.name.normalize("NFC"));
+          expect(res.name).toBe(res.name.normalize("NFKC"));
+          expect(res.name).toMatch(/^[\p{L}\p{N}_-]{3,32}$/u);
           expect(new TextEncoder().encode(res.name).length).toBeLessThanOrEqual(96);
           expect(res.name).not.toContain("/");
         }

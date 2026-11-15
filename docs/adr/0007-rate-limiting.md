@@ -48,6 +48,8 @@ request quota.
   about 2.4 times before it is cut off.
 - A 429 from a binding still counts toward the 100k per day request quota. The bindings only save D1 reads
   and AE writes. Only the WAF rule protects the quota.
+- `RL_REDIRECT` fails open. If the binding throws, the request continues and a warning is logged per failing request
+  without the client key. The other limiters keep failing closed, so their errors surface as 500.
 - The no-JS form `POST /` shares `RL_CREATE`.
 - If a binding is removed later, per-route limits (`RL_CREATE`, `RL_DELETE`, `RL_STATS`,
   `RL_REDIRECT`) are gone, and the WAF rule must be set up by hand on the zone.

@@ -3,7 +3,7 @@ import type { AppEnv } from "../lib/app-env";
 import { Notice } from "../views/Notice";
 
 const ERROR_PAGE =
-  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Error</title><h1>Something went wrong</h1></html>';
+  '<!doctype html><html lang="pl"><meta charset="utf-8"><title>Błąd</title><h1>Coś poszło nie tak</h1></html>';
 
 export function apiError(
   c: Context,

@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import { escapeHtml } from "../lib/html";
 import { activeEvent } from "../shared/events";
 import type { NonceVariables } from "./security-headers";
 
@@ -9,15 +10,6 @@ const TOKEN = /^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i;
  * Markup for the pieces every HTML page may carry: the seasonal event script and the CF Web Analytics
  * beacon. Both carry the per-request nonce. The clock is `new Date()`; tests freeze it with fake timers.
  */
-function escapeAttr(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/'/g, "&#39;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
 export function extrasMarkup(nonce: string, token: string, now: Date): string {
   let html = "";
   const event = activeEvent(now);
@@ -26,7 +18,7 @@ export function extrasMarkup(nonce: string, token: string, now: Date): string {
   }
   if (TOKEN.test(token)) {
     const beacon = JSON.stringify({ token });
-    html += `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${escapeAttr(beacon)}' nonce="${nonce}"></script>`;
+    html += `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${escapeHtml(beacon)}' nonce="${nonce}"></script>`;
   }
   return html;
 }

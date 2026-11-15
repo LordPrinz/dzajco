@@ -188,6 +188,23 @@ describe("AeVisitSource", () => {
   });
 });
 
+describe("AeVisitSource timeout", () => {
+  it("aborts a request the SQL API never answers", async () => {
+    const fetcher = ((_url: string, init: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+      })) as Fetcher;
+    const source = new AeVisitSource({
+      accountId: ACCOUNT,
+      token: "tok",
+      fetch: fetcher,
+      timeoutMs: 20,
+    });
+
+    await expect(source.queryDay("2026-11-13", 0, 500)).rejects.toThrow();
+  });
+});
+
 describe("AeVisitSource row mapping", () => {
   async function mapOne(raw: Record<string, unknown>) {
     const fetcher = (async () =>

@@ -191,6 +191,7 @@ function summary(report: MigrationReport): string[] {
     `duplicates: ${list(report.duplicates)}`,
     `legacy keys hashed: ${report.legacyKeys}`,
     `https:// added to www. targets: ${list(report.schemeAdded)}`,
+    `ids over 96 bytes (imported anyway): ${list(report.overlongIds)}`,
     `policy flags (imported; review, then admin:block if needed): ${report.policyFlags.length} ${JSON.stringify(report.policyFlags)}`,
   ];
 }

@@ -29,19 +29,24 @@ dzajco/                          (trunk: v3.0)
 │   ├── db/            # queries.ts (D1)
 │   ├── analytics/     # sink.ts (AE writeDataPoint), ae-source.ts (SQL API), fresh.ts. Ports, mocked in tests
 │   ├── cron/          # rollup.ts, daily.ts, scheduled.ts
-│   ├── middleware/    # security-headers, rate-limit, origin-check, errors, request-id
-│   ├── routes/        # redirect.ts, api.ts, pages.ts, form.ts
-│   ├── views/         # Hono JSX: Layout, Home, Created, History, Stats, About, ApiDocs, Privacy, NotFound, Gone
+│   ├── services/      # links.ts (create a link), stats.ts
+│   ├── lib/           # app-env, abuse, body, client-ip, html, time
+│   ├── shared/        # code shared by the server and the browser scripts: events, form, history, stats
+│   ├── middleware/    # security-headers, rate-limit, cors, site-extras, errors, request-id
+│   ├── routes/        # redirect.ts, api.ts, stats.ts, pages.ts (form pages, origin check), stats-page.ts, info-pages.ts
+│   ├── views/         # Hono JSX: Layout, Header, Home, Created, ResultCard, History, Stats, About, ApiDocs, Privacy, LinkError, Notice
 │   ├── client/        # browser scripts, built with `bun build` into public/assets
 │   └── index.ts       # fetch + scheduled
-├── migrations/0001_init.sql
+├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql
 ├── public/            # _headers, css, img, assets/ (build output)
 ├── test/worker/       # vitest-pool-workers (+ cf fixtures, applyD1Migrations)
 ├── test/e2e/          # Playwright
 ├── scripts/
+│   ├── admin/         # block.ts (abuse CLI: block or unblock a host, delete a link)
 │   ├── gh/            # repo, board and issue scripts (+ tests)
 │   ├── git/           # commit and branch conventions (+ tests)
-│   ├── ci/            # coverage.ts, size.ts
+│   ├── ci/            # coverage.ts, size.ts, smoke.ts
+│   ├── lib/           # jsonc.ts, sql.ts
 │   └── migrate/       # mongo-to-d1.ts
 ├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:7)
 ├── Dockerfile                 # dev/test: node:24-bookworm-slim + bun + wrangler (workerd needs glibc)
@@ -139,7 +144,9 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
   call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
   `batch()` counts as one query toward the per-invocation limit (Free: 50), but the per-statement limits (100
   bound parameters, 100 KB) still apply, so a page is split into statements that fit. The next hours finish
-  the rest. `deleteExpired` runs once a day after 01:00 UTC, whatever the cursor is. The `global_stats`
+  the rest. `deleteExpired` runs after 01:00 UTC, whatever the cursor is, in batches of 500, at most 3 batches
+  per cron call (so the call stays inside the Free limit of 50 even at 20 rollup pages). The day marker is
+  written only after a short batch, so a bigger backlog continues in the next hourly run. The `global_stats`
   recompute runs once the cursor has reached today.
 - Fresh data (everything not yet in D1) comes from two queries with the same `GROUP BY` and `ORDER BY`: day
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache
@@ -152,7 +159,9 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
 - Locally there is no SQL API. Without `CF_AE_TOKEN` the code uses `LocalVisitSource`, which returns an
   empty list, so locally the fresh part of the stats is empty.
 - Global stats: one row in `global_stats`, recomputed by the cron once a day. `countries` is a JSON list of the top 20 `{code, visits}`. `GET /api/v1/stats` reads that
-  row only, so the numbers can lag by up to about 24 hours.
+  row only, so the numbers can lag by up to about 24 hours. The totals cover live links only: deleted and expired
+  links drop out together with their stats rows, and a running total would cost a D1 write per deleted row.
+  `/about` and `/docs/api` say so.
 - Each link gets its own secretKey. v2 reused a key for "never" links with the same target. v3 does not.
 
 ### API v1
@@ -225,10 +234,12 @@ result page and owner stats carry `Cache-Control: no-store`.
 
 - Random ids: 7 characters. They are drawn with rejection sampling over a URL-safe alphabet using
   `crypto.getRandomValues` (no nanoid). An id that is reserved is drawn again.
-- Custom names: NFC-normalized, `^[\p{L}\p{N}_-]{3,32}$` with the `u` flag, at most 96 bytes in UTF-8. They
-  stay case-sensitive. Two more rules apply:
-  - `reserved_name`: the name is rejected when its NFKC and lowercase form equals a reserved name.
-  - `mixed_script`: a name that mixes Latin with any other script is rejected.
+- Custom names: NFKC-normalized first (`ａｂｃ` is stored as `abc`, `abc²` as `abc2`), then checked against
+  `^[\p{L}\p{N}_-]{3,32}$` with the `u` flag and at most 96 bytes in UTF-8, so the limits apply to the stored
+  form. They stay case-sensitive. Two more rules apply:
+  - `reserved_name`: the name is rejected when its lowercase form equals a reserved name.
+  - `mixed_script`: a name that mixes Latin with any other script is rejected. Next to Latin letters only ASCII
+    digits are allowed (`abc٣` is rejected); a name in one non-Latin script may use that script's digits.
 - Reserved names: app routes and the top-level entries of `public/`. The list is kept by hand, and a test
   compares it with `public/`, so a new file there fails the test until the list is updated.
 - Lookup ids on redirect: 1 to 64 characters (NFC) with no `/`, control or format characters, so imported v2
@@ -239,11 +250,16 @@ result page and owner stats carry `Cache-Control: no-store`.
   - credentials in the URL (`credentials_not_allowed`);
   - private, loopback, link-local, multicast and reserved IPv4 and IPv6 addresses, including alternative
     IPv4 forms and `localhost` (`private_target`). Reserved covers the IPv4 documentation and benchmarking
-    ranges (`192.0.0.0/24`, `192.0.2.0/24`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`) and, for
-    IPv6, site-local `fec0::/10`, documentation `2001:db8::/32` and `3fff::/20`, Teredo `2001::/32`,
-    discard `100::/64`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and IPv4-mapped, translated, compatible or
-    NAT64 (`64:ff9b::/96`) forms of a private IPv4 address. A public IPv6 literal such as
+    ranges (`192.0.0.0/24`, `192.0.2.0/24`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`), the 6to4
+    relay `192.88.99.0/24` and, for IPv6, site-local `fec0::/10`, documentation `2001:db8::/32` and
+    `3fff::/20`, Teredo `2001::/32`, benchmarking `2001:2::/48`, ORCHID `2001:10::/28` and `2001:20::/28`,
+    the reserved `::/8`, `100::/8` (0100::/8) and `5f00::/16`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and every
+    IPv4-mapped, translated, compatible or NAT64 (`64:ff9b::/96`) literal whatever IPv4 it embeds (the
+    stored host would be the IPv6 text, so an IPv4 blocklist entry could not match it). A public IPv6
+    literal such as
     `http://[2606:4700:4700::1111]/` is accepted, and `admin:block host` takes one in brackets;
+  - hosts with no dot, such as `https://metadata/` or `https://intranet:8080/x` (a trailing dot does not
+    count), which only resolve inside a local network (`private_target`);
   - the own hosts: the host of `PUBLIC_ORIGIN`, the request host, and the account's `*.workers.dev` suffix
     (preview URLs), including trailing dots and ports;
   - targets on other URL shorteners (see Abuse).
@@ -334,6 +350,8 @@ Other measures:
   WAF rule protects the request quota. Spike T9.0 showed that the bindings work on Free. They count per location
   and are eventually consistent (a limit is enforced after roughly 2.4 times its value), so they are an
   abuse cut-off, not an exact limit ([ADR 0007](adr/0007-rate-limiting.md)). The threshold is set in `DEPLOYMENT.md`.
+  `RL_REDIRECT` fails open: if the binding throws, the Worker logs a warning per failing request, without the client key, and
+  serves the request, because a redirect must not break when a side system fails. The other limiters fail closed.
 - No-JS form. `POST /` requires `Sec-Fetch-Site: same-origin`. When that header is absent, `Origin` must equal an own
   origin. `Origin: null` is rejected. Anything else gets 403.
 - Security headers (middleware). On every Worker response (HTML, JSON and redirects) it sends
@@ -375,6 +393,8 @@ A shortener is open to abuse, so v3.0 has a minimum set of controls (task T10c):
 Accepted risks:
 
 - Cache staleness. Another colo can serve a deleted or changed record for up to 60 seconds.
+  After a custom name is re-created, that stale record carries the old `created_at`, so visits recorded in
+  that window are dropped from the stats and not attributed to the new link.
 - Late AE ingest. If AE ingests a data point after `D+1 01:00 UTC`, it can shift `OFFSET` paging. A few
   visits can then be skipped or counted twice.
 - Stats for the current day depend on the AE SQL API (token, 10k queries per day). When it fails, the API
