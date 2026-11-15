@@ -15,7 +15,12 @@
       "$date": "2099-01-01T00:00:00.000Z"
     },
     "secretKey": "Kk1_-aaBBcc9",
-    "visitsLocation": []
+    "visitsLocation": [
+      {
+        "visits": { "$numberInt": "9" },
+        "location": "Amsterdam_North Holland_The Netherlands"
+      }
+    ]
   },
   {
     "_id": "cafe%CC%81",
@@ -92,10 +97,17 @@
   {
     "_id": "o'brien",
     "full": "https://example.com/it's'); DROP TABLE links;--",
-    "visits": 0,
+    "visits": 10,
     "expire": "2099-06-01T12:00:00.000Z",
     "secretKey": "Hh7_-ssTTuu3",
-    "visitsLocation": []
+    "visitsLocation": [
+      { "visits": 3, "location": "Gliwice_Silesia_Poland" },
+      { "visits": 1, "location": "Gliwice_Upper Silesia_Poland" },
+      { "visits": 2, "location": "Ujazd_Opole Voivodeship_Poland" },
+      { "visits": 1, "location": "Atlantis_Nowhere_Atlantis" },
+      { "visits": 1, "location": "Ghost Town_Nowhere_Germany" },
+      { "visits": 0, "location": "Warsaw_Mazovia_Poland" }
+    ]
   },
   {
     "_id": "a%2Fb",
