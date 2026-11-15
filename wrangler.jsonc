@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-11-13",
   "observability": { "enabled": true },
-  "assets": { "directory": "./public", "binding": "ASSETS" },
+  "assets": { "directory": "./public" },
   "d1_databases": [
     {
       "binding": "DB",

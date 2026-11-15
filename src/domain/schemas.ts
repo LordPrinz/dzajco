@@ -6,8 +6,6 @@ export const LEGACY_KEY_LENGTH = 12;
 
 const KEY_PATTERN = `(?:[A-Za-z0-9_-]{${KEY_LENGTH}}|[A-Za-z0-9_-]{${LEGACY_KEY_LENGTH}})`;
 
-export const keySchema = v.pipe(v.string(), v.regex(new RegExp(`^${KEY_PATTERN}$`), "Invalid key"));
-
 // RFC 7235: the auth scheme is case-insensitive.
 const BEARER = new RegExp(`^bearer ${KEY_PATTERN}$`, "i");
 
@@ -39,6 +37,3 @@ export const formBodySchema = v.strictObject({
     ),
   ),
 });
-
-export type CreateLinkInput = v.InferOutput<typeof createLinkSchema>;
-export type FormBodyInput = v.InferOutput<typeof formBodySchema>;

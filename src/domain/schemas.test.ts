@@ -1,29 +1,26 @@
 import { describe, expect, it } from "bun:test";
 import * as v from "valibot";
-import { bearerSchema, createLinkSchema, formBodySchema, keySchema } from "./schemas.ts";
+import { bearerSchema, createLinkSchema, formBodySchema } from "./schemas.ts";
 
 const key = "A".repeat(22);
 
-describe("keySchema and bearerSchema", () => {
+describe("bearerSchema", () => {
   it("accepts a 22 char base64url key", () => {
-    expect(v.safeParse(keySchema, "abcDEF012-_abcDEF012-_").success).toBe(true);
+    expect(v.safeParse(bearerSchema, "Bearer abcDEF012-_abcDEF012-_").success).toBe(true);
   });
 
   it("accepts a legacy 12 char v2 key", () => {
-    expect(v.safeParse(keySchema, "abcDEF012-_a").success).toBe(true);
     expect(v.parse(bearerSchema, "Bearer abcDEF012-_a")).toBe("abcDEF012-_a");
   });
 
   it.each(["A".repeat(11), "A".repeat(13), "A".repeat(21), "A".repeat(23)])(
     "rejects a key of the wrong length %p",
     (bad) => {
-      expect(v.safeParse(keySchema, bad).success).toBe(false);
       expect(v.safeParse(bearerSchema, `Bearer ${bad}`).success).toBe(false);
     },
   );
 
   it('{"$ne":null} as key is a schema error', () => {
-    expect(v.safeParse(keySchema, { $ne: null }).success).toBe(false);
     expect(v.safeParse(bearerSchema, { $ne: null }).success).toBe(false);
   });
 
@@ -35,7 +32,7 @@ describe("keySchema and bearerSchema", () => {
     `${"A".repeat(21)}=`,
     `${"A".repeat(21)}+`,
   ])("rejects key %p", (bad) => {
-    expect(v.safeParse(keySchema, bad).success).toBe(false);
+    expect(v.safeParse(bearerSchema, `Bearer ${bad}`).success).toBe(false);
   });
 
   it("bearerSchema extracts the key", () => {
