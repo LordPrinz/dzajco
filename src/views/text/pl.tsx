@@ -245,7 +245,8 @@ export const pl = {
     keyText:
       "Poniższy klucz pozwala usunąć link i zobaczyć jego pełne statystyki. Zapisz go, nie pokażemy go ponownie.",
     stats: "Statystyki",
-    another: "Skróć kolejny",
+    another: "Skróć kolejny link",
+    share: "Udostępnij",
   },
   created: { title: "Link utworzony" },
   notices: {

@@ -12,9 +12,18 @@ export interface ResultCardProps {
   expiresAt: string | null;
 }
 
+/** `https://dzaj.de/abc` as `dzaj.de/abc`: shorter to read, and what people type anyway. */
+export function withoutProtocol(url: string): string {
+  return url.replace(/^https?:\/\//, "");
+}
+
 /**
  * The result of a creation. Rendered by `Created` on the no-JS path and, empty, inside a `<template>` on
  * the home page: the browser script clones the template and fills the `data-field` elements.
+ *
+ * The short link is the main thing, with Copy as the one filled button next to it. The key box starts
+ * as the strong warning, which is right without JavaScript; the script turns it into a quiet note once
+ * the key is saved to History, and leaves the warning if saving fails.
  */
 export function ResultCard(props: ResultCardProps) {
   const { t } = usePage();
@@ -32,14 +41,22 @@ export function ResultCard(props: ResultCardProps) {
         {t.result.title}
       </h2>
 
-      <div class="field">
-        <span class="field__label">{t.result.shortLink}</span>
-        <div class="copy-row">
-          <a class="copy-row__value" data-field="shortUrl" href={props.shortUrl}>
-            {props.shortUrl}
-          </a>
-          <button type="button" class="button button--ghost" data-copy="shortUrl" hidden>
+      <div class="result__link">
+        <a
+          class="result__short"
+          data-field="shortUrl"
+          data-value={props.shortUrl}
+          href={props.shortUrl}
+          aria-label={`${t.result.shortLink}: ${props.shortUrl}`}
+        >
+          {withoutProtocol(props.shortUrl)}
+        </a>
+        <div class="result__share">
+          <button type="button" class="button result__copy" data-copy="shortUrl" hidden>
             {t.common.copy.button}
+          </button>
+          <button type="button" class="button button--ghost" data-share hidden>
+            {t.result.share}
           </button>
         </div>
       </div>
@@ -54,9 +71,11 @@ export function ResultCard(props: ResultCardProps) {
         {t.result.expires} <time datetime={props.expiresAt ?? ""}>{props.expiresLabel}</time>
       </p>
 
-      <div class="notice notice--warning" role="note">
-        <p class="notice__title">{t.result.keyTitle}</p>
-        <p>{t.result.keyText}</p>
+      <div class="notice notice--warning" role="note" data-key-box>
+        <p class="notice__title" data-field="keyTitle">
+          {t.result.keyTitle}
+        </p>
+        <p data-field="keyText">{t.result.keyText}</p>
         <div class="copy-row">
           <code class="copy-row__value copy-row__value--key" data-field="secretKey">
             {props.secretKey}
@@ -71,7 +90,7 @@ export function ResultCard(props: ResultCardProps) {
         <a class="button button--ghost" data-field="stats" href={statsHref}>
           {t.result.stats}
         </a>
-        <a class="button" href="/">
+        <a class="result__again" href="/">
           {t.result.another}
         </a>
       </div>

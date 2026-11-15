@@ -506,6 +506,48 @@ body {
   margin: 0;
 }
 
+/* The short link is the point of the page: big, without the protocol, with Copy right next to it. */
+.result__link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--bg);
+}
+
+.result__short {
+  flex: 1 1 14rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  color: var(--link);
+}
+
+.result__short:hover {
+  text-decoration: underline;
+}
+
+.result__share {
+  display: flex;
+  flex: 0 1 auto;
+  gap: 0.5rem;
+}
+
+.result__copy {
+  min-width: 7rem;
+}
+
+.result__again {
+  align-self: center;
+  margin-inline-start: 0.5rem;
+  font-weight: 600;
+}
+
 .result__target,
 .result__expiry {
   overflow-wrap: anywhere;
@@ -563,6 +605,21 @@ body {
 }
 
 .notice--warning .copy-row__value {
+  background: var(--surface);
+}
+
+/* The key once it is saved to History: still there to copy, no longer a warning. */
+.notice--quiet {
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.notice--quiet .notice__title {
+  color: var(--text);
+}
+
+.notice--quiet .copy-row__value {
   background: var(--surface);
 }
 
@@ -777,6 +834,15 @@ a {
 
   .copy-row {
     flex-wrap: wrap;
+  }
+
+  .result__short {
+    font-size: 1.5rem;
+  }
+
+  .result__share,
+  .result__share .button {
+    flex: 1 1 auto;
   }
 }
 

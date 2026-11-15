@@ -40,6 +40,10 @@ export const en: SharedText = {
     failedToast: "Could not copy. Select the text and copy it by hand.",
   },
   toastClose: "Close",
+  savedKey: {
+    title: "Management key",
+    text: "Saved in this browser's History. Copy it if you want to delete this link or see city stats on another device.",
+  },
   form: {
     sending: "Shortening…",
     localDateLabel: "Custom expiry date (local time)",

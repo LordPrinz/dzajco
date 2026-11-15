@@ -8,10 +8,18 @@ test("creates a link with JavaScript and shows the result card", async ({ page }
 
   const card = page.locator("#result-slot [data-created]");
   await expect(card.getByRole("heading", { name: "Twój link jest gotowy" })).toBeVisible();
-  await expect(card.locator('[data-field="shortUrl"]')).toHaveText(/^http:\/\/.+\/[\w-]+$/);
+  // Shown without the protocol; the full URL is what Copy and the link use.
+  await expect(card.locator('[data-field="shortUrl"]')).toHaveText(/^[^/:]+(:\d+)?\/[\w-]+$/);
+  await expect(card.locator('[data-field="shortUrl"]')).toHaveAttribute("href", /^http:\/\//);
+  await expect(card.getByRole("button", { name: "Kopiuj" }).first()).toHaveClass(
+    /\bbutton\b(?!--)/,
+  );
+  await expect(card.getByRole("link", { name: "Skróć kolejny link" })).toBeVisible();
   await expect(card.locator('[data-field="target"]')).toHaveText(target);
   await expect(card.locator('[data-field="secretKey"]')).not.toBeEmpty();
-  await expect(card.getByText("Zapisz klucz")).toBeVisible();
+  // The key went to History, so the box is a quiet note instead of a warning.
+  await expect(card.getByText("Klucz do zarządzania")).toBeVisible();
+  await expect(card.locator("[data-key-box]")).toHaveClass(/notice--quiet/);
   // The result takes the place of the forms.
   await expect(page.locator("#shorten-form")).toBeHidden();
   await expect(page.locator("#lookup-form")).toBeHidden();
@@ -44,7 +52,9 @@ test("copy button puts the short link on the clipboard", async ({ page }) => {
   await page.getByLabel("Link do skrócenia").fill(uniqueTarget());
   await page.getByRole("button", { name: "Dżajcuj" }).click();
 
-  const shortUrl = await page.locator('#result-slot [data-field="shortUrl"]').textContent();
+  const shortUrl = await page
+    .locator('#result-slot [data-field="shortUrl"]')
+    .getAttribute("data-value");
   await page.locator('#result-slot [data-copy="shortUrl"]').click();
 
   await expect(page.locator('#result-slot [data-copy="shortUrl"]')).toHaveText("Skopiowano");
@@ -109,4 +119,45 @@ test("opens the options and shows a custom name error next to the field", async 
   await expect(page.locator("#options-error")).toContainText("Własna nazwa ma mieć");
   await expect(page.getByLabel("Własna nazwa")).toBeFocused();
   await expect(page.locator("#form-error")).toBeHidden();
+});
+
+test("keeps the strong key warning when the key cannot be saved to History", async ({ page }) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("full", "QuotaExceededError");
+    };
+  });
+  await page.goto("/");
+  await page.getByLabel("Link do skrócenia").fill(uniqueTarget());
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+  const box = page.locator("#result-slot [data-key-box]");
+  await expect(box).toHaveClass(/notice--warning/);
+  await expect(box.getByText("Zapisz klucz")).toBeVisible();
+});
+
+test("offers Share where the browser has a share sheet", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async (data: { url?: string }) => {
+        (globalThis as { __shared?: string }).__shared = data.url;
+      },
+    });
+  });
+  await page.goto("/");
+  await page.getByLabel("Link do skrócenia").fill(uniqueTarget());
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+  await page.locator("#result-slot").getByRole("button", { name: "Udostępnij" }).click();
+  const shared = await page.evaluate(() => (globalThis as { __shared?: string }).__shared);
+  expect(shared).toMatch(/^http:\/\/.+\/[\w-]+$/);
+});
+
+test("hides Share where the browser has no share sheet", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+  });
+  await page.goto("/");
+  await page.getByLabel("Link do skrócenia").fill(uniqueTarget());
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+  await expect(page.locator("#result-slot [data-share]")).toBeHidden();
 });

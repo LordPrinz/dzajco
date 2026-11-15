@@ -40,13 +40,36 @@ function readHistory(): HistoryEntry[] {
   }
 }
 
-/** Stores the entry, replacing one with the same id; storage can be blocked, so failures are silent. */
-function saveToHistory(entry: HistoryEntry): void {
+/** Stores the entry, replacing one with the same id. False when storage is blocked or full. */
+function saveToHistory(entry: HistoryEntry): boolean {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(upsertEntry(readHistory(), entry)));
+    return true;
   } catch {
     // Private mode or a full quota: the result stays on screen, only the history misses it.
+    return false;
   }
+}
+
+/** Once the key is in History, the warning becomes a quiet note; it stays loud if saving failed. */
+function markKeySaved(root: ParentNode): void {
+  const box = root.querySelector<HTMLElement>("[data-key-box]");
+  if (!box) return;
+  box.classList.replace("notice--warning", "notice--quiet");
+  setField(box, "keyTitle", text.savedKey.title);
+  setField(box, "keyText", text.savedKey.text);
+}
+
+/** Share opens the system share sheet where the browser has one (mostly phones). */
+function enableShare(root: ParentNode): void {
+  const button = root.querySelector<HTMLButtonElement>("[data-share]");
+  const link = root.querySelector<HTMLElement>('[data-field="shortUrl"]');
+  if (!button || !link || typeof navigator.share !== "function") return;
+  button.hidden = false;
+  button.addEventListener("click", () => {
+    // A closed share sheet rejects too; there is nothing to report then.
+    navigator.share({ url: link.dataset.value ?? link.textContent ?? "" }).catch(() => {});
+  });
 }
 
 function setField(root: ParentNode, name: string, text: string): void {
@@ -60,7 +83,8 @@ function enableCopy(root: ParentNode): void {
     button.addEventListener("click", async () => {
       const source = root.querySelector<HTMLElement>(`[data-field="${button.dataset.copy}"]`);
       try {
-        await navigator.clipboard.writeText(source?.textContent ?? "");
+        // The short link shows without its protocol; the full URL is in data-value.
+        await navigator.clipboard.writeText(source?.dataset.value ?? source?.textContent ?? "");
         button.textContent = text.copy.done;
         toast(text.copy.toast, "success");
       } catch {
@@ -74,7 +98,13 @@ function enableCopy(root: ParentNode): void {
   }
 }
 
-function showResult(link: CreatedLink, target: string, host: string, isIdn: boolean): void {
+function showResult(
+  link: CreatedLink,
+  target: string,
+  host: string,
+  isIdn: boolean,
+  saved: boolean,
+): void {
   const template = byId<HTMLTemplateElement>("result-template");
   const slot = byId("result-slot");
   if (!template || !slot) return;
@@ -88,7 +118,10 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
   const short = card.querySelector<HTMLAnchorElement>('[data-field="shortUrl"]');
   if (short) {
     short.href = link.shortUrl;
-    short.textContent = link.shortUrl;
+    short.dataset.value = link.shortUrl;
+    short.textContent = link.shortUrl.replace(/^https?:\/\//, "");
+    // The template's label ends with "Short link: "; the full URL completes it.
+    short.setAttribute("aria-label", `${short.getAttribute("aria-label") ?? ""}${link.shortUrl}`);
   }
   setField(card, "target", target);
   setField(card, "secretKey", link.secretKey);
@@ -110,6 +143,8 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
 
   // The fragment is empty once its children move into the slot, so the copy handlers need the section.
   enableCopy(section);
+  enableShare(section);
+  if (saved) markKeySaved(section);
   slot.replaceChildren(card);
   // The result takes the place of the form: the forms go, the card shows right under the hero.
   for (const id of ["shorten-form", "lookup-form"]) byId(id)?.setAttribute("hidden", "");
@@ -203,7 +238,7 @@ function setupShortenForm(form: HTMLFormElement): void {
       const json = (await response.json()) as { error?: { code?: string } } & Partial<CreatedLink>;
       if (response.status === 201 && json.id && json.shortUrl && json.secretKey && json.url) {
         const link = json as CreatedLink;
-        saveToHistory({
+        const saved = saveToHistory({
           id: link.id,
           url: link.url,
           expire: link.expiresAt ?? "never",
@@ -211,7 +246,7 @@ function setupShortenForm(form: HTMLFormElement): void {
           secretKey: link.secretKey,
         });
         const target = new URL(link.url);
-        showResult(link, target.href, target.hostname, hostIsIdn(target.hostname));
+        showResult(link, target.href, target.hostname, hostIsIdn(target.hostname), saved);
         form.reset();
         syncCustomDate();
         if (status) status.textContent = "";
@@ -232,15 +267,17 @@ function setupResultPage(section: HTMLElement): void {
   const secretKey = section.querySelector<HTMLElement>('[data-field="secretKey"]')?.textContent;
   const { id, url, expire } = section.dataset;
   if (id && url && secretKey) {
-    saveToHistory({
+    const saved = saveToHistory({
       id,
       url,
       expire: expire ?? "never",
       createdAt: new Date().toISOString(),
       secretKey,
     });
+    if (saved) markKeySaved(section);
   }
   enableCopy(section);
+  enableShare(section);
 }
 
 function codeFromInput(input: string): string {
