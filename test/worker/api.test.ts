@@ -385,12 +385,13 @@ describe("POST /api/v1/links", () => {
   });
 
   it.each([
-    ["customName", { customName: "a" }],
-    ["expiresAt", { expiresAt: "not-a-date" }],
-  ])("rejects an invalid %s without a D1 query", async (_field, extra) => {
+    ["customName", { customName: "a" }, "invalid_name"],
+    ["expiresAt", { expiresAt: "not-a-date" }, "invalid_expiry"],
+  ])("rejects an invalid %s without a D1 query", async (_field, extra, code) => {
     const prepare = vi.spyOn(env.DB, "prepare");
     const res = await call(post({ url: "https://example.com", ...extra }));
     expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe(code);
     expect(prepare).not.toHaveBeenCalled();
   });
 
