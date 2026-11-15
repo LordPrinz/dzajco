@@ -129,8 +129,8 @@ CI repeats every check, so `--no-verify` only moves the failure to the PR.
 
 ## Deploy
 
-Deploys are manual only: `bun run deploy`. CI runs tests and never deploys. Steps are in
-`docs/DEPLOYMENT.md`.
+Every push to `dev` deploys `https://test.dzaj.de` through `.github/workflows/deploy-dev.yml`. Production
+deploys are manual: `bun run deploy`. Steps are in `docs/DEPLOYMENT.md`.
 
 ## Definition of done
 
