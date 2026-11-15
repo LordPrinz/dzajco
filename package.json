@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "bun run build:client && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
-    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy",
+    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy --var PUBLIC_ORIGIN:${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN, for example https://dzaj.de}",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json",

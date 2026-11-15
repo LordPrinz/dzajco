@@ -318,7 +318,8 @@ describe("GET /:id", () => {
 
     const id2 = freshId();
     await seedLink(id2, { expiresAt: Date.now() - 1000 });
-    expect(await (await run(app, request(`/${id2}`))).text()).not.toContain("mailto:");
+    const noMail = { ...env, ABUSE_EMAIL: "" } as unknown as typeof env;
+    expect(await (await run(app, request(`/${id2}`), noMail)).text()).not.toContain("mailto:");
   });
 
   it("caches the record, and purgeLinkCache clears it in this colo", async () => {
