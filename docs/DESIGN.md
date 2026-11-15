@@ -235,11 +235,16 @@ result page and owner stats carry `Cache-Control: no-store`.
   - credentials in the URL (`credentials_not_allowed`);
   - private, loopback, link-local, multicast and reserved IPv4 and IPv6 addresses, including alternative
     IPv4 forms and `localhost` (`private_target`). Reserved covers the IPv4 documentation and benchmarking
-    ranges (`192.0.0.0/24`, `192.0.2.0/24`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`) and, for
-    IPv6, site-local `fec0::/10`, documentation `2001:db8::/32` and `3fff::/20`, Teredo `2001::/32`,
-    discard `100::/64`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and IPv4-mapped, translated, compatible or
-    NAT64 (`64:ff9b::/96`) forms of a private IPv4 address. A public IPv6 literal such as
+    ranges (`192.0.0.0/24`, `192.0.2.0/24`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`), the 6to4
+    relay `192.88.99.0/24` and, for IPv6, site-local `fec0::/10`, documentation `2001:db8::/32` and
+    `3fff::/20`, Teredo `2001::/32`, benchmarking `2001:2::/48`, ORCHID `2001:10::/28` and `2001:20::/28`,
+    the reserved `::/8`, `100::/8` (0100::/8) and `5f00::/16`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and every
+    IPv4-mapped, translated, compatible or NAT64 (`64:ff9b::/96`) literal whatever IPv4 it embeds (the
+    stored host would be the IPv6 text, so an IPv4 blocklist entry could not match it). A public IPv6
+    literal such as
     `http://[2606:4700:4700::1111]/` is accepted, and `admin:block host` takes one in brackets;
+  - hosts with no dot, such as `https://metadata/` or `https://intranet:8080/x` (a trailing dot does not
+    count), which only resolve inside a local network (`private_target`);
   - the own hosts: the host of `PUBLIC_ORIGIN`, the request host, and the account's `*.workers.dev` suffix
     (preview URLs), including trailing dots and ports;
   - targets on other URL shorteners (see Abuse).
