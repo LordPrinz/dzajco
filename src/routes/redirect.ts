@@ -7,6 +7,7 @@ import { isReserved, LOOKUP_ID } from "../domain/ids";
 import { reportAbuseLink } from "../lib/abuse";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
+import { renderPage } from "../lib/page";
 import { rateLimit } from "../middleware/rate-limit";
 import { LinkError, type LinkErrorKind } from "../views/LinkError";
 
@@ -21,7 +22,7 @@ export const PAGE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Optio
 
 export function errorPage(c: Context<AppEnv>, kind: LinkErrorKind, linkId?: string): string {
   const reportHref = reportAbuseLink(c.env, { linkId });
-  return `<!doctype html>${LinkError({ nonce: c.var.nonce, kind, reportHref })}`;
+  return renderPage(c, LinkError, { nonce: c.var.nonce, kind, reportHref });
 }
 
 export function linkCacheKey(id: string): Request {

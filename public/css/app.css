@@ -22,7 +22,8 @@
     U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Tokens: the v2 "jajco" yolk scale on cool grays. */
+/* Tokens: the v2 "jajco" yolk scale on cool grays. Every pair used for text meets WCAG AA (4.5:1)
+   in both themes; check new ones before adding them. */
 :root {
   --jajco-50: #fffee7;
   --jajco-100: #fffec1;
@@ -41,17 +42,19 @@
   --line: #d7d7d7;
   --accent: var(--jajco-500);
   --on-accent: var(--jajco-950);
-  --link: var(--jajco-700);
-  --icon: var(--jajco-600);
+  /* A shade under jajco-700, which is 4.3:1 on --bg and too light for text. */
+  --link: #935c02;
+  --icon: var(--jajco-700);
   --icon-bg: var(--jajco-50);
   --scrollbar: #d1d5db;
   --shadow: 0 1px 3px rgb(0 0 0 / 0.1), 0 1px 2px rgb(0 0 0 / 0.06);
-  --focus: var(--jajco-700);
+  --focus: var(--link);
   --danger-bg: #fef2f2;
   --danger-text: #991b1b;
   --warn-bg: var(--jajco-50);
   --warn-line: var(--jajco-600);
   --warn-text: var(--jajco-950);
+  --map-tiles: none;
 
   --font: "Open Sans", Lato, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -59,8 +62,37 @@
   color-scheme: light dark;
 }
 
+/* The theme switch sets `data-theme` on <html>; without it the system setting decides. The dark
+   tokens are listed twice because a media query cannot share a rule with a plain selector. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #14110b;
+  --surface: #211c12;
+  --text: #f3f0e6;
+  --text-muted: #a8a290;
+  --heading: #fbf7e4;
+  --line: #3a3322;
+  --link: var(--jajco-400);
+  --icon: var(--jajco-500);
+  --icon-bg: #33270a;
+  --scrollbar: #4a412b;
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+  --focus: var(--jajco-400);
+  --danger-bg: #3b1414;
+  --danger-text: #fecaca;
+  --warn-bg: #33270a;
+  --warn-line: var(--jajco-600);
+  --warn-text: var(--jajco-100);
+  /* OpenStreetMap only has light tiles; inverting them keeps the hues and fits the dark page. */
+  --map-tiles: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.5);
+  color-scheme: dark;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #14110b;
     --surface: #211c12;
     --text: #f3f0e6;
@@ -78,6 +110,9 @@
     --warn-bg: #33270a;
     --warn-line: var(--jajco-600);
     --warn-text: var(--jajco-100);
+    /* OpenStreetMap only has light tiles; inverting them keeps the hues and fits the dark page. */
+    --map-tiles: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.5);
+    color-scheme: dark;
   }
 }
 
@@ -116,8 +151,8 @@ body {
 }
 
 ::selection {
-  background: var(--jajco-500);
-  color: var(--jajco-50);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 ::-webkit-scrollbar {
@@ -148,6 +183,66 @@ body {
   border: 0;
 }
 
+/* Top bar with the page settings, right-aligned above the content. */
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: min(100% - 2 * var(--gutter), 70rem);
+  margin-inline: auto;
+  padding-top: 0.875rem;
+}
+
+.switch {
+  margin: 0;
+}
+
+.switch__group {
+  display: flex;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0.1875rem;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.switch__option {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.switch__option:hover {
+  color: var(--text);
+}
+
+.switch__option[aria-pressed="true"] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.switch__option:focus-visible {
+  outline-offset: 0;
+}
+
+.switch__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 /* Layout: one centred column, as wide as the v2 eight-column grid. */
 .page {
   width: min(100% - 2 * var(--gutter), 70rem);
@@ -159,7 +254,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-block: 4rem 0.75rem;
+  padding-block: 2.5rem 0.75rem;
   text-align: center;
 }
 
@@ -551,7 +646,7 @@ a {
 
 @media (max-width: 30rem) {
   .hero {
-    padding-top: 2.5rem;
+    padding-top: 1.5rem;
   }
 
   .hero__title {
