@@ -238,7 +238,7 @@ result page and owner stats carry `Cache-Control: no-store`.
     ranges (`192.0.0.0/24`, `192.0.2.0/24`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`), the 6to4
     relay `192.88.99.0/24` and, for IPv6, site-local `fec0::/10`, documentation `2001:db8::/32` and
     `3fff::/20`, Teredo `2001::/32`, benchmarking `2001:2::/48`, ORCHID `2001:10::/28` and `2001:20::/28`,
-    the reserved `::/8`, `100::/16` and `5f00::/16`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and every
+    the reserved `::/8`, `100::/8` (0100::/8) and `5f00::/16`, local-use NAT64 `64:ff9b:1::/48`, 6to4, and every
     IPv4-mapped, translated, compatible or NAT64 (`64:ff9b::/96`) literal whatever IPv4 it embeds (the
     stored host would be the IPv6 text, so an IPv4 blocklist entry could not match it). A public IPv6
     literal such as

@@ -99,9 +99,9 @@ function isPrivateIPv6(host: string): boolean {
   if (g0 === 0x2002) return true;
   // Teredo (2001::/32, can carry any IPv4), and documentation (2001:db8::/32).
   if (g0 === 0x2001 && (g1 === 0 || g1 === 0x0db8)) return true;
-  // Reserved or special-purpose and not routed to a public site: the rest of ::/8, 100::/16 (discard
-  // and its unallocated neighbours), benchmarking 2001:2::/48, ORCHID 2001:10::/28, ORCHIDv2 2001:20::/28, 5f00::/16.
-  if (g0 === 0 || g0 === 0x0100 || g0 === 0x5f00) return true;
+  // Reserved space with no public sites: ::/8 (g0 < 0x100) and 0100::/8 (discard and its neighbours),
+  // then 5f00::/16 and, below, benchmarking 2001:2::/48, ORCHID 2001:10::/28 and ORCHIDv2 2001:20::/28.
+  if (g0 < 0x0200 || g0 === 0x5f00) return true;
   if (
     g0 === 0x2001 &&
     ((g1 === 2 && g2 === 0) || (g1 & 0xfff0) === 0x10 || (g1 & 0xfff0) === 0x20)
