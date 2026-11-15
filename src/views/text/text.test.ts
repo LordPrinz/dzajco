@@ -40,10 +40,12 @@ describe.each([
 describe("API docs text", () => {
   it.each(["pl", "en"] as const)("lines up with the API constants in %s", (lang) => {
     const api = PAGE_TEXT[lang].api;
-    expect(api.endpoints).toHaveLength(ENDPOINTS.length);
-    ENDPOINTS.forEach((endpoint, i) => {
-      expect(api.endpoints[i]?.responses).toHaveLength(endpoint.statuses.length);
-    });
+    expect(Object.keys(api.endpoints).sort()).toEqual(ENDPOINTS.map((e) => e.id).sort());
+    for (const endpoint of ENDPOINTS) {
+      expect(Object.keys(api.endpoints[endpoint.id].responses).sort()).toEqual(
+        [...endpoint.statuses].sort(),
+      );
+    }
     expect(Object.keys(api.errorCodes).sort()).toEqual(ERROR_CODES.map((e) => e.code).sort());
     expect(api.limits).toHaveLength(LIMIT_ROUTES.length);
     expect(api.migration.rows).toHaveLength(MIGRATION.length);

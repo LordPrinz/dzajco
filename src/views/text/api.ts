@@ -1,27 +1,38 @@
 import type { Child } from "hono/jsx";
 
 export interface Endpoint {
+  /** Key of the endpoint's prose in `ApiText.endpoints`. */
+  id: EndpointId;
   method: "GET" | "POST" | "DELETE";
   path: string;
-  /** Status codes in the order of the response texts in `ApiText.endpoints`. */
+  /** Status codes in display order; each one keys a response text. */
   statuses: readonly string[];
 }
+
+export type EndpointId = "create" | "get" | "stats" | "delete" | "globalStats";
 
 /** The API v1 contract, as served by the Worker. A test keeps this list and the error table complete. */
 export const ENDPOINTS: readonly Endpoint[] = [
   {
+    id: "create",
     method: "POST",
     path: "/api/v1/links",
     statuses: ["201", "400", "409", "413", "415", "429", "503"],
   },
-  { method: "GET", path: "/api/v1/links/:id", statuses: ["200", "404", "410", "429"] },
+  { id: "get", method: "GET", path: "/api/v1/links/:id", statuses: ["200", "404", "410", "429"] },
   {
+    id: "stats",
     method: "GET",
     path: "/api/v1/links/:id/stats",
     statuses: ["200", "403", "404", "410", "429"],
   },
-  { method: "DELETE", path: "/api/v1/links/:id", statuses: ["204", "400", "403", "404", "429"] },
-  { method: "GET", path: "/api/v1/stats", statuses: ["200", "429"] },
+  {
+    id: "delete",
+    method: "DELETE",
+    path: "/api/v1/links/:id",
+    statuses: ["204", "400", "403", "404", "429"],
+  },
+  { id: "globalStats", method: "GET", path: "/api/v1/stats", statuses: ["200", "429"] },
 ];
 
 /** Every error code the API can return, with its status. */
@@ -73,7 +84,7 @@ export const MIGRATION = [
   { v2: "DELETE /api/urls/{shortUrl}", v3: "DELETE /api/v1/links/:id" },
 ] as const;
 
-/** The prose of the API page in one language. Lists line up with the constants above by index. */
+/** The prose of the API page in one language. `limits` and `migration.rows` line up with the constants above by index. */
 export interface ApiText {
   title: string;
   heading: string;
@@ -96,7 +107,11 @@ export interface ApiText {
   route: string;
   limit: string;
   errorShape: string;
-  endpoints: readonly { summary: string; input: string; responses: readonly string[] }[];
+  /** Prose per endpoint; `responses` is keyed by status code. */
+  endpoints: Record<
+    EndpointId,
+    { summary: string; input: string; responses: Readonly<Record<string, string>> }
+  >;
   errorCodes: Record<ErrorCode, string>;
   limitsIntro: Child;
   limits: readonly string[];

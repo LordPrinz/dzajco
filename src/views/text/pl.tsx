@@ -29,62 +29,62 @@ const api: ApiText = {
   route: "Trasa",
   limit: "Limit",
   errorShape: "Każdy błąd ma ten sam kształt:",
-  endpoints: [
-    {
+  endpoints: {
+    create: {
       summary: "Tworzy link. Wymaga nagłówka Content-Type: application/json.",
       input: "JSON: url (wymagane), customName (opcjonalne), expiresAt (ISO 8601 lub null).",
-      responses: [
-        "{ id, shortUrl, url, secretKey, expiresAt }. url to adres docelowy po normalizacji (host w punycode).",
-        "invalid_json, invalid_body albo kod domenowy z tabeli poniżej.",
-        "id_taken",
-        "payload_too_large (ciało większe niż 8 KB)",
-        "unsupported_media_type",
-        "rate_limited",
-        "service_unavailable",
-      ],
+      responses: {
+        201: "{ id, shortUrl, url, secretKey, expiresAt }. url to adres docelowy po normalizacji (host w punycode).",
+        400: "invalid_json, invalid_body albo kod domenowy z tabeli poniżej.",
+        409: "id_taken",
+        413: "payload_too_large (ciało większe niż 8 KB)",
+        415: "unsupported_media_type",
+        429: "rate_limited",
+        503: "service_unavailable",
+      },
     },
-    {
+    get: {
       summary: "Zwraca adres docelowy linku bez przekierowania.",
       input: "Brak.",
-      responses: [
-        "{ id, url, expiresAt }",
-        "not_found",
-        "expired albo link_disabled",
-        "rate_limited",
-      ],
+      responses: {
+        200: "{ id, url, expiresAt }",
+        404: "not_found",
+        410: "expired albo link_disabled",
+        429: "rate_limited",
+      },
     },
-    {
+    stats: {
       summary:
         "Statystyki linku. Bez nagłówka Authorization widok publiczny, z poprawnym kluczem widok właściciela.",
       input: "Opcjonalnie Authorization: Bearer <klucz>.",
-      responses: [
-        "{ visits, countries: [{ code, visits }], partial }. Z kluczem dodatkowo cities.",
-        "forbidden. Dotyczy każdego nagłówka Authorization, który nie jest poprawnym kluczem tego linku. Nie ma powrotu do widoku publicznego.",
-        "not_found",
-        "expired albo link_disabled",
-        "rate_limited",
-      ],
+      responses: {
+        200: "{ visits, countries: [{ code, visits }], partial }. Z kluczem dodatkowo cities.",
+        403: "forbidden. Dotyczy każdego nagłówka Authorization, który nie jest poprawnym kluczem tego linku. Nie ma powrotu do widoku publicznego.",
+        404: "not_found",
+        410: "expired albo link_disabled",
+        429: "rate_limited",
+      },
     },
-    {
+    delete: {
       summary: "Usuwa link razem z jego statystykami.",
       input: "Authorization: Bearer <klucz>. Ciało jest ignorowane.",
-      responses: [
-        "Bez treści.",
-        "invalid_key (brak klucza albo zły format)",
-        "forbidden (klucz nie pasuje do linku)",
-        "not_found",
-        "rate_limited",
-      ],
+      responses: {
+        204: "Bez treści.",
+        400: "invalid_key (brak klucza albo zły format)",
+        403: "forbidden (klucz nie pasuje do linku)",
+        404: "not_found",
+        429: "rate_limited",
+      },
     },
-    {
+    globalStats: {
       summary: "Statystyki całego serwisu. Liczby obejmują tylko aktywne linki.",
       input: "Brak.",
-      responses: [
-        "{ links, visits, countries: [{ code, visits }], updatedAt }. Liczby przelicza się raz na dobę i mogą się spóźniać o około 24 godziny.",
-        "rate_limited",
-      ],
+      responses: {
+        200: "{ links, visits, countries: [{ code, visits }], updatedAt }. Liczby przelicza się raz na dobę i mogą się spóźniać o około 24 godziny.",
+        429: "rate_limited",
+      },
     },
-  ],
+  },
   errorCodes: {
     invalid_json: "Ciało żądania nie jest poprawnym JSON-em.",
     invalid_body: "Ciało nie pasuje do schematu: brak url, pole o złym typie albo nieznane pole.",

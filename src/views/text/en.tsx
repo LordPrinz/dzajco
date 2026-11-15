@@ -28,62 +28,62 @@ const api: ApiText = {
   route: "Route",
   limit: "Limit",
   errorShape: "Every error has the same shape:",
-  endpoints: [
-    {
+  endpoints: {
+    create: {
       summary: "Creates a link. Needs the header Content-Type: application/json.",
       input: "JSON: url (required), customName (optional), expiresAt (ISO 8601 or null).",
-      responses: [
-        "{ id, shortUrl, url, secretKey, expiresAt }. url is the normalised target (host in punycode).",
-        "invalid_json, invalid_body or a domain code from the table below.",
-        "id_taken",
-        "payload_too_large (body over 8 KB)",
-        "unsupported_media_type",
-        "rate_limited",
-        "service_unavailable",
-      ],
+      responses: {
+        201: "{ id, shortUrl, url, secretKey, expiresAt }. url is the normalised target (host in punycode).",
+        400: "invalid_json, invalid_body or a domain code from the table below.",
+        409: "id_taken",
+        413: "payload_too_large (body over 8 KB)",
+        415: "unsupported_media_type",
+        429: "rate_limited",
+        503: "service_unavailable",
+      },
     },
-    {
+    get: {
       summary: "Returns the link's target without redirecting.",
       input: "None.",
-      responses: [
-        "{ id, url, expiresAt }",
-        "not_found",
-        "expired or link_disabled",
-        "rate_limited",
-      ],
+      responses: {
+        200: "{ id, url, expiresAt }",
+        404: "not_found",
+        410: "expired or link_disabled",
+        429: "rate_limited",
+      },
     },
-    {
+    stats: {
       summary:
         "Stats of a link. Without an Authorization header you get the public view, with the right key the owner's view.",
       input: "Optional Authorization: Bearer <key>.",
-      responses: [
-        "{ visits, countries: [{ code, visits }], partial }. With the key, cities too.",
-        "forbidden. Returned for any Authorization header that is not this link's key. There is no fallback to the public view.",
-        "not_found",
-        "expired or link_disabled",
-        "rate_limited",
-      ],
+      responses: {
+        200: "{ visits, countries: [{ code, visits }], partial }. With the key, cities too.",
+        403: "forbidden. Returned for any Authorization header that is not this link's key. There is no fallback to the public view.",
+        404: "not_found",
+        410: "expired or link_disabled",
+        429: "rate_limited",
+      },
     },
-    {
+    delete: {
       summary: "Deletes a link together with its stats.",
       input: "Authorization: Bearer <key>. The body is ignored.",
-      responses: [
-        "No content.",
-        "invalid_key (no key or a malformed one)",
-        "forbidden (the key does not match the link)",
-        "not_found",
-        "rate_limited",
-      ],
+      responses: {
+        204: "No content.",
+        400: "invalid_key (no key or a malformed one)",
+        403: "forbidden (the key does not match the link)",
+        404: "not_found",
+        429: "rate_limited",
+      },
     },
-    {
+    globalStats: {
       summary: "Stats of the whole service. The numbers cover live links only.",
       input: "None.",
-      responses: [
-        "{ links, visits, countries: [{ code, visits }], updatedAt }. The numbers are recomputed once a day and can lag by about 24 hours.",
-        "rate_limited",
-      ],
+      responses: {
+        200: "{ links, visits, countries: [{ code, visits }], updatedAt }. The numbers are recomputed once a day and can lag by about 24 hours.",
+        429: "rate_limited",
+      },
     },
-  ],
+  },
   errorCodes: {
     invalid_json: "The request body is not valid JSON.",
     invalid_body:

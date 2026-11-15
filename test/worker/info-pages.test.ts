@@ -2,7 +2,7 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import worker from "../../src/index";
-import { ENDPOINTS, ERROR_CODES } from "../../src/views/ApiDocs";
+import { ENDPOINTS, ERROR_CODES } from "../../src/views/text/api";
 import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";

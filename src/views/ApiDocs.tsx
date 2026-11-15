@@ -2,8 +2,6 @@ import { Layout } from "./Layout";
 import { usePage } from "./page-context";
 import { ENDPOINTS, type Endpoint, ERROR_CODES, LIMIT_ROUTES, MIGRATION } from "./text/api";
 
-export { ENDPOINTS, ERROR_CODES };
-
 function Method({ method }: { method: Endpoint["method"] }) {
   return <span class={`method method--${method.toLowerCase()}`}>{method}</span>;
 }
@@ -67,16 +65,16 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
 
         <section class="doc__section" id="endpointy" aria-labelledby="h-endpointy">
           <h2 id="h-endpointy">{a.sections.endpoints}</h2>
-          {ENDPOINTS.map((endpoint, i) => {
-            const text = a.endpoints[i];
+          {ENDPOINTS.map((endpoint) => {
+            const text = a.endpoints[endpoint.id];
             return (
               <section class="endpoint" aria-label={`${endpoint.method} ${endpoint.path}`}>
                 <h3 class="endpoint__title">
                   <Method method={endpoint.method} /> <code>{endpoint.path}</code>
                 </h3>
-                <p>{text?.summary}</p>
+                <p>{text.summary}</p>
                 <p>
-                  <strong>{a.input}</strong> {text?.input}
+                  <strong>{a.input}</strong> {text.input}
                 </p>
                 <table class="table">
                   <thead>
@@ -86,12 +84,12 @@ curl -H 'Authorization: Bearer <${ex.key}>' ${origin}/api/v1/links/${ex.name}/st
                     </tr>
                   </thead>
                   <tbody>
-                    {endpoint.statuses.map((status, j) => (
+                    {endpoint.statuses.map((status) => (
                       <tr>
                         <td>
                           <code>{status}</code>
                         </td>
-                        <td>{text?.responses[j]}</td>
+                        <td>{text.responses[status]}</td>
                       </tr>
                     ))}
                   </tbody>
