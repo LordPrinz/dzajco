@@ -9,10 +9,17 @@ import { deleteExpired, readCursor, recomputeGlobalStats } from "../db/queries";
 const EXPIRED_KEY = "daily_expired";
 const GLOBAL_KEY = "daily_global_stats";
 export const EXPIRED_BATCH = 500;
+// One run deletes at most this many batches. The Free plan allows 50 subrequests per invocation. At
+// ROLLUP_MAX_PAGES = 20 the rollup uses 40 (20 SQL API fetches + 20 D1 batches) and the rest of the run
+// about 7 D1 queries (marker reads and writes, cursor read, global_stats), so 3 batches make 50.
+export const MAX_EXPIRED_BATCHES = 3;
 
 const DAY_MS = 86_400_000;
 
-/** Runs `step` unless the marker under `key` already says `today`; the marker is written after it succeeds. */
+/**
+ * Runs `step` unless the marker under `key` already says `today`. The marker is written after the step
+ * succeeds, unless it returns `false` (not finished): then the next hourly run continues.
+ */
 async function oncePerDay(
   db: D1Database,
   key: string,
@@ -25,7 +32,7 @@ async function oncePerDay(
     .first<{ value: string }>();
   if (last?.value === today) return false;
   // Both steps are idempotent, so a crash before the marker is written just repeats them next hour.
-  await step();
+  if ((await step()) === false) return false;
   await db
     .prepare(
       "INSERT INTO meta (key, value) VALUES (?1, ?2) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
@@ -42,9 +49,13 @@ export async function runDaily(
 ): Promise<{ expired: boolean; globalStats: boolean }> {
   const today = dayOf(now);
   if (!isDayClosed(dayOf(now - DAY_MS), now)) return { expired: false, globalStats: false };
-  const expired = await oncePerDay(db, EXPIRED_KEY, today, () =>
-    deleteExpired(db, now, EXPIRED_BATCH),
-  );
+  const expired = await oncePerDay(db, EXPIRED_KEY, today, async () => {
+    for (let i = 0; i < MAX_EXPIRED_BATCHES; i++) {
+      if ((await deleteExpired(db, now, EXPIRED_BATCH)).length < EXPIRED_BATCH) return true;
+    }
+    // Every batch was full, so more may be waiting.
+    return false;
+  });
   if (analyticsConfigured) {
     const cursor = await readCursor(db);
     if (!cursor || cursor.day < today) return { expired, globalStats: false };

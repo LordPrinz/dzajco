@@ -180,7 +180,21 @@ describe("POST /api/v1/links", () => {
   ])("returns 400 invalid_body for %s", async (_label, body) => {
     const res = await call(post(body));
     expect(res.status).toBe(400);
-    expect(await errorCode(res)).toBe("invalid_body");
+    const error = ((await res.json()) as { error: { code: string; message: string } }).error;
+    expect(error.code).toBe("invalid_body");
+    expect(error.message).toBe("Request body is invalid");
+  });
+
+  it("returns 400 url_too_long for a url over 2048 characters", async () => {
+    const res = await call(post({ url: `https://example.com/${"a".repeat(2100)}` }));
+    expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe("url_too_long");
+  });
+
+  it("returns 400 name_too_long for a customName over 128 characters", async () => {
+    const res = await call(post({ url: "https://example.com", customName: "a".repeat(200) }));
+    expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe("name_too_long");
   });
 
   it("returns 413 for a body over the size cap", async () => {
@@ -281,6 +295,12 @@ describe("POST /api/v1/links", () => {
     ["http://[ff02::1]/", "private_target"],
     ["http://[2001:db8::1]/", "private_target"],
     ["http://198.18.0.1/", "private_target"],
+    ["http://192.88.99.1/", "private_target"],
+    ["http://[::ffff:1.2.3.4]/", "private_target"],
+    ["http://[64:ff9b::1.2.3.4]/", "private_target"],
+    ["http://[::1.2.3.4]/", "private_target"],
+    ["https://intranet:8080/x", "private_target"],
+    ["http://[2001:10::1]/", "private_target"],
     ["https://bit.ly/x", "blocked_target"],
     ["https://dzaj.co/abc", "own_host"],
     ["http://localhost:8787/abc", "own_host"],
@@ -361,6 +381,50 @@ describe("POST /api/v1/links", () => {
     const res = await call(post({ url: "https://example.org", customName: name }));
     expect(res.status).toBe(409);
     expect(await errorCode(res)).toBe("id_taken");
+  });
+
+  it("reuses a custom name whose link has expired", async () => {
+    const name = freshName();
+    await insertLink(env.DB, {
+      id: name,
+      target: "https://example.com/old",
+      secretHash: "v1:old",
+      expiresAt: Date.now() - 1000,
+      createdAt: Date.now() - 5000,
+      isCustom: true,
+    });
+    const res = await call(post({ url: "https://example.org/new", customName: name }));
+    expect(res.status).toBe(201);
+    const row = await env.DB.prepare("SELECT target FROM links WHERE id = ?")
+      .bind(name)
+      .first<{ target: string }>();
+    expect(row?.target).toBe("https://example.org/new");
+  });
+
+  it("keeps 409 for a custom name whose link has not expired yet", async () => {
+    const name = freshName();
+    await insertLink(env.DB, {
+      id: name,
+      target: "https://example.com/old",
+      secretHash: "v1:old",
+      expiresAt: Date.now() + 3_600_000,
+      createdAt: Date.now(),
+      isCustom: true,
+    });
+    const res = await call(post({ url: "https://example.org/new", customName: name }));
+    expect(res.status).toBe(409);
+    expect(await errorCode(res)).toBe("id_taken");
+  });
+
+  it.each([
+    ["customName", { customName: "a" }, "invalid_name"],
+    ["expiresAt", { expiresAt: "not-a-date" }, "invalid_expiry"],
+  ])("rejects an invalid %s without a D1 query", async (_field, extra, code) => {
+    const prepare = vi.spyOn(env.DB, "prepare");
+    const res = await call(post({ url: "https://example.com", ...extra }));
+    expect(res.status).toBe(400);
+    expect(await errorCode(res)).toBe(code);
+    expect(prepare).not.toHaveBeenCalled();
   });
 
   it("gives exactly one 201 and one 409 when the same name is created in parallel", async () => {

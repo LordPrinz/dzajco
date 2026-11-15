@@ -1,7 +1,7 @@
 import { type Context, Hono } from "hono";
 import type { Child } from "hono/jsx";
 import * as v from "valibot";
-import { formBodySchema } from "../domain/schemas";
+import { createFailureCode, formBodySchema } from "../domain/schemas";
 import type { AppEnv } from "../lib/app-env";
 import { readCapped } from "../lib/body";
 import { clientIpKey } from "../lib/client-ip";
@@ -50,13 +50,6 @@ function isUrlEncoded(contentType: string | undefined): boolean {
 
 function field(form: URLSearchParams, name: string): string {
   return form.get(name) ?? "";
-}
-
-/** Failure codes of the shared schema check, narrowed to the ones the form can explain. */
-function invalidCode(values: HomeValues): string {
-  if (values.url.length > 2048) return "url_too_long";
-  if (values.customName.length > 128) return "name_too_long";
-  return "invalid_body";
 }
 
 /** HTML pages: the home form and its no-JS `POST /`. */
@@ -114,7 +107,7 @@ export function pageRoutes() {
         customName: values.customName,
         expiresAt: expiresAtFrom(values, Date.now(), "Z") ?? "",
       });
-      if (!parsed.success) return reject(invalidCode(values), 400);
+      if (!parsed.success) return reject(createFailureCode(parsed.issues), 400);
 
       const created = await createLink(c.env, parsed.output, c.req.url);
       if (!created.ok) return reject(created.code, created.status);
