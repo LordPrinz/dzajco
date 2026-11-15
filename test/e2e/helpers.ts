@@ -214,6 +214,10 @@ function pageCheck(
       const value = norm(el?.textContent);
       return { pass: !!el && text(check.arg, value, check.kind === "containText"), actual: value };
     }
+    case "notContainText": {
+      const value = norm(el?.textContent);
+      return { pass: !!el && !text(check.arg, value, true), actual: value };
+    }
     case "attribute": {
       const value = el?.getAttribute(check.name ?? "") ?? null;
       const pass = value !== null && (check.arg === undefined || text(check.arg, value, false));
@@ -289,6 +293,8 @@ export interface PageOptions {
   locale?: string;
   /** Answers a request in the proxy instead of the server when it returns a response. */
   route?: (method: string, path: string) => Response | undefined;
+  /** The page's time zone, as an IANA name. */
+  timezoneId?: string;
 }
 
 export class Page {
@@ -300,7 +306,7 @@ export class Page {
   private picks = 0;
   private closed = false;
 
-  constructor(options: PageOptions = {}) {
+  constructor(private readonly options: PageOptions = {}) {
     const ip = randomIp();
     const requests = this.requests;
     const base = new URL(BASE_URL);
@@ -361,12 +367,28 @@ export class Page {
   /**
    * Each WebKit view has its own ephemeral cookie jar and storage. Chrome keeps one profile for every view,
    * cookies ignore the port, and the OS can hand out a port again, so clear both before each test there.
+   * A time zone is emulated on Chrome; WebKit has no switch for it and runs in the system time zone.
    */
   async init(): Promise<void> {
-    if (!useChrome) return;
+    const { timezoneId } = this.options;
+    if (useChrome) {
+      await this.view.navigate("about:blank");
+      await this.view.cdp("Network.clearBrowserCookies");
+      await this.view.cdp("Storage.clearDataForOrigin", {
+        origin: this.origin,
+        storageTypes: "all",
+      });
+      if (timezoneId) await this.view.cdp("Emulation.setTimezoneOverride", { timezoneId });
+      return;
+    }
+    if (!timezoneId) return;
     await this.view.navigate("about:blank");
-    await this.view.cdp("Network.clearBrowserCookies");
-    await this.view.cdp("Storage.clearDataForOrigin", { origin: this.origin, storageTypes: "all" });
+    const zone = await this.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+    if (zone !== timezoneId) {
+      throw new Error(
+        `WebKit runs in the system time zone (${zone}), the test needs ${timezoneId}: set it or use E2E_BROWSER=chrome`,
+      );
+    }
   }
 
   close(): void {
@@ -515,6 +537,7 @@ export class Page {
       toHaveCount: (n: number) => run("count", n),
       toHaveText: (text: string | RegExp) => run("text", text),
       toContainText: (text: string) => run("containText", text),
+      notToContainText: (text: string) => run("notContainText", text),
       toHaveAttribute: (name: string, value?: string | RegExp) => run("attribute", value, name),
       notToHaveAttribute: (name: string, value: string) => run("noAttribute", value, name),
       toHaveClass: (pattern: RegExp) => run("class", pattern),

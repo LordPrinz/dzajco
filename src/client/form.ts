@@ -16,6 +16,7 @@ import { upsertEntry } from "../shared/history";
 import { codeFromInput, withoutProtocol } from "../shared/short-url";
 import { enableCopy } from "./lib/copy";
 import { pageLocale, pageText } from "./lib/lang";
+import { formatLocal } from "./lib/local-time";
 import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
 
 const text = pageText();
@@ -113,10 +114,7 @@ function showResult(
   const time = card.querySelector<HTMLTimeElement>("time");
   if (expiry && time && link.expiresAt) {
     time.dateTime = link.expiresAt;
-    time.textContent = new Date(link.expiresAt).toLocaleString(pageLocale(), {
-      dateStyle: "long",
-      timeStyle: "short",
-    });
+    time.textContent = formatLocal(link.expiresAt, pageLocale());
     expiry.hidden = false;
   }
   const stats = card.querySelector<HTMLAnchorElement>('[data-field="stats"]');

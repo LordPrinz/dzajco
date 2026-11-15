@@ -11,7 +11,8 @@ import {
   parseCities,
 } from "../shared/stats";
 import { enableCopy } from "./lib/copy";
-import { pageLang } from "./lib/lang";
+import { pageLang, pageLocale } from "./lib/lang";
+import { localizeTimes } from "./lib/local-time";
 
 function readKey(id: string): string | null {
   try {
@@ -91,9 +92,11 @@ function setupMap(owner: HTMLElement, cities: readonly CityRow[]): void {
 /** The page view already used one `RL_STATS` token for the server render; this fetch uses a second one. */
 async function init(): Promise<void> {
   const root = document.querySelector<HTMLElement>("[data-stats]");
-  const owner = root?.querySelector<HTMLElement>("[data-owner]");
-  const id = root?.dataset.id;
-  if (!root || !owner || !id) return;
+  if (!root) return;
+  localizeTimes(root, pageLocale());
+  const owner = root.querySelector<HTMLElement>("[data-owner]");
+  const id = root.dataset.id;
+  if (!owner || !id) return;
   enableCopy(root);
   const key = readKey(id);
   if (key === null) return;

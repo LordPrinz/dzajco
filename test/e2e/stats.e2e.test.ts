@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { closePages, HISTORY_KEY, openPage, v2Entry } from "./helpers";
 
 afterEach(closePages);
@@ -68,4 +68,33 @@ test("the stats header copies the full short link", async () => {
   const copied = await page.evaluate(() => (globalThis as { __copied?: string }).__copied);
   expect(copied).toMatch(new RegExp(`/${link.id}$`));
   expect(copied).toMatch(/^https?:\/\//);
+});
+
+describe("times in the viewer's time zone", () => {
+  const timezoneId = "Europe/Warsaw";
+
+  test("expiry is shown in local time, not UTC", async () => {
+    const page = await openPage({ timezoneId });
+    // 20:57 UTC is 22:57 in Warsaw during summer time. Pinned to the next 15 July, as expiry is capped at a year.
+    const year = new Date().getUTCFullYear();
+    const thisYear = `${year}-07-15T20:57:00Z`;
+    const expiresAt =
+      Date.parse(thisYear) > Date.now() + 60_000 ? thisYear : `${year + 1}-07-15T20:57:00Z`;
+    const link = await page.createViaApi({ expiresAt });
+    await page.goto(`/${link.id}/stats`);
+
+    const created = page.locator(".stats__meta time").first();
+    const expires = page.locator(".stats__meta time:last-of-type");
+    await page.expect(expires).toContainText("22:57");
+    await page.expect(expires).notToContainText("UTC");
+    await page.expect(created).notToContainText("UTC");
+  });
+
+  test("a link without expiry still says never", async () => {
+    const page = await openPage({ timezoneId });
+    const link = await page.createViaApi();
+    await page.goto(`/${link.id}/stats`);
+
+    await page.expect(page.getByText("Wygasa: nigdy")).toBeVisible();
+  });
 });
