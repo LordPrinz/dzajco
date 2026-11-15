@@ -292,6 +292,8 @@ body {
 /* Inputs: the v2 pill. */
 .input {
   width: 100%;
+  /* One height for every input, the date picker included (its inner fields add their own padding). */
+  block-size: 3.5rem;
   padding: 1rem 1.5rem;
   border: 0;
   border-radius: 9999px;
@@ -303,6 +305,26 @@ body {
 
 .input::placeholder {
   color: var(--text-muted);
+}
+
+.input::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.input::-webkit-date-and-time-value {
+  text-align: start;
+}
+
+/* Autofill would paint the browser's own background and text colours over the theme. */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow:
+    inset 0 0 0 100vmax var(--surface),
+    var(--shadow);
+  transition: background-color 600000s 0s;
 }
 
 /* Rings hug the control instead of the global 2px gap. */
@@ -355,14 +377,24 @@ body {
   transition: background-color 0.15s ease;
 }
 
-/* Drawn inside the visible part of the button, so the ring never sticks out past the pill. */
+/* An inset ring follows the button's own corners and stays inside it. */
 .pill__submit:focus-visible {
-  outline: 2px solid var(--on-accent);
-  outline-offset: -5px;
+  outline: none;
+  box-shadow:
+    inset 0 0 0 3px var(--accent),
+    inset 0 0 0 5px var(--on-accent),
+    var(--shadow);
 }
 
 .pill__submit:hover {
   background: var(--jajco-400);
+}
+
+.pill__submit:hover:focus-visible {
+  box-shadow:
+    inset 0 0 0 3px var(--jajco-400),
+    inset 0 0 0 5px var(--on-accent),
+    var(--shadow);
 }
 
 .pill__submit:disabled {
@@ -431,10 +463,26 @@ body {
   pointer-events: none;
 }
 
+/* Own chevron, kept clear of the right end; the native one sits in the corner. */
+.expiry::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 1.5rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-inline-end: 2px solid var(--text);
+  border-block-end: 2px solid var(--text);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
 .expiry__select {
   width: 100%;
   min-width: 0;
-  padding: 0.75rem 1rem 0.75rem calc(var(--expiry-label) + 1rem);
+  block-size: 3.5rem;
+  appearance: none;
+  padding: 0 3rem 0 calc(var(--expiry-label) + 1rem);
   border: 0;
   border-radius: 9999px;
   font: inherit;
