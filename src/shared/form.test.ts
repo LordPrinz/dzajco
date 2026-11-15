@@ -19,6 +19,11 @@ describe("expiresAtFrom with a custom date", () => {
     expect(expiresAtFrom(choice, NOW, "Z")).toBe("2026-12-01T10:00:00Z");
   });
 
+  it("never reads an empty date as no expiry", () => {
+    expect(expiresAtFrom({ expiry: "custom", customDate: "" }, NOW, "Z")).not.toBe("");
+    expect(expiresAtFrom({ expiry: "custom", customDate: "" }, NOW, "")).not.toBe("");
+  });
+
   it("passes an unparsable date on for the API to reject", () => {
     expect(expiresAtFrom({ expiry: "custom", customDate: "nope" }, NOW, "")).toBe("nope");
   });
