@@ -93,6 +93,8 @@ export function Layout({
             </ul>
           </nav>
         </footer>
+        {/* Filled by the toast module; empty and silent without JavaScript. */}
+        <div class="toasts" id="toasts" aria-live="polite" />
         {["theme.js", ...scripts].map((src) => (
           <script type="module" nonce={nonce} src={`/assets/${src}`} />
         ))}
