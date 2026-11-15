@@ -61,6 +61,10 @@ export const en: SharedText = {
     deleted: (id) => `Deleted link ${id}`,
     rateLimited: "Too many requests. Try again in a minute.",
     keyRejected: "This key does not match the link.",
+    confirmTitle: "Delete this link?",
+    confirmBody: (short) =>
+      `The link ${short} and its stats will be deleted for good. This cannot be undone.`,
+    cancel: "Cancel",
     deleteFailed: "Could not delete the link. Please try again.",
   },
 };

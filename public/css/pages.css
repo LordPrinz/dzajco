@@ -397,3 +397,35 @@
     padding: 1rem;
   }
 }
+
+.confirm {
+  width: min(24rem, calc(100vw - 2 * var(--gutter)));
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.confirm::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.confirm__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  color: var(--heading);
+}
+
+.confirm__body {
+  margin: 0 0 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}

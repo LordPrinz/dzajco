@@ -62,6 +62,10 @@ export const pl = {
     deleted: (id: string) => `Usunięto link ${id}`,
     rateLimited: "Za dużo żądań. Spróbuj ponownie za minutę.",
     keyRejected: "Ten klucz nie pasuje do linku.",
+    confirmTitle: "Usunąć link?",
+    confirmBody: (short: string) =>
+      `Link ${short} zostanie usunięty razem ze statystykami. Tego nie da się cofnąć.`,
+    cancel: "Anuluj",
     deleteFailed: "Nie udało się usunąć linku. Spróbuj ponownie.",
   },
 };

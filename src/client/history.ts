@@ -83,6 +83,33 @@ function copyButton(value: string): HTMLButtonElement {
   return button;
 }
 
+function confirmDelete(short: string, opener: HTMLElement): Promise<boolean> {
+  const dialog = el("dialog", "confirm");
+  dialog.setAttribute("closedby", "any");
+  dialog.setAttribute("aria-labelledby", "confirm-title");
+  const title = el("h2", "confirm__title", text.history.confirmTitle);
+  title.id = "confirm-title";
+  const actions = el("div", "confirm__actions");
+  const cancel = el("button", "button button--ghost button--small", text.history.cancel);
+  cancel.type = "button";
+  cancel.autofocus = true;
+  cancel.addEventListener("click", () => dialog.close("cancel"));
+  const confirm = el("button", "button button--danger button--small", text.history.delete);
+  confirm.type = "button";
+  confirm.addEventListener("click", () => dialog.close("confirm"));
+  actions.append(cancel, confirm);
+  dialog.append(title, el("p", "confirm__body", text.history.confirmBody(short)), actions);
+  document.body.append(dialog);
+  return new Promise((resolve) => {
+    dialog.addEventListener("close", () => {
+      dialog.remove();
+      opener.focus();
+      resolve(dialog.returnValue === "confirm");
+    });
+    dialog.showModal();
+  });
+}
+
 async function remove(
   entry: HistoryEntry,
   item: HTMLElement,
@@ -91,6 +118,7 @@ async function remove(
 ) {
   const request = buildDeleteRequest(entry);
   if (!request) return;
+  if (!(await confirmDelete(shortUrl(location.origin, entry.id), button))) return;
   button.disabled = true;
   let status = 0;
   try {
