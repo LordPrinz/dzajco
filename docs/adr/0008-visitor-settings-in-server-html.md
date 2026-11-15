@@ -24,7 +24,9 @@
   only holds link records under an internal origin. A page rendered for one visitor's settings is therefore
   never stored, and the cache key needs no theme or language part. Pages still send
   `Vary: Cookie, Accept-Language` and `Content-Language`, so a cache added later in front of them would
-  not mix languages by default.
+  not mix languages by default. `Vary` cannot name `request.cf.country`, though, and the language
+  depends on it. So HTML must stay `no-store`, or any cache added later must put the country (or the
+  resolved language) in its key.
 
 ## Drivers
 
