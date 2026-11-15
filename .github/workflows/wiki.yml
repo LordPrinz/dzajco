@@ -6,7 +6,7 @@ name: Wiki
 # until then the wiki checkout below fails with "repository not found".
 on:
   push:
-    branches: [v3.0]
+    branches: [dev]
     paths:
       - README.md
       - "docs/**"
@@ -23,7 +23,7 @@ permissions: {}
 jobs:
   publish:
     # Manual runs from other branches would publish unmerged docs.
-    if: github.ref == 'refs/heads/v3.0'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     permissions:
       contents: write

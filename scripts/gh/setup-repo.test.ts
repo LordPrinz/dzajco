@@ -72,9 +72,9 @@ const lines = (dryRun: boolean, state: State, withChecks = false) => {
 };
 
 describe("buildRuleset", () => {
-  test("targets the default branch and v3.0, without checks unless asked", () => {
+  test("targets the default branch and dev, without checks unless asked", () => {
     const plain = buildRuleset(false);
-    expect(plain.conditions.ref_name.include).toEqual(["~DEFAULT_BRANCH", "refs/heads/v3.0"]);
+    expect(plain.conditions.ref_name.include).toEqual(["~DEFAULT_BRANCH", "refs/heads/dev"]);
     expect(plain.rules.map((r) => r.type)).toEqual([
       "deletion",
       "non_fast_forward",

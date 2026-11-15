@@ -1,7 +1,7 @@
 name: Project sync
 
 # Moves the linked issue across the project board:
-#   branch DZAJ-<n>-… created → In Progress, PR opened or ready → QA, PR merged into v3.0 → Done and the issue is closed
+#   branch DZAJ-<n>-… created → In Progress, PR opened or ready → QA, PR merged into dev → Done and the issue is closed
 #   (`Closes #n` only closes issues when the PR targets the default branch).
 on:
   create:
@@ -31,7 +31,7 @@ jobs:
       # collaborator with write access could still edit this workflow file; the repo has one writer.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: v3.0
+          ref: dev
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:

@@ -23,7 +23,7 @@ const pr = (
     number: 9,
     draft: false,
     merged: false,
-    base: { ref: "v3.0" },
+    base: { ref: "dev" },
     body: "",
     head: { ref: "DZAJ-7-thing", repo: { fork: false } },
     ...over,
@@ -67,7 +67,7 @@ describe("handleEvent", () => {
     expect(calls).toEqual(["link 9 DZAJ-7-thing"]);
   });
 
-  test("a PR merged into v3.0 closes the issue and moves it to Done", async () => {
+  test("a PR merged into dev closes the issue and moves it to Done", async () => {
     const { deps, calls } = fakeDeps();
     await handleEvent("pull_request", pr("closed", { merged: true }), deps);
     expect(calls).toEqual(["close 7", "move 7 Done"]);

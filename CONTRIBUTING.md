@@ -8,8 +8,11 @@ bun run gh:setup             # repository settings, labels, rules, then the proj
 ```
 
 The script prints the few steps GitHub only allows in the browser (board views, built-in workflows). Add
-the `PROJECTS_TOKEN` repository secret by hand: a fine-grained PAT with access to Projects. `GITHUB_TOKEN`
-cannot write to a user-owned project, and `project-sync.yml` needs the token to move cards and close issues.
+the `PROJECTS_TOKEN` repository secret by hand. It must be a classic PAT with only the `project` scope:
+fine-grained tokens do not support user-owned Projects. Create it with
+[this link](https://github.com/settings/tokens/new?scopes=project&description=dzajco%20project%20sync), then run
+`gh secret set PROJECTS_TOKEN --repo LordPrinz/dzajco`. `GITHUB_TOKEN` cannot write to a user-owned project,
+and `project-sync.yml` needs the token to move cards and close issues.
 
 ## Board
 
@@ -21,7 +24,7 @@ cannot write to a user-owned project, and `project-sync.yml` needs the token to 
 | Todo        | Planned for the current sprint | sprint planning (manual)                          |
 | In Progress | Someone is working on it       | branch `DZAJ-<n>-…` created or pushed (automatic) |
 | QA          | PR open: code review + test    | PR opened or ready for review (automatic)         |
-| Done        | Merged to `v3.0`               | PR merged (automatic)                             |
+| Done        | Merged to `dev`                | PR merged (automatic)                             |
 
 Fields: **Area**, **Priority** (P0 blocks others, P1 this sprint, P2 nice to have), **Size** (S up to half
 a day, M 1 to 2 days, L split it), **Sprint** (2 weeks).
@@ -33,22 +36,22 @@ draft (drafts have no number). Tasks from [`docs/ROADMAP.md`](docs/ROADMAP.md) a
 ## Flow
 
 ```bash
-gh issue develop 12 --base v3.0 --name DZAJ-12-short-description --checkout   # or "Create a branch" on the issue
+gh issue develop 12 --base dev --name DZAJ-12-short-description --checkout   # or "Create a branch" on the issue
 # …work…
 git commit -m "feat(api): Add stats endpoint"   # hook turns it into "[DZAJ-12] feat(api): Add stats endpoint"
 git push -u origin HEAD                           # pre-push: branch name, typecheck, tests
-gh pr create --base v3.0 --draft --title "[DZAJ-12] feat(api): Add stats endpoint" --body "Refs #12"   # title: same format
+gh pr create --base dev --draft --title "[DZAJ-12] feat(api): Add stats endpoint" --body "Refs #12"   # title: same format
 ```
 
-PRs into `v3.0` use `Refs #<n>` in the body, not `Closes #<n>`. GitHub closes issues automatically only
+PRs into `dev` use `Refs #<n>` in the body, not `Closes #<n>`. GitHub closes issues automatically only
 when the PR targets the default branch, and the default stays `main` until the cutover.
-`project-sync.yml` closes the issue and sets Done when the PR is merged into `v3.0`.
+`project-sync.yml` closes the issue and sets Done when the PR is merged into `dev`.
 
 Open PRs as drafts. Never enable auto-merge. The owner merges.
 
 ## Conventions
 
-- **Trunk** is `v3.0`. `main` stays the default branch until the cutover.
+- **Trunk** is `dev`: feature branches merge into it and it is deployed to `test.dzaj.de`. `dev` goes to `main` (production, `dzaj.de`) through a PR. `main` stays the default branch.
 - **Ticket** `DZAJ-<n>` is issue `#<n>` (autolinked on GitHub).
 - **Branch:** `DZAJ-<n>-short-kebab-description`.
 - **Commit / PR title:** `[DZAJ-<n>] <type>(<optional scope>): <Description>`
@@ -58,8 +61,8 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
     `migrate`, `infra`, `docs`
   - issue type labels: `type:spike` marks a spike. Its commit type is still `chore(infra)`.
   - `!` after the type/scope marks a breaking change.
-- PRs are **squash-merged**; the PR title becomes the commit on `v3.0`.
-- **Dependabot** keeps its own `dependabot/…` branches and targets `v3.0`.
+- PRs are **squash-merged**; the PR title becomes the commit on `dev`.
+- **Dependabot** keeps its own `dependabot/…` branches and targets `dev`.
 - Code, comments, docs and commits are in English. What the site shows to users is in Polish.
 
 ## Local development

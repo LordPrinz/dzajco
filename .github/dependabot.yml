@@ -2,7 +2,7 @@ version: 2
 updates:
   - package-ecosystem: bun
     directory: /
-    target-branch: v3.0
+    target-branch: dev
     schedule:
       interval: weekly
     # PR titles become "[DZAJ-15] build(deps): Bump …", which passes the title convention.
@@ -17,7 +17,7 @@ updates:
         update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
-    target-branch: v3.0
+    target-branch: dev
     schedule:
       interval: weekly
     commit-message:
@@ -28,7 +28,7 @@ updates:
         update-types: [minor, patch]
   - package-ecosystem: docker
     directory: /
-    target-branch: v3.0
+    target-branch: dev
     schedule:
       interval: weekly
     commit-message:
@@ -37,7 +37,7 @@ updates:
 
   - package-ecosystem: docker-compose
     directory: /infra
-    target-branch: v3.0
+    target-branch: dev
     schedule:
       interval: weekly
     commit-message:
