@@ -281,6 +281,7 @@ export const en: PageText = {
     },
     report: "Report abuse",
     shortenOwn: "Shorten your own link",
+    cta: "Make your own short link in one click:",
   },
   history: {
     title: "History",
@@ -303,6 +304,11 @@ export const en: PageText = {
     noCities: "No city data",
     showMap: "Show map",
     map: "Map of visits",
+    created: "Created:",
+    expires: "Expires:",
+    never: "never",
+    noClicks: "No clicks yet",
+    noClicksHint: "Share your link and check back here.",
     ownerHint:
       "Cities and the map show only in the browser that created the link (it needs the key from the history).",
   },

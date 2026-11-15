@@ -305,21 +305,44 @@ describe("GET /:id", () => {
     expect(await res.text()).toContain("Ten link został wyłączony");
   });
 
-  it("shows an escaped report-abuse link on 404 and 410 pages only when ABUSE_EMAIL is set", async () => {
+  it("shows an escaped report-abuse link only on the disabled-link page, and only with ABUSE_EMAIL", async () => {
     const app = appWith(new RecordingSink());
-    const id = freshId();
-    await seedLink(id, { expiresAt: Date.now() - 1000 });
     const withMail = { ...env, ABUSE_EMAIL: "abuse@dzaj.co" } as unknown as typeof env;
 
-    const gone = await (await run(app, request(`/${id}`), withMail)).text();
-    expect(gone).toContain(`href="mailto:abuse@dzaj.co?subject=Report%20abuse%3A%20link%20${id}"`);
-    const missing = await (await run(app, request("/nope-missing"), withMail)).text();
-    expect(missing).toContain('href="mailto:abuse@dzaj.co?subject=Report%20abuse"');
+    const id = freshId();
+    const host = `${id.toLowerCase()}.example.net`;
+    await seedLink(id, { target: `https://${host}/x` });
+    await blockHost(env.DB, host, "test", Date.now());
+    const disabled = await (await run(app, request(`/${id}`), withMail)).text();
+    expect(disabled).toContain(
+      `href="mailto:abuse@dzaj.co?subject=Report%20abuse%3A%20link%20${id}"`,
+    );
+
+    // Nothing to report about a link that ran out or never existed.
+    const expired = freshId();
+    await seedLink(expired, { expiresAt: Date.now() - 1000 });
+    expect(await (await run(app, request(`/${expired}`), withMail)).text()).not.toContain(
+      "mailto:",
+    );
+    expect(await (await run(app, request("/nope-missing"), withMail)).text()).not.toContain(
+      "mailto:",
+    );
 
     const id2 = freshId();
-    await seedLink(id2, { expiresAt: Date.now() - 1000 });
+    const host2 = `${id2.toLowerCase()}.example.net`;
+    await seedLink(id2, { target: `https://${host2}/x` });
+    await blockHost(env.DB, host2, "test", Date.now());
     const noMail = { ...env, ABUSE_EMAIL: "" } as unknown as typeof env;
     expect(await (await run(app, request(`/${id2}`), noMail)).text()).not.toContain("mailto:");
+  });
+
+  it("puts the logo, the slogan and the shorten form on dead-link pages", async () => {
+    const html = await (await run(appWith(new RecordingSink()), request("/nope-missing"))).text();
+    expect(html).toContain('src="/img/logo.svg"');
+    expect(html).toContain('class="hero__subtitle"');
+    expect(html).toContain('id="shorten-form"');
+    expect(html).toContain('action="/"');
+    expect(html).toContain('src="/assets/form.js"');
   });
 
   it("caches the record, and purgeLinkCache clears it in this colo", async () => {

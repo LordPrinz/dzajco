@@ -10,8 +10,9 @@ import { rateLimit } from "../middleware/rate-limit";
 import { createLink } from "../services/links";
 import { expiresAtFrom, formUrlError, normalizeUrlInput } from "../shared/form";
 import { Created } from "../views/Created";
-import { Home, type HomeValues } from "../views/Home";
+import { Home } from "../views/Home";
 import { Notice, type NoticeKind } from "../views/Notice";
+import type { ShortenValues } from "../views/Shorten";
 
 export const MAX_FORM_BYTES = 8 * 1024;
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -79,7 +80,7 @@ export function pageRoutes() {
         return notice(c, 413, "tooLarge");
       }
       const form = new URLSearchParams(raw);
-      const values: HomeValues = {
+      const values: ShortenValues = {
         url: field(form, "url"),
         customName: field(form, "customName"),
         expiry: field(form, "expiry") || "never",

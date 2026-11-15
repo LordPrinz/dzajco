@@ -282,6 +282,7 @@ export const pl = {
     },
     report: "Zgłoś nadużycie",
     shortenOwn: "Skróć własny link",
+    cta: "Zrób własny krótki link jednym kliknięciem:",
   },
   history: {
     title: "Historia",
@@ -304,6 +305,11 @@ export const pl = {
     noCities: "Brak danych o miastach",
     showMap: "Pokaż mapę",
     map: "Mapa wejść",
+    created: "Utworzono:",
+    expires: "Wygasa:",
+    never: "nigdy",
+    noClicks: "Nie ma jeszcze kliknięć",
+    noClicksHint: "Udostępnij link i zajrzyj tu później.",
     ownerHint:
       "Miasta i mapa są widoczne tylko w przeglądarce, w której utworzono link (potrzebny jest klucz z historii).",
   },

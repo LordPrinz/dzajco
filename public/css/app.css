@@ -270,11 +270,19 @@ body {
 }
 
 .hero__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin: 0 0 1.75rem;
   font-size: 3rem;
   font-weight: 700;
   line-height: 1;
   color: var(--heading);
+}
+
+.hero__logo {
+  width: 3.5rem;
+  height: 3.5rem;
 }
 
 .hero__subtitle {
@@ -817,6 +825,11 @@ a {
 
   .hero__title {
     font-size: 2.5rem;
+  }
+
+  .hero__logo {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .hero__subtitle {
