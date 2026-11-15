@@ -1,6 +1,6 @@
 # Deployment
 
-How to set up, deploy, migrate to and operate dzajco on Cloudflare. Deploys are manual: nothing in CI runs `wrangler deploy`.
+How to set up, deploy, migrate to and operate dzajco on Cloudflare. Production deploys are manual. The dev environment on `test.dzaj.de` is deployed by CI on every push to `dev` (see "Dev environment").
 
 Commands use the project's own wrangler (`bunx wrangler` or `./node_modules/.bin/wrangler`). Replace `<...>` placeholders with your values.
 
@@ -165,7 +165,19 @@ bun run deploy:dev
 - `bun run deploy` (production) passes `--env=""` so wrangler targets the top-level config now that `env.dev` exists.
 - Check the result with `bunx wrangler deploy --env dev --dry-run`; it lists the dev bindings.
 
-As in production, nothing in CI runs `wrangler deploy`.
+Every push to `dev` runs `.github/workflows/deploy-dev.yml`. It runs the same checks as `deploy:dev`, then `db:migrate:dev`, then `wrangler deploy --env dev`, and finally requests `https://test.dzaj.de/`. One deploy runs at a time and a running one is not cancelled. The commands above stay for a manual deploy.
+
+The workflow uses the GitHub environment `dev` with two secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`: the account id from `wrangler.jsonc`.
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare Workers" template with _Account: D1: Edit_ added, limited to this account and the `dzaj.de` zone.
+
+```sh
+gh secret set CLOUDFLARE_ACCOUNT_ID --env dev --repo LordPrinz/dzajco
+gh secret set CLOUDFLARE_API_TOKEN --env dev --repo LordPrinz/dzajco   # prompts for the value
+```
+
+The first deploy moves `test.dzaj.de` to `dzajco-dev`. If the production Worker still has that domain, remove it there first (Workers & Pages, `dzajco`, Settings, Domains & Routes).
 
 ### Post-deploy checks
 
