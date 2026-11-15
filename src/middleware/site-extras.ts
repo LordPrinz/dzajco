@@ -34,10 +34,17 @@ export function extrasMarkup(nonce: string, token: string, now: Date): string {
 
 /** Open Graph wants an absolute image URL, and several crawlers do not resolve a relative one. */
 function absoluteOgImage(html: string, origin: string): string {
-  const relative = `property="og:image" content="${OG_IMAGE_PATH}"`;
+  let absolute: string;
+  try {
+    absolute = new URL(OG_IMAGE_PATH, origin).href;
+  } catch {
+    // A broken PUBLIC_ORIGIN must not take every page down; the image stays relative.
+    return html;
+  }
+  // A function replacer, because a string would expand `$&` and `` $` `` from the origin.
   return html.replace(
-    relative,
-    `property="og:image" content="${escapeAttr(new URL(OG_IMAGE_PATH, origin).href)}"`,
+    `property="og:image" content="${OG_IMAGE_PATH}"`,
+    () => `property="og:image" content="${escapeAttr(absolute)}"`,
   );
 }
 
