@@ -52,6 +52,7 @@ test("the stats header copies the full short link", async () => {
   const page = await openPage();
   const link = await page.createViaApi();
   await page.goto(`/${link.id}/stats`);
+  // Stubbed after load: the app reads navigator.clipboard when the button is clicked.
   await page.evaluate(() => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,

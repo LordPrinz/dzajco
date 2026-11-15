@@ -143,9 +143,9 @@ function pageQuery(steps: Step[]): Element[] {
           if (label !== null && matches(label, step.text)) add(el);
         }
       } else if (step.kind === "text") {
-        // The innermost elements whose text contains the string.
+        // The innermost elements whose text contains the string; nothing in <head> (the <title> is not on the page).
         for (const el of all("*")) {
-          if (el.tagName === "SCRIPT" || el.tagName === "STYLE" || el.tagName === "HEAD") continue;
+          if (el.closest("head, script, style, noscript")) continue;
           if (!matches(norm(el.textContent), step.text)) continue;
           const child = [...el.children].some((c) => matches(norm(c.textContent), step.text));
           if (!child) add(el);
@@ -167,6 +167,10 @@ function pageCheck(
   check: { kind: string; arg?: unknown; name?: string },
 ): { pass: boolean; actual: unknown } {
   const els = pageQuery(steps);
+  // Like Playwright's strict mode: only a count may look at several elements; use `first()` to pick one.
+  if (els.length > 1 && check.kind !== "count") {
+    return { pass: false, actual: `${els.length} elements match, expected one` };
+  }
   const el = els[0] as HTMLElement | undefined;
   const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
   const visible = (e: Element | undefined) => {
@@ -246,12 +250,12 @@ function pageCheck(
   }
 }
 
-/** Runs inside the page: tags the first match so `Bun.WebView` can address it by a CSS selector. */
-function pageMark(steps: Step[], id: string): boolean {
-  const el = pageQuery(steps)[0];
-  if (!el) return false;
-  el.setAttribute("data-e2e-pick", id);
-  return true;
+/** Runs inside the page: tags the only match so `Bun.WebView` can address it by a CSS selector. */
+function pageMark(steps: Step[], id: string): string {
+  const els = pageQuery(steps);
+  if (els.length !== 1) return els.length === 0 ? "no element" : `${els.length} elements match`;
+  els[0]?.setAttribute("data-e2e-pick", id);
+  return "ok";
 }
 
 const PAGE_LIB = `${pageQuery.toString()};${pageCheck.toString()};${pageMark.toString()}`;
@@ -268,7 +272,7 @@ interface Logged {
 export interface PageOptions {
   /** Block every script with a CSP header, like a browser with JavaScript turned off. */
   javaScript?: boolean;
-  /** Sent as `Accept-Language`; the old Playwright suite ran with the pl-PL locale. */
+  /** Sent as `Accept-Language`. Polish by default; most tests check the Polish pages. */
   locale?: string;
 }
 
@@ -279,6 +283,7 @@ export class Page {
   readonly requests: Logged[] = [];
   private readonly server: ReturnType<typeof Bun.serve>;
   private picks = 0;
+  private closed = false;
 
   constructor(options: PageOptions = {}) {
     const ip = randomIp();
@@ -321,19 +326,32 @@ export class Page {
       },
     });
     this.origin = `http://localhost:${this.server.port}`;
-    this.view = new Bun.WebView({ backend, width: 1280, height: 800 });
+    try {
+      this.view = new Bun.WebView({ backend, width: 1280, height: 800 });
+    } catch (error) {
+      this.server.stop(true);
+      throw error;
+    }
   }
 
-  /** Chrome keeps one profile for every view, and cookies ignore the port, so start each test without any. */
+  /**
+   * Each WebKit view has its own ephemeral cookie jar and storage. Chrome keeps one profile for every view,
+   * cookies ignore the port, and the OS can hand out a port again, so clear both before each test there.
+   */
   async init(): Promise<void> {
     if (!useChrome) return;
     await this.view.navigate("about:blank");
     await this.view.cdp("Network.clearBrowserCookies");
+    await this.view.cdp("Storage.clearDataForOrigin", { origin: this.origin, storageTypes: "all" });
   }
 
   close(): void {
-    this.view.close();
-    this.server.stop(true);
+    this.closed = true;
+    try {
+      this.view.close();
+    } finally {
+      this.server.stop(true);
+    }
   }
 
   /** Navigates and returns the status the server answered for the document. */
@@ -387,9 +405,10 @@ export class Page {
 
   /** Waits for the element, scrolls it into view if needed and clicks it with a real mouse event. */
   async click(target: Locator): Promise<void> {
-    const selector = await this.pick(target);
-    await this.view.scrollTo(selector, { block: "nearest", timeout: EXPECT_TIMEOUT });
-    await this.view.click(selector, { timeout: EXPECT_TIMEOUT });
+    await this.act(target, "click", async (selector, timeout) => {
+      await this.view.scrollTo(selector, { block: "nearest", timeout });
+      await this.view.click(selector, { timeout });
+    });
   }
 
   /** Replaces the field's value by typing, which fires real `input` events. */
@@ -400,21 +419,36 @@ export class Page {
   }
 
   async focus(target: Locator): Promise<void> {
-    const selector = await this.pick(target);
-    await this.evaluate((s) => (document.querySelector(s) as HTMLElement).focus(), selector);
+    await this.act(target, "focus", (selector) =>
+      this.evaluate((s) => {
+        const el = document.querySelector<HTMLElement>(s);
+        if (!el) throw new Error("detached");
+        el.focus();
+      }, selector),
+    );
   }
 
   async textContent(target: Locator): Promise<string | null> {
-    const selector = await this.pick(target);
-    return this.evaluate((s) => document.querySelector(s)?.textContent ?? null, selector);
+    return this.act(target, "read text", (selector) =>
+      this.evaluate((s) => {
+        const el = document.querySelector(s);
+        if (!el) throw new Error("detached");
+        return el.textContent;
+      }, selector),
+    );
   }
 
   async getAttribute(target: Locator, name: string): Promise<string | null> {
-    const selector = await this.pick(target);
-    return this.evaluate(
-      (s, n) => document.querySelector(s)?.getAttribute(n) ?? null,
-      selector,
-      name,
+    return this.act(target, `read ${name}`, (selector) =>
+      this.evaluate(
+        (s, n) => {
+          const el = document.querySelector(s);
+          if (!el) throw new Error("detached");
+          return el.getAttribute(n);
+        },
+        selector,
+        name,
+      ),
     );
   }
 
@@ -424,11 +458,14 @@ export class Page {
     fn: (...args: A) => unknown,
     ...args: A
   ): Promise<void> {
-    await poll(what, async () => ({ pass: !!(await this.evaluate(fn, ...args)), actual: "falsy" }));
+    await this.poll(what, async () => ({
+      pass: !!(await this.evaluate(fn, ...args)),
+      actual: "falsy",
+    }));
   }
 
   async waitForUrl(pattern: RegExp): Promise<void> {
-    await poll(`URL matching ${pattern}`, async () => ({
+    await this.poll(`URL matching ${pattern}`, async () => ({
       pass: pattern.test(this.view.url) && !this.view.loading,
       actual: this.view.url,
     }));
@@ -439,10 +476,12 @@ export class Page {
     const run = (kind: string, arg?: unknown, name?: string) => {
       const value = arg instanceof RegExp ? { source: arg.source, flags: arg.flags } : arg;
       const check = { kind, arg: value, name };
-      return poll(`${describe(target)} ${kind}${arg === undefined ? "" : ` ${String(arg)}`}`, () =>
-        this.view.evaluate<{ pass: boolean; actual: unknown }>(
-          `(() => { ${PAGE_LIB}; return pageCheck(${JSON.stringify(target.steps)}, ${JSON.stringify(check)}); })()`,
-        ),
+      return this.poll(
+        `${describe(target)} ${kind}${arg === undefined ? "" : ` ${String(arg)}`}`,
+        () =>
+          this.view.evaluate<{ pass: boolean; actual: unknown }>(
+            `(() => { ${PAGE_LIB}; return pageCheck(${JSON.stringify(target.steps)}, ${JSON.stringify(check)}); })()`,
+          ),
       );
     };
     return {
@@ -463,42 +502,62 @@ export class Page {
     };
   }
 
-  private async pick(target: Locator): Promise<string> {
-    const id = String(++this.picks);
-    await poll(`${describe(target)} attached`, async () => ({
-      pass: await this.view.evaluate<boolean>(
-        `(() => { ${PAGE_LIB}; return pageMark(${JSON.stringify(target.steps)}, ${JSON.stringify(id)}); })()`,
-      ),
-      actual: "no element",
-    }));
-    return `[data-e2e-pick="${id}"]`;
+  /**
+   * Finds the one element the locator matches, tags it and runs `action` on its selector. When the action
+   * fails (the node was replaced or detached in between), it finds the element again, until the deadline.
+   */
+  private async act<T>(
+    target: Locator,
+    what: string,
+    action: (selector: string, timeout: number) => Promise<T>,
+  ): Promise<T> {
+    const deadline = Date.now() + EXPECT_TIMEOUT;
+    let result: T | undefined;
+    await this.poll(
+      `${what} on ${describe(target)}`,
+      async () => {
+        const id = String(++this.picks);
+        const found = await this.view.evaluate<string>(
+          `(() => { ${PAGE_LIB}; return pageMark(${JSON.stringify(target.steps)}, ${JSON.stringify(id)}); })()`,
+        );
+        if (found !== "ok") return { pass: false, actual: found };
+        result = await action(`[data-e2e-pick="${id}"]`, Math.max(deadline - Date.now(), 100));
+        return { pass: true, actual: "" };
+      },
+      deadline,
+    );
+    return result as T;
+  }
+
+  /**
+   * Retries `check` until it passes or `deadline`. Errors count as a miss: the page may be in the middle of
+   * a navigation. Stops at once when the page is closed, so nothing keeps running after the test.
+   */
+  private async poll(
+    what: string,
+    check: () => Promise<{ pass: boolean; actual: unknown }>,
+    deadline = Date.now() + EXPECT_TIMEOUT,
+  ): Promise<void> {
+    let last: unknown = "never ran";
+    while (true) {
+      if (this.closed) throw new Error(`Page closed while waiting for ${what}`);
+      try {
+        const result = await check();
+        if (result.pass) return;
+        last = result.actual;
+      } catch (error) {
+        last = error;
+      }
+      if (Date.now() > deadline) {
+        throw new Error(`Timed out waiting for ${what}; last saw: ${String(last)}`);
+      }
+      await Bun.sleep(50);
+    }
   }
 }
 
 function describe(target: Locator): string {
   return target.steps.map((s) => JSON.stringify(s)).join(" > ");
-}
-
-/** Retries `check` until it passes. Errors count as a miss: the page may be in the middle of a navigation. */
-async function poll(
-  what: string,
-  check: () => Promise<{ pass: boolean; actual: unknown }>,
-  timeout = EXPECT_TIMEOUT,
-): Promise<void> {
-  const deadline = Date.now() + timeout;
-  let last: unknown = "never ran";
-  while (true) {
-    try {
-      const result = await check();
-      if (result.pass) return;
-      last = result.actual;
-    } catch (error) {
-      last = error;
-    }
-    if (Date.now() > deadline)
-      throw new Error(`Timed out waiting for ${what}; last saw: ${String(last)}`);
-    await Bun.sleep(50);
-  }
 }
 
 /** Opens a page for one test; `afterEach(closePages)` closes it. */
@@ -510,6 +569,25 @@ export async function openPage(options: PageOptions = {}): Promise<Page> {
   return page;
 }
 
+/** Closes every open page, even when closing one of them throws. */
 export function closePages(): void {
-  for (const page of open.splice(0)) page.close();
+  const errors: unknown[] = [];
+  for (const page of open.splice(0)) {
+    try {
+      page.close();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length > 0) throw new AggregateError(errors, "closing the pages failed");
+}
+
+/** Starts the browser once before the first test, so that test does not pay for the launch. */
+export async function warmUp(): Promise<void> {
+  const view = new Bun.WebView({ backend });
+  try {
+    await view.navigate("about:blank");
+  } finally {
+    view.close();
+  }
 }

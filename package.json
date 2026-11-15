@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json && tsc --noEmit -p tsconfig.e2e.json",
     "test": "bun test ./src ./scripts",
     "test:worker": "vitest run",
-    "test:e2e": "bun test --timeout 30000 --path-ignore-patterns='node_modules/**' ./test/e2e",
+    "test:e2e": "bun test --timeout 30000 --preload ./test/e2e/setup.ts --path-ignore-patterns='node_modules/**' ./test/e2e",
     "test:lhci": "lhci autorun",
     "types": "wrangler types --env-file .env.example",
     "prepare": "husky",

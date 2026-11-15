@@ -50,7 +50,8 @@ test("saves the new link and its key to the history", async () => {
 test("copy button puts the short link on the clipboard", async () => {
   const page = await openPage();
   await page.goto("/");
-  // A headless browser has no reliable shared clipboard, so record what the page writes to it.
+  // A headless browser has no reliable shared clipboard, so record what the page writes to it. Stubbing
+  // after load is enough: the app reads navigator.clipboard when the button is clicked.
   await page.evaluate(() => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -118,7 +119,6 @@ test("a network failure shows a toast that hands focus back when closed", async 
   // What the page sees when the request never reaches the server.
   await page.evaluate(() => {
     const realFetch = window.fetch.bind(window);
-    // The cast only satisfies Bun's own `fetch` type; the page has the browser's.
     window.fetch = ((input: RequestInfo | URL, init?: RequestInit) =>
       String(input).includes("/api/v1/links")
         ? Promise.reject(new TypeError("Failed to fetch"))
@@ -154,6 +154,7 @@ test("opens the options and shows a custom name error next to the field", async 
 test("keeps the strong key warning when the key cannot be saved to History", async () => {
   const page = await openPage();
   await page.goto("/");
+  // Stubbed after load: the app only saves to History once the link is created.
   await page.evaluate(() => {
     Storage.prototype.setItem = () => {
       throw new DOMException("full", "QuotaExceededError");
@@ -168,6 +169,7 @@ test("keeps the strong key warning when the key cannot be saved to History", asy
 test("offers Share where the browser has a share sheet", async () => {
   const page = await openPage();
   await page.goto("/");
+  // Stubbed after load: the app looks for navigator.share when it renders the result card.
   await page.evaluate(() => {
     Object.defineProperty(navigator, "share", {
       configurable: true,
@@ -186,6 +188,7 @@ test("offers Share where the browser has a share sheet", async () => {
 test("hides Share where the browser has no share sheet", async () => {
   const page = await openPage();
   await page.goto("/");
+  // Stubbed after load: the app looks for navigator.share when it renders the result card.
   await page.evaluate(() => {
     Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
   });
