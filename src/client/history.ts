@@ -85,7 +85,6 @@ function copyButton(value: string): HTMLButtonElement {
 
 function confirmDelete(short: string, opener: HTMLElement): Promise<boolean> {
   const dialog = el("dialog", "confirm");
-  dialog.setAttribute("closedby", "any");
   dialog.setAttribute("aria-labelledby", "confirm-title");
   dialog.setAttribute("aria-describedby", "confirm-body");
   const title = el("h2", "confirm__title", text.history.confirmTitle);
