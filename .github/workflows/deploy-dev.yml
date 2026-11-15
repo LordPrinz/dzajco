@@ -58,10 +58,11 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # A new custom domain needs a few minutes for DNS and the certificate, so retry for up to 5 minutes.
       - name: Smoke check
         run: |
-          for i in 1 2 3 4 5 6; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' https://test.dzaj.de/)
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://test.dzaj.de/ || true)
             [ "$code" = 200 ] && exit 0
             sleep 10
           done
