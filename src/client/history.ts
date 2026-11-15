@@ -228,7 +228,8 @@ function setupAddForm(page: Page): void {
   const title = document.getElementById("add-key-title");
   const error = document.getElementById("add-key-error");
   const status = document.getElementById("add-key-status");
-  if (!form || !code || !key || !title || !error || !status) return;
+  const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (!form || !code || !key || !title || !error || !status || !submit) return;
 
   const fieldOf: Partial<Record<AddError, HTMLInputElement>> = {
     key_rejected: key,
@@ -253,7 +254,11 @@ function setupAddForm(page: Page): void {
       error.textContent = text.history.addErrors[reason];
     }, REANNOUNCE_MS);
     const field = fieldOf[reason];
-    if (!field) return;
+    if (!field) {
+      // The form was inert during the request, which dropped focus to the page.
+      submit.focus();
+      return;
+    }
     field.setAttribute("aria-invalid", "true");
     field.setAttribute("aria-describedby", error.id);
     field.focus();

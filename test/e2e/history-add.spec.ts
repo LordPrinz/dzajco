@@ -63,6 +63,21 @@ test("a code of only spaces asks for a link", async ({ page }) => {
   await expect(code).toBeFocused();
 });
 
+test("a rate limit shows the message and returns focus to the button", async ({ page }) => {
+  await page.route("**/api/v1/links/*/stats", (route) =>
+    route.fulfill({ status: 429, json: { error: { code: "rate_limited" } } }),
+  );
+  await page.goto("/history");
+
+  await page.getByLabel("Krótki link albo kod").fill("somelink");
+  await page.getByLabel("Klucz do zarządzania").fill("some-key");
+  const submit = page.getByRole("button", { name: "Dodaj link" });
+  await submit.click();
+
+  await expect(page.getByRole("alert")).toHaveText("Za dużo żądań. Spróbuj ponownie za minutę.");
+  await expect(submit).toBeFocused();
+});
+
 test("a wrong key shows an error and saves nothing", async ({ page }) => {
   const link = await createViaApi(page.request);
   await page.goto("/history");
