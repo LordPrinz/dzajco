@@ -505,27 +505,32 @@ describe("POST /api/v1/links", () => {
 });
 
 describe("GET /api/v1/links/:id", () => {
-  async function seed(id: string, extra: { expiresAt?: number | null; target?: string } = {}) {
+  async function seed(
+    id: string,
+    extra: { expiresAt?: number | null; target?: string; createdAt?: number } = {},
+  ) {
     await insertLink(env.DB, {
       id,
       target: extra.target ?? "https://example.com/seeded",
       secretHash: null,
       expiresAt: extra.expiresAt ?? null,
-      createdAt: Date.now(),
+      createdAt: extra.createdAt ?? Date.now(),
       isCustom: true,
     });
   }
 
-  it("returns 200 {id, url, expiresAt}", async () => {
+  it("returns 200 {id, url, expiresAt, createdAt}", async () => {
     const id = freshName();
     const expiresAt = Date.now() + 3_600_000;
-    await seed(id, { expiresAt });
+    const createdAt = Date.now() - 60_000;
+    await seed(id, { expiresAt, createdAt });
     const res = await call(get(`/api/v1/links/${id}`));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       id,
       url: "https://example.com/seeded",
       expiresAt: new Date(expiresAt).toISOString(),
+      createdAt: new Date(createdAt).toISOString(),
     });
   });
 

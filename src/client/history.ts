@@ -1,21 +1,30 @@
-// The history page: lists the links this browser created (`links-history` in localStorage, the v2
-// shape) and deletes the ones saved with their secret key. All text goes in through textContent.
+// The history page: lists the links this browser created or added with their key (`links-history`
+// in localStorage, the v2 shape) and deletes the ones saved with their secret key. All text goes in
+// through textContent.
 
 import {
+  type AddOutcome,
+  addOutcome,
   buildDeleteRequest,
   canDelete,
   deleteOutcome,
+  entryFromLink,
   HISTORY_KEY,
   type HistoryEntry,
   isExpired,
+  isLinkId,
   parseHistory,
   removeEntry,
   shortUrl,
   statsPath,
+  upsertEntry,
   visibleEntries,
+  withKey,
 } from "../shared/history";
+import { codeFromInput } from "../shared/short-url";
+import { ownerRequest } from "../shared/stats";
 import { pageLocale, pageText } from "./lib/lang";
-import { toast } from "./lib/toast";
+import { REANNOUNCE_MS, toast } from "./lib/toast";
 
 const text = pageText();
 
@@ -188,6 +197,113 @@ function render(entry: HistoryEntry, page: Page): HTMLElement {
   return item;
 }
 
+function show(entries: readonly HistoryEntry[], page: Page): void {
+  page.list.replaceChildren(...visibleEntries(entries).map((entry) => render(entry, page)));
+  page.empty.hidden = entries.length > 0;
+}
+
+type Added = { outcome: Exclude<AddOutcome, "ok"> } | { outcome: "ok"; entry: HistoryEntry };
+type AddError = keyof typeof text.history.addErrors;
+
+/** Checks the key with the owner stats, then reads the link to build its entry. */
+async function addLink(id: string, secretKey: string): Promise<Added> {
+  try {
+    const { url, init } = ownerRequest(id, secretKey);
+    const checked = addOutcome((await fetch(url, init)).status);
+    if (checked !== "ok") return { outcome: checked };
+    const response = await fetch(`/api/v1/links/${encodeURIComponent(id)}`);
+    const found = addOutcome(response.status);
+    if (found !== "ok") return { outcome: found };
+    const entry = entryFromLink(await response.json(), id, secretKey);
+    return entry ? { outcome: "ok", entry } : { outcome: "failed" };
+  } catch {
+    return { outcome: "failed" };
+  }
+}
+
+function setupAddForm(page: Page): void {
+  const form = document.getElementById("add-key-form") as HTMLFormElement | null;
+  const code = document.getElementById("add-key-code") as HTMLInputElement | null;
+  const key = document.getElementById("add-key-secret") as HTMLInputElement | null;
+  const title = document.getElementById("add-key-title");
+  const error = document.getElementById("add-key-error");
+  const status = document.getElementById("add-key-status");
+  const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (!form || !code || !key || !title || !error || !status || !submit) return;
+
+  const fieldOf: Partial<Record<AddError, HTMLInputElement>> = {
+    key_rejected: key,
+    not_found: code,
+    empty_code: code,
+  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const clear = () => {
+    clearTimeout(timer);
+    error.hidden = true;
+    error.textContent = "";
+    for (const field of [code, key]) {
+      field.removeAttribute("aria-invalid");
+      field.removeAttribute("aria-describedby");
+    }
+  };
+  const fail = (reason: AddError) => {
+    clearTimeout(timer);
+    error.hidden = false;
+    // Set after a moment, so a repeated message is read out again.
+    timer = setTimeout(() => {
+      error.textContent = text.history.addErrors[reason];
+    }, REANNOUNCE_MS);
+    const field = fieldOf[reason];
+    if (!field) {
+      // The form was inert during the request, which dropped focus to the page.
+      submit.focus();
+      return;
+    }
+    field.setAttribute("aria-invalid", "true");
+    field.setAttribute("aria-describedby", error.id);
+    field.focus();
+  };
+  code.addEventListener("input", clear);
+  key.addEventListener("input", clear);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    clear();
+    const id = codeFromInput(code.value).normalize("NFC");
+    if (id === "") {
+      fail("empty_code");
+      return;
+    }
+    if (!isLinkId(id)) {
+      fail("not_found");
+      return;
+    }
+    const secretKey = key.value.trim();
+    form.inert = true;
+    status.textContent = text.history.adding;
+    const added = await addLink(id, secretKey);
+    form.inert = false;
+    status.textContent = "";
+    if (added.outcome !== "ok") {
+      fail(added.outcome);
+      return;
+    }
+    const { entry } = added;
+    const entries = load();
+    const updated = withKey(entries, entry.id, secretKey);
+    const next = updated ?? upsertEntry(entries, entry);
+    save(next);
+    show(next, page);
+    form.reset();
+    toast(updated ? text.history.keyUpdated(entry.id) : text.history.added(entry.id), "success");
+    const short = shortUrl(location.origin, entry.id);
+    const links = Array.from(page.list.querySelectorAll<HTMLAnchorElement>(".history__short"));
+    // Past MAX_RENDERED the new entry is not drawn, so focus goes back to the form.
+    (links.find((link) => link.href === short) ?? title).focus();
+  });
+  form.hidden = false;
+}
+
 function init(): void {
   const list = document.getElementById("history-list");
   const empty = document.getElementById("history-empty");
@@ -200,9 +316,9 @@ function init(): void {
   const live = all.filter((entry) => !isExpired(entry, now));
   if (live.length !== all.length) save(live);
 
-  list.replaceChildren(...visibleEntries(live).map((entry) => render(entry, page)));
-  empty.hidden = live.length > 0;
+  show(live, page);
   document.getElementById("history-loading")?.remove();
+  setupAddForm(page);
 }
 
 init();

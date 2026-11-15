@@ -1,6 +1,7 @@
 // Pure logic of the history page, shared by the browser script and the bun tests. Keep it free of
 // DOM and runtime imports.
 
+import { LOOKUP_ID } from "../domain/lookup-id";
 import { HISTORY_KEY, type HistoryEntry } from "./form";
 
 export { HISTORY_KEY, type HistoryEntry };
@@ -12,6 +13,9 @@ export interface DeleteRequest {
 
 /** What to do with a history entry after `DELETE /api/v1/links/:id` answered with `status`. */
 export type DeleteOutcome = "removed" | "rate_limited" | "key_rejected" | "failed";
+
+/** What adding a link with its key does after `GET /api/v1/links/:id/stats` answered with `status`. */
+export type AddOutcome = "ok" | "key_rejected" | "not_found" | "rate_limited" | "failed";
 
 /** The page renders at most this many entries; storage keeps all of them. */
 export const MAX_RENDERED = 1000;
@@ -93,6 +97,52 @@ export function deleteOutcome(status: number): DeleteOutcome {
   if (status === 429) return "rate_limited";
   if (status === 400 || status === 403) return "key_rejected";
   return "failed";
+}
+
+/** 403 is a key that does not match (or is malformed); 410 is an expired or disabled link. */
+export function addOutcome(status: number): AddOutcome {
+  if (status === 200) return "ok";
+  if (status === 403) return "key_rejected";
+  if (status === 404 || status === 410) return "not_found";
+  if (status === 429) return "rate_limited";
+  return "failed";
+}
+
+/** The history with the key set on the entry for `id`; null when there is no such entry yet. */
+export function withKey(
+  entries: readonly HistoryEntry[],
+  id: string,
+  secretKey: string,
+): HistoryEntry[] | null {
+  if (!entries.some((entry) => entry.id === id)) return null;
+  return entries.map((entry) => (entry.id === id ? { ...entry, secretKey } : entry));
+}
+
+/**
+ * Whether `id` (already NFC) can name a link, by the server's lookup rule. `.` and `..` pass it but
+ * would act as path segments in the request URL and reach another endpoint.
+ */
+export function isLinkId(id: string): boolean {
+  return LOOKUP_ID.test(id) && id !== "." && id !== "..";
+}
+
+/** A new entry from the `GET /api/v1/links/:id` body; null unless it is the link `id` that was checked. */
+export function entryFromLink(body: unknown, id: string, secretKey: string): HistoryEntry | null {
+  const link = (body ?? {}) as {
+    id?: unknown;
+    url?: unknown;
+    expiresAt?: unknown;
+    createdAt?: unknown;
+  };
+  const url = text(link.url);
+  if (link.id !== id || url === null) return null;
+  return {
+    id,
+    url,
+    expire: text(link.expiresAt) ?? "never",
+    createdAt: text(link.createdAt) ?? "",
+    secretKey,
+  };
 }
 
 /** The entries to draw: newest first, at most `MAX_RENDERED`. */

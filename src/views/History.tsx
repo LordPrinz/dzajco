@@ -24,6 +24,47 @@ export function History({ nonce }: { nonce: string }) {
           {t.history.empty} <a href="/">{t.history.emptyLink}</a>.
         </p>
         <p class="doc__note">{t.history.note}</p>
+
+        {/* Hidden until history.js runs. */}
+        <form class="doc__section add-key" id="add-key-form" aria-labelledby="add-key-title" hidden>
+          <h2 id="add-key-title" tabindex={-1}>
+            {t.history.add.heading}
+          </h2>
+          <p class="add-key__lead">{t.history.add.lead}</p>
+          <label class="field__label" for="add-key-code">
+            {t.history.add.codeLabel}
+          </label>
+          <input
+            class="input"
+            id="add-key-code"
+            name="code"
+            type="text"
+            required
+            autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck={false}
+          />
+          <label class="field__label" for="add-key-secret">
+            {t.history.add.keyLabel}
+          </label>
+          <input
+            class="input"
+            id="add-key-secret"
+            name="secretKey"
+            type="text"
+            required
+            autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck={false}
+          />
+          <p class="error" id="add-key-error" role="alert" hidden />
+          <button class="button add-key__submit" type="submit">
+            {t.history.add.submit}
+          </button>
+          <p class="sr-only" id="add-key-status" role="status" />
+        </form>
       </article>
     </Layout>
   );
