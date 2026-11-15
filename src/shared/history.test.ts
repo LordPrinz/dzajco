@@ -10,6 +10,7 @@ import {
   removeEntry,
   shortUrl,
   statsPath,
+  upsertEntry,
   visibleEntries,
 } from "./history";
 
@@ -153,5 +154,36 @@ describe("large histories", () => {
     const shown = visibleEntries(parseHistory(many));
     expect(shown).toHaveLength(MAX_RENDERED);
     expect(shown[0]?.id).toBe(`id${MAX_RENDERED + 49}`);
+  });
+});
+
+describe("upsertEntry", () => {
+  const old = {
+    id: "promo",
+    url: "https://example.com/a",
+    expire: "2020-01-01T00:00:00.000Z",
+    createdAt: "2019-12-01T10:00:00.000Z",
+    secretKey: "old-key",
+  };
+  const fresh = {
+    id: "promo",
+    url: "https://example.com/b",
+    expire: "never",
+    createdAt: "2026-11-01T10:00:00.000Z",
+    secretKey: "new-key",
+  };
+
+  it("replaces an entry of a re-created name with the new key and expiry", () => {
+    const other = {
+      id: "other",
+      url: "https://example.org",
+      expire: "never",
+      createdAt: "2025-01-01T00:00:00.000Z",
+    };
+    expect(upsertEntry([old, other], fresh)).toEqual([other, fresh]);
+  });
+
+  it("appends an entry with a new id", () => {
+    expect(upsertEntry([old], { ...fresh, id: "next" })).toHaveLength(2);
   });
 });

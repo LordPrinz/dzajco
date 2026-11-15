@@ -27,7 +27,10 @@ export interface HomeProps {
 export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
   const field = error === undefined ? undefined : (FIELD_OF_ERROR[error] ?? "url");
   const message = error === undefined ? undefined : errorText(error);
-  const hasOptions = values.customName !== "" || values.expiry !== "never" || field !== "url";
+  const hasOptions =
+    values.customName !== "" ||
+    values.expiry !== "never" ||
+    (field !== undefined && field !== "url");
   return (
     <Layout nonce={nonce} scripts={["form.js"]}>
       <Header />

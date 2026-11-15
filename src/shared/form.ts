@@ -41,10 +41,14 @@ export function hostIsIdn(hostname: string): boolean {
   return hostname.split(".").some((label) => label.startsWith("xn--"));
 }
 
+/** `host:port` looks like a scheme to the check below, so it is told apart by the digits after the colon. */
+const HOST_WITH_PORT = /^[^\s/?#:@]+:\d+(?:[/?#]|$)/;
+
 /** `example.com` is accepted as `https://example.com`; anything that already has a scheme is left alone. */
 export function normalizeUrlInput(input: string): string {
   const trimmed = input.trim();
-  return trimmed === "" || /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) && !HOST_WITH_PORT.test(trimmed);
+  return trimmed === "" || hasScheme ? trimmed : `https://${trimmed}`;
 }
 
 export const FIELD_OF_ERROR: Record<string, "url" | "customName" | "expiry"> = {

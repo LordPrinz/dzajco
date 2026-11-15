@@ -4,6 +4,9 @@ const SITE_NAME = "dzajco";
 const DESCRIPTION =
   "Darmowy skracacz linków od Dzajlopment. Własne nazwy, data wygaśnięcia i licznik wejść.";
 
+/** Relative here because the layout does not know the origin; `siteExtras` makes it absolute from `PUBLIC_ORIGIN`. */
+export const OG_IMAGE_PATH = "/img/og.jpg";
+
 const NAV = [
   { href: "/", label: "Strona główna" },
   { href: "/about", label: "O nas" },
@@ -39,7 +42,7 @@ export function Layout({ nonce, title, scripts = [], styles = [], children }: La
         <meta property="og:type" content="website" />
         <meta property="og:title" content={fullTitle} />
         <meta property="og:description" content={DESCRIPTION} />
-        <meta property="og:image" content="/img/og.jpg" />
+        <meta property="og:image" content={OG_IMAGE_PATH} />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/img/logo.svg" type="image/svg+xml" />
         <link

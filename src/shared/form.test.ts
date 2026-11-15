@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { expiresAtFrom, hostIsIdn } from "./form";
+import { expiresAtFrom, hostIsIdn, normalizeUrlInput } from "./form";
 
 const NOW = Date.parse("2026-01-01T00:00:00Z");
 
@@ -30,5 +30,28 @@ describe("hostIsIdn", () => {
     expect(hostIsIdn("www.xn--pnk-qma.pl")).toBe(true);
     expect(hostIsIdn("example.com")).toBe(false);
     expect(hostIsIdn("notxn--example.com")).toBe(false);
+  });
+});
+
+describe("normalizeUrlInput", () => {
+  it("adds https to a host with a port", () => {
+    expect(normalizeUrlInput("example.com:8080/path")).toBe("https://example.com:8080/path");
+    expect(normalizeUrlInput("localhost:3000")).toBe("https://localhost:3000");
+  });
+
+  it("adds https to a bare host", () => {
+    expect(normalizeUrlInput(" example.com/path ")).toBe("https://example.com/path");
+  });
+
+  it("leaves real schemes alone so the URL policy rejects them", () => {
+    for (const input of [
+      "ftp://example.com",
+      "mailto:a@b.c",
+      "javascript:alert(1)",
+      "http://a.b",
+      "HTTPS://A.B",
+    ]) {
+      expect(normalizeUrlInput(input)).toBe(input);
+    }
   });
 });

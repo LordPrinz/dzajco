@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { activeEvent } from "../shared/events";
+import { OG_IMAGE_PATH } from "../views/Layout";
 import type { NonceVariables } from "./security-headers";
 
 /** CF Web Analytics tokens: 32 hex characters, or the same as a dashed UUID. */
@@ -31,7 +32,19 @@ export function extrasMarkup(nonce: string, token: string, now: Date): string {
   return html;
 }
 
-/** Injects `extrasMarkup` before `</body>` of every HTML response; other responses pass untouched. */
+/** Open Graph wants an absolute image URL, and several crawlers do not resolve a relative one. */
+function absoluteOgImage(html: string, origin: string): string {
+  const relative = `property="og:image" content="${OG_IMAGE_PATH}"`;
+  return html.replace(
+    relative,
+    `property="og:image" content="${escapeAttr(new URL(OG_IMAGE_PATH, origin).href)}"`,
+  );
+}
+
+/**
+ * Injects `extrasMarkup` before `</body>` and makes the `og:image` URL absolute in every HTML
+ * response; other responses pass untouched.
+ */
 export function siteExtras(): MiddlewareHandler<{
   Bindings: Cloudflare.Env;
   Variables: NonceVariables;
@@ -41,8 +54,7 @@ export function siteExtras(): MiddlewareHandler<{
     const type = c.res.headers.get("Content-Type")?.toLowerCase() ?? "";
     if (!type.startsWith("text/html")) return;
     const extras = extrasMarkup(c.var.nonce, c.env.CF_ANALYTICS_TOKEN, new Date());
-    if (extras === "") return;
-    const html = await c.res.text();
+    const html = absoluteOgImage(await c.res.text(), c.env.PUBLIC_ORIGIN);
     const at = html.lastIndexOf("</body>");
     const body = at === -1 ? html + extras : html.slice(0, at) + extras + html.slice(at);
     c.res = new Response(body, c.res);

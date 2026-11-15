@@ -1,4 +1,5 @@
 import type { CountryStat } from "../db/queries";
+import { countryName } from "../shared/stats";
 import { Layout } from "./Layout";
 
 export interface AboutStats {
@@ -39,14 +40,6 @@ const FEATURES = [
 const TOP = 8;
 const NUMBER = new Intl.NumberFormat("pl-PL");
 
-function countryName(code: string, names: Intl.DisplayNames | null): string {
-  try {
-    return names?.of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
-
 function formatUpdated(iso: string): string {
   return new Date(iso).toLocaleString("pl-PL", {
     dateStyle: "long",
@@ -56,12 +49,6 @@ function formatUpdated(iso: string): string {
 }
 
 export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
-  let names: Intl.DisplayNames | null = null;
-  try {
-    names = new Intl.DisplayNames(["pl"], { type: "region" });
-  } catch {
-    names = null;
-  }
   const top = [...stats.countries].sort((a, b) => b.visits - a.visits).slice(0, TOP);
 
   return (
@@ -107,7 +94,7 @@ export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
                   <ol class="scoreboard">
                     {top.map((country) => (
                       <li class="scoreboard__item">
-                        <span class="scoreboard__name">{countryName(country.code, names)}</span>
+                        <span class="scoreboard__name">{countryName(country.code)}</span>
                         <span class="scoreboard__visits">{NUMBER.format(country.visits)}</span>
                       </li>
                     ))}

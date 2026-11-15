@@ -49,7 +49,8 @@ describe("GET /", () => {
     const html = await res.text();
     expect(html.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain('<html lang="pl">');
-    expect(html).toContain('property="og:image" content="/img/og.jpg"');
+    expect(html).toContain(`property="og:image" content="${env.PUBLIC_ORIGIN}/img/og.jpg"`);
+    expect(html).not.toMatch(/<details class="options"[^>]*\bopen\b/);
     expect(html).toContain('<form class="shorten"');
 
     const nonce = /nonce-([^';\s]+)/.exec(res.headers.get("content-security-policy") ?? "")?.[1];

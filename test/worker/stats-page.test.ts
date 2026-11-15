@@ -106,7 +106,7 @@ describe("GET /:id/stats", () => {
     const id = freshId();
     await seed(id);
     const html = await (await call(`/${id}/stats`)).text();
-    expect(html).toContain('property="og:image" content="/img/og.jpg"');
+    expect(html).toContain(`property="og:image" content="${env.PUBLIC_ORIGIN}/img/og.jpg"`);
     expect(html.toLowerCase()).not.toContain("leaflet");
     const home = await (await call("/")).text();
     expect(home.toLowerCase()).not.toContain("leaflet");
