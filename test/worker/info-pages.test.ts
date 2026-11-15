@@ -90,6 +90,14 @@ describe("GET /about", () => {
     expect((await page("/docs/api")).html).toContain("tylko aktywne linki");
   });
 
+  it("gives each of the six features an inline, decorative icon", async () => {
+    const { html } = await page("/about");
+    const icons = html.match(/<svg class="features__icon"[^>]*>/g) ?? [];
+    expect(icons).toHaveLength(6);
+    for (const icon of icons) expect(icon).toContain('aria-hidden="true"');
+    expect(html).not.toMatch(/<(?:img|use)\b[^>]*features/);
+  });
+
   it("embeds the sponsor button without an inline style", async () => {
     const { res, html } = await page("/about");
     expect(html).toContain('src="https://github.com/sponsors/LordPrinz/button"');

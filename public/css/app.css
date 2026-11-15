@@ -42,6 +42,8 @@
   --accent: var(--jajco-500);
   --on-accent: var(--jajco-950);
   --link: var(--jajco-700);
+  --icon: var(--jajco-600);
+  --icon-bg: var(--jajco-50);
   --scrollbar: #d1d5db;
   --shadow: 0 1px 3px rgb(0 0 0 / 0.1), 0 1px 2px rgb(0 0 0 / 0.06);
   --focus: var(--jajco-700);
@@ -66,6 +68,8 @@
     --heading: #fbf7e4;
     --line: #3a3322;
     --link: var(--jajco-400);
+    --icon: var(--jajco-500);
+    --icon-bg: #33270a;
     --scrollbar: #4a412b;
     --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
     --focus: var(--jajco-400);
