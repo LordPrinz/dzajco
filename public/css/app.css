@@ -201,23 +201,53 @@ body {
   padding: 0.25rem;
 }
 
+/* v2 form: a pill input with a pill button laid over its right end. */
 .pill {
+  --pill-overlap: 2.25rem;
+  position: relative;
   display: flex;
   align-items: stretch;
+  border-radius: 9999px;
 }
 
 .pill__input {
   flex: 1;
   min-width: 0;
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
+  /* Keeps the text clear of the button that covers the right end. */
+  padding-inline-end: calc(var(--pill-overlap) + 1rem);
+}
+
+/* The ring goes round the whole pill: on the input alone the button would cover its right end.
+   Browsers without :has() keep the input's own ring and outline. */
+@supports selector(:has(*)) {
+  .pill__input:focus-visible,
+  .pill__input[aria-invalid="true"] {
+    outline: none;
+  }
+
+  .pill:has(.pill__input:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .pill:has(.pill__input[aria-invalid="true"]) {
+    outline: 2px solid var(--danger-text);
+  }
+
+  /* Focused and invalid: still a full focus ring, in the error colour. */
+  .pill:has(.pill__input:focus-visible[aria-invalid="true"]) {
+    outline: 3px solid var(--danger-text);
+    outline-offset: 2px;
+  }
 }
 
 .pill__submit {
-  padding: 0 1.5rem 0 1.75rem;
+  position: relative;
+  flex: none;
+  margin-inline-start: calc(-1 * var(--pill-overlap));
+  padding: 0 1.75rem;
   border: 0;
-  border-start-end-radius: 9999px;
-  border-end-end-radius: 9999px;
+  border-radius: 9999px;
   font: inherit;
   font-weight: 600;
   color: var(--on-accent);
@@ -225,6 +255,12 @@ body {
   box-shadow: var(--shadow);
   cursor: pointer;
   transition: background-color 0.15s ease;
+}
+
+/* Drawn inside the button, so the ring keeps its shape and never sticks out past the pill. */
+.pill__submit:focus-visible {
+  outline: 3px solid var(--on-accent);
+  outline-offset: -6px;
 }
 
 .pill__submit:hover {
@@ -522,8 +558,12 @@ a {
     font-size: 1.0625rem;
   }
 
+  .pill {
+    --pill-overlap: 1.75rem;
+  }
+
   .pill__submit {
-    padding-inline: 1rem 1.25rem;
+    padding-inline: 1.25rem;
   }
 
   .copy-row {
