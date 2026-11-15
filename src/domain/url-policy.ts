@@ -55,6 +55,8 @@ function isPrivateIPv4(a: number, b: number, c: number): boolean {
     (a === 192 && b === 168) ||
     // IETF protocol assignments, TEST-NET-1/2/3 and benchmarking (198.18.0.0/15).
     (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    // Deprecated 6to4 relay anycast (192.88.99.0/24), the IPv4 side of the refused 2002::/16.
+    (a === 192 && b === 88 && c === 99) ||
     (a === 198 && (b === 18 || b === 19)) ||
     (a === 198 && b === 51 && c === 100) ||
     (a === 203 && b === 0 && c === 113)
@@ -82,18 +84,14 @@ function ipv6Groups(host: string): number[] | null {
 function isPrivateIPv6(host: string): boolean {
   const g = ipv6Groups(host);
   if (!g) return true;
-  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0, g6 = 0, g7 = 0] = g;
-  const embeddedV4 = isPrivateIPv4(g6 >> 8, g6 & 0xff, g7 >> 8);
+  const [g0 = 0, g1 = 0, g2 = 0, g3 = 0, g4 = 0, g5 = 0] = g;
   const zeroPrefix = g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0;
-  if (zeroPrefix && g5 === 0 && (g6 === 0 || embeddedV4)) return true;
-  if (zeroPrefix && g5 === 0xffff && embeddedV4) return true;
-  // IPv4-translated (::ffff:0:a.b.c.d).
-  if (g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0xffff && g5 === 0 && embeddedV4) {
-    return true;
-  }
-  if (g0 === 0x64 && g1 === 0xff9b && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0 && embeddedV4) {
-    return true;
-  }
+  // IPv4-compatible (::/96) and IPv4-mapped (::ffff:0:0/96) literals are refused whatever IPv4 they embed:
+  // the stored host would be the IPv6 text, so an IPv4 blocklist entry could never match it.
+  if (zeroPrefix && (g5 === 0 || g5 === 0xffff)) return true;
+  // IPv4-translated (::ffff:0:0:0/96) and well-known NAT64 (64:ff9b::/96), refused for the same reason.
+  if (g0 === 0 && g1 === 0 && g2 === 0 && g3 === 0 && g4 === 0xffff && g5 === 0) return true;
+  if (g0 === 0x64 && g1 === 0xff9b && g2 === 0 && g3 === 0 && g4 === 0 && g5 === 0) return true;
   // Local-use NAT64 (64:ff9b:1::/48) maps into networks we cannot see, so it is refused whatever it embeds.
   if (g0 === 0x64 && g1 === 0xff9b && g2 === 1) return true;
   // Documentation (3fff::/20, RFC 9637).
