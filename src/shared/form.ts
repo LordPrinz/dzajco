@@ -1,11 +1,14 @@
 // Shared by the server-rendered form and the browser script, so keep it free of runtime imports.
 
+import type { SharedText } from "./text";
+
+/** Labels live in `SharedText.expiry` under the same `value`. */
 export const EXPIRY_PRESETS = [
-  { value: "never", label: "Nigdy", ms: null },
-  { value: "1h", label: "1 godzina", ms: 3_600_000 },
-  { value: "1d", label: "1 dzień", ms: 86_400_000 },
-  { value: "1w", label: "1 tydzień", ms: 604_800_000 },
-  { value: "1m", label: "30 dni", ms: 2_592_000_000 },
+  { value: "never", ms: null },
+  { value: "1h", ms: 3_600_000 },
+  { value: "1d", ms: 86_400_000 },
+  { value: "1w", ms: 604_800_000 },
+  { value: "1m", ms: 2_592_000_000 },
 ] as const;
 
 export const CUSTOM_EXPIRY = "custom";
@@ -67,31 +70,9 @@ export const FIELD_OF_ERROR: Record<string, "url" | "customName" | "expiry"> = {
   expiry_too_far: "expiry",
 };
 
-export const ERROR_TEXT: Record<string, string> = {
-  invalid_url: "To nie wygląda na poprawny adres URL.",
-  url_too_long: "Adres jest za długi (maksymalnie 2048 znaków).",
-  unsupported_scheme: "Dozwolone są tylko adresy http i https.",
-  credentials_not_allowed: "Adres nie może zawierać nazwy użytkownika ani hasła.",
-  own_host: "Nie skracamy linków do tego serwisu.",
-  private_target: "Adresy prywatne i lokalne są niedozwolone.",
-  blocked_target: "Ten adres jest niedozwolony.",
-  invalid_body: "Formularz zawiera nieprawidłowe dane.",
-  invalid_name: "Własna nazwa ma mieć od 3 do 32 liter, cyfr, znaków _ lub -.",
-  name_too_long: "Własna nazwa jest za długa.",
-  reserved_name: "Ta nazwa jest zarezerwowana.",
-  mixed_script: "Nazwa miesza litery łacińskie z innym alfabetem.",
-  id_taken: "Ta nazwa jest już zajęta.",
-  invalid_expiry: "Podaj istniejącą datę wygaśnięcia.",
-  expiry_in_past: "Data wygaśnięcia musi być w przyszłości.",
-  expiry_too_far: "Link może wygasać najpóźniej za rok.",
-  rate_limited: "Za dużo żądań. Spróbuj ponownie za minutę.",
-  service_unavailable: "Usługa jest chwilowo niedostępna. Spróbuj ponownie za chwilę.",
-};
-
-export const FALLBACK_ERROR = "Coś poszło nie tak. Spróbuj ponownie.";
-
-export function errorText(code: string): string {
-  return ERROR_TEXT[code] ?? FALLBACK_ERROR;
+/** The message for an error code in the page language; unknown codes get the generic one. */
+export function errorText(code: string, text: SharedText): string {
+  return (text.errors as Record<string, string | undefined>)[code] ?? text.fallbackError;
 }
 
 /** `links-history` entry, same shape as v2 (`createdAt` is the ISO form of v2's `Date`). */

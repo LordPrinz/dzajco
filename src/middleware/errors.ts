@@ -3,8 +3,9 @@ import type { AppEnv } from "../lib/app-env";
 import { renderPage } from "../lib/page";
 import { Notice } from "../views/Notice";
 
+/** Last resort, so it depends on nothing: one static page in both languages. */
 const ERROR_PAGE =
-  '<!doctype html><html lang="pl"><meta charset="utf-8"><title>Błąd</title><h1>Coś poszło nie tak</h1></html>';
+  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Error</title><h1>Something went wrong</h1><p lang="pl">Coś poszło nie tak.</p></html>';
 
 export function apiError(
   c: Context,
@@ -28,10 +29,6 @@ export const onError: ErrorHandler<AppEnv> = (error, c) => {
 
 export const notFound: NotFoundHandler<AppEnv> = (c) => {
   if (isApi(c)) return apiError(c, 404, "not_found", "Not found");
-  const page = renderPage(c, Notice, {
-    nonce: c.var.nonce,
-    title: "Nie znaleziono strony",
-    message: "Taka strona nie istnieje.",
-  });
+  const page = renderPage(c, Notice, { nonce: c.var.nonce, kind: "notFound" });
   return c.html(page, 404, { "Cache-Control": "no-store" });
 };

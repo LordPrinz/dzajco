@@ -10,6 +10,7 @@ import {
   ownerRequest,
   parseCities,
 } from "../shared/stats";
+import { pageLang } from "./lib/lang";
 
 function readKey(id: string): string | null {
   try {
@@ -37,7 +38,7 @@ function renderCities(list: HTMLElement, cities: readonly CityRow[]): void {
       item.className = "bars__item";
       const label = document.createElement("span");
       label.className = "bars__label";
-      label.textContent = `${city.city}, ${countryName(city.country)}`;
+      label.textContent = `${city.city}, ${countryName(city.country, pageLang())}`;
       const meter = document.createElement("meter");
       meter.className = "bars__meter";
       meter.min = 0;

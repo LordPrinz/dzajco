@@ -2,6 +2,7 @@
 // an assertive region (`role="alert"`), success and info to a polite one (`role="status"`).
 // Classes only, no inline styles, so the CSP stays as it is. Text goes in through textContent.
 
+import { pageText } from "./lang";
 import {
   dismissToast,
   showToast,
@@ -117,7 +118,7 @@ export interface ToastOptions {
 export function toast(
   message: string,
   variant: ToastVariant = "info",
-  { closeLabel = "Zamknij", returnFocus }: ToastOptions = {},
+  { closeLabel = pageText().toastClose, returnFocus }: ToastOptions = {},
 ): void {
   const target = region(variant);
   if (!target) return;

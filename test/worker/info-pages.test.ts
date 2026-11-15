@@ -3,12 +3,13 @@ import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import worker from "../../src/index";
 import { ENDPOINTS, ERROR_CODES } from "../../src/views/ApiDocs";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 
 async function get(path: string, bindings: Cloudflare.Env = env): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(new Request(`${ORIGIN}${path}`), bindings, ctx);
+  const res = await worker.fetch(inPolish(new Request(`${ORIGIN}${path}`)), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }

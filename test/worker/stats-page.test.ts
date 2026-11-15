@@ -5,6 +5,7 @@ import { startCursor } from "../../src/analytics/day";
 import { freshCacheKey } from "../../src/analytics/fresh";
 import { blockHost, insertLink } from "../../src/db/queries";
 import worker from "../../src/index";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 const allowAll: RateLimit = { limit: async () => ({ success: true }) };
@@ -25,7 +26,7 @@ function testEnv(overrides: Partial<Cloudflare.Env> = {}): Cloudflare.Env {
 
 async function call(path: string, bindings: Cloudflare.Env = testEnv(), init?: RequestInit) {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(new Request(`${ORIGIN}${path}`, init), bindings, ctx);
+  const res = await worker.fetch(inPolish(new Request(`${ORIGIN}${path}`, init)), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }

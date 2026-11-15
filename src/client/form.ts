@@ -12,7 +12,10 @@ import {
   normalizeUrlInput,
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
+import { pageLocale, pageText } from "./lib/lang";
 import { dismissAll, toast } from "./lib/toast";
+
+const text = pageText();
 
 interface CreatedLink {
   id: string;
@@ -57,14 +60,14 @@ function enableCopy(root: ParentNode): void {
       const source = root.querySelector<HTMLElement>(`[data-field="${button.dataset.copy}"]`);
       try {
         await navigator.clipboard.writeText(source?.textContent ?? "");
-        button.textContent = "Skopiowano";
-        toast("Skopiowano do schowka", "success");
+        button.textContent = text.copy.done;
+        toast(text.copy.toast, "success");
       } catch {
-        button.textContent = "Nie udało się";
-        toast("Nie udało się skopiować. Zaznacz tekst i skopiuj go ręcznie.", "error");
+        button.textContent = text.copy.failed;
+        toast(text.copy.failedToast, "error");
       }
       setTimeout(() => {
-        button.textContent = "Kopiuj";
+        button.textContent = text.copy.button;
       }, 2000);
     });
   }
@@ -95,7 +98,7 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
   const time = card.querySelector<HTMLTimeElement>("time");
   if (expiry && time && link.expiresAt) {
     time.dateTime = link.expiresAt;
-    time.textContent = new Date(link.expiresAt).toLocaleString("pl-PL", {
+    time.textContent = new Date(link.expiresAt).toLocaleString(pageLocale(), {
       dateStyle: "long",
       timeStyle: "short",
     });
@@ -117,9 +120,9 @@ function setupShortenForm(form: HTMLFormElement): void {
   const customDate = byId<HTMLElement>("custom-date");
   // The script reads the date in the browser's zone; the no-JS form keeps UTC.
   const dateLabel = byId<HTMLElement>("custom-date-label");
-  if (dateLabel) dateLabel.textContent = "Własna data wygaśnięcia (czas lokalny)";
+  if (dateLabel) dateLabel.textContent = text.form.localDateLabel;
   const dateHint = byId<HTMLElement>("custom-date-hint");
-  if (dateHint) dateHint.textContent = "Czas lokalny. Używana tylko przy wyborze „Własna data”.";
+  if (dateHint) dateHint.textContent = text.form.localDateHint;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 
   const syncCustomDate = () => {
@@ -137,7 +140,7 @@ function setupShortenForm(form: HTMLFormElement): void {
     if (serverError) serverError.hidden = true;
   };
   const fail = (code: string) => {
-    const message = errorText(code);
+    const message = errorText(code, text);
     const field = byId(FIELD_OF_ERROR[code] ?? "url");
     // The toast announces the error; the field keeps the text as its description, in the
     // server's #form-error paragraph, hidden from sight and with its alert role dropped so the
@@ -172,7 +175,7 @@ function setupShortenForm(form: HTMLFormElement): void {
     if (customName !== "") body.customName = customName;
 
     if (submit) submit.disabled = true;
-    if (status) status.textContent = "Skracanie…";
+    if (status) status.textContent = text.form.sending;
     try {
       const response = await fetch("/api/v1/links", {
         method: "POST",
