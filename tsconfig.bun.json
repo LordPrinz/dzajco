@@ -3,12 +3,6 @@
   "compilerOptions": {
     "types": ["bun", "./worker-configuration.d.ts"]
   },
-  "include": [
-    "scripts",
-    "src/**/*.test.ts",
-    "test/e2e",
-    "playwright.config.ts",
-    "worker-configuration.d.ts"
-  ],
+  "include": ["scripts", "src/**/*.test.ts", "worker-configuration.d.ts"],
   "exclude": []
 }

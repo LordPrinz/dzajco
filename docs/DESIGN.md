@@ -40,7 +40,7 @@ dzajco/                          (trunk: dev)
 ├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql, 0003_v2_visit_import.sql, 0004_deleted_links.sql
 ├── public/            # _headers, css, img, assets/ (build output)
 ├── test/worker/       # vitest-pool-workers (+ cf fixtures, applyD1Migrations)
-├── test/e2e/          # Playwright
+├── test/e2e/          # bun test + Bun.WebView (WebKit on macOS, Chrome in CI)
 ├── scripts/
 │   ├── admin/         # block.ts (abuse CLI: block or unblock a host, delete a link), deleted.ts (read the archive)
 │   ├── gh/            # repo, board and issue scripts (+ tests)

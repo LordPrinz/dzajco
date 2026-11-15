@@ -51,7 +51,7 @@ The image is for development and tests only. Production is the Cloudflare Worker
 | `bun run test`                                   | Unit tests with `bun test` (`src`, `scripts`)                   |
 | `bun run test:worker`                            | Worker tests in the Workers runtime with Vitest                 |
 | `bun run test:coverage`                          | Unit tests with coverage; fails below 90% lines in `src/domain` |
-| `bun run test:e2e`                               | Playwright end-to-end tests                                     |
+| `bun run test:e2e`                               | End-to-end tests with `bun test` and `Bun.WebView`              |
 | `bun run test:lhci`                              | Lighthouse CI run                                               |
 | `bun run build:client`                           | Bundle `src/client` into `public/assets`                        |
 | `bun run check:size`                             | Fail when a built bundle exceeds the gzip budget                |
