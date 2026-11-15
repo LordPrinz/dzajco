@@ -33,7 +33,7 @@
 - No flash of the wrong theme, and no inline script to prevent it (the CSP allows only nonce scripts).
 - The switch has to work without JavaScript.
 - A cached page must never be served with someone else's theme or language.
-- Visitors from Poland keep Polish; everyone else gets English unless they ask for Polish.
+- Visitors from Poland keep Polish; everyone else gets English unless the cookie, `?lang=` or `Accept-Language` asks for Polish.
 
 ## Alternatives considered
 
