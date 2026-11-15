@@ -27,10 +27,22 @@ export interface LayoutProps {
   scripts?: readonly string[];
   /** Extra stylesheets under `/css` (`pages.css`, `stats.css`), loaded after `app.css`. */
   styles?: readonly PageStylesheet[];
+  /**
+   * False hides the theme and language switches. The result page does this: they post and redirect,
+   * and the redirect would lose the secret key that the page shows only once.
+   */
+  settings?: boolean;
   children?: Child;
 }
 
-export function Layout({ nonce, title, scripts = [], styles = [], children }: LayoutProps) {
+export function Layout({
+  nonce,
+  title,
+  scripts = [],
+  styles = [],
+  settings = true,
+  children,
+}: LayoutProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const { theme } = usePage();
   return (
@@ -62,9 +74,11 @@ export function Layout({ nonce, title, scripts = [], styles = [], children }: La
         ))}
       </head>
       <body>
-        <header class="topbar">
-          <ThemeSwitch />
-        </header>
+        {settings && (
+          <header class="topbar">
+            <ThemeSwitch />
+          </header>
+        )}
         <main class="page">{children}</main>
         <footer class="footer">
           <nav aria-label="Nawigacja w stopce">

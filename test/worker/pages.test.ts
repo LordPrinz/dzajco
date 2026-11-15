@@ -128,6 +128,8 @@ describe("POST / without JavaScript", () => {
     const key = /data-field="secretKey">([A-Za-z0-9_-]{22})</.exec(html)?.[1];
     expect(key).toBeTruthy();
     expect(html).toContain("Zapisz go, nie pokażemy go ponownie");
+    // A settings post would redirect away and lose the key, so the result page has no switches.
+    expect(html).not.toContain('action="/prefs/');
     expect(html).toContain(`${env.PUBLIC_ORIGIN}/${name}`);
     expect(html).toContain("Wygasa:");
 
