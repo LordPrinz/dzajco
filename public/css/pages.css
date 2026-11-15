@@ -362,13 +362,30 @@
   overflow-wrap: normal;
 }
 
-/* 404 and 410 */
-.result--center {
+/* Dead-link pages: what happened, then the shorten form. */
+.dead-link {
+  max-width: 48rem;
+  margin: 2rem auto 0;
   text-align: center;
 }
 
-.result--center .result__actions {
-  justify-content: center;
+.dead-link__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  color: var(--heading);
+}
+
+.dead-link p {
+  margin: 0.25rem 0;
+}
+
+.dead-link__message {
+  color: var(--text-muted);
+}
+
+.dead-link .dead-link__cta {
+  margin-top: 1.5rem;
+  font-weight: 600;
 }
 
 @media (max-width: 30rem) {

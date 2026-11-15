@@ -14,6 +14,7 @@ import {
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
 import { withoutProtocol } from "../shared/short-url";
+import { enableCopy } from "./lib/copy";
 import { pageLocale, pageText } from "./lib/lang";
 import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
 
@@ -78,27 +79,6 @@ function setField(root: ParentNode, name: string, text: string): void {
   if (el) el.textContent = text;
 }
 
-function enableCopy(root: ParentNode): void {
-  for (const button of root.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
-    button.hidden = false;
-    button.addEventListener("click", async () => {
-      const source = root.querySelector<HTMLElement>(`[data-field="${button.dataset.copy}"]`);
-      try {
-        // The short link shows without its protocol; the full URL is in data-value.
-        await navigator.clipboard.writeText(source?.dataset.value ?? source?.textContent ?? "");
-        button.textContent = text.copy.done;
-        toast(text.copy.toast, "success");
-      } catch {
-        button.textContent = text.copy.failed;
-        toast(text.copy.failedToast, "error");
-      }
-      setTimeout(() => {
-        button.textContent = text.copy.button;
-      }, 2000);
-    });
-  }
-}
-
 function showResult(
   link: CreatedLink,
   target: string,
@@ -149,6 +129,8 @@ function showResult(
   slot.replaceChildren(card);
   // The result takes the place of the form: the forms go, the card shows right under the hero.
   for (const id of ["shorten-form", "lookup-form"]) byId(id)?.setAttribute("hidden", "");
+  for (const el of document.querySelectorAll("[data-hide-on-result]"))
+    el.setAttribute("hidden", "");
   slot.querySelector<HTMLElement>("#result-title")?.focus({ preventScroll: true });
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   section.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });

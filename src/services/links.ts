@@ -3,6 +3,7 @@ import { parseExpiry } from "../domain/expiry";
 import { parseCustomName, randomId } from "../domain/ids";
 import { currentVersion, generateSecretKey, hashSecret, peppersFromEnv } from "../domain/secret";
 import { parseTarget } from "../domain/url-policy";
+import { shortUrlFor } from "../lib/short-url";
 import { purgeLinkCache } from "../routes/redirect";
 
 const RANDOM_ID_ATTEMPTS = 5;
@@ -132,7 +133,7 @@ export async function createLink(
   return {
     ok: true,
     id,
-    shortUrl: new URL(`/${encodeURIComponent(id)}`, env.PUBLIC_ORIGIN).href,
+    shortUrl: shortUrlFor(env, id),
     secretKey,
     target: target.url,
     host: target.host,

@@ -1,5 +1,7 @@
+import { Header } from "./Header";
 import { Layout } from "./Layout";
 import { usePage } from "./page-context";
+import { Shorten } from "./Shorten";
 
 export type LinkErrorKind = "not_found" | "expired" | "disabled";
 
@@ -10,26 +12,30 @@ export interface LinkErrorProps {
   reportHref: string | null;
 }
 
-/** The 404 and 410 page of the redirect route. No script; the abuse link is the only dynamic part. */
+/**
+ * The 404 and 410 page of the redirect route. People land here from someone else's dead link, so the
+ * page says what happened and offers the shorten form right away. "Report abuse" shows only for a
+ * disabled link: there is nothing to report about a link that does not exist or ran out.
+ */
 export function LinkError({ nonce, kind, reportHref }: LinkErrorProps) {
   const { t } = usePage();
   const { title, message } = t.linkError[kind];
   return (
-    <Layout nonce={nonce} title={title} styles={["pages.css"]}>
-      <section class="result result--center">
-        <h1 class="result__title">{title}</h1>
-        <p>{message}</p>
-        <div class="result__actions">
-          {reportHref !== null && (
-            <a class="button button--ghost" href={reportHref}>
-              {t.linkError.report}
-            </a>
-          )}
-          <a class="button" href="/">
-            {t.linkError.shortenOwn}
-          </a>
-        </div>
+    <Layout nonce={nonce} title={title} scripts={["form.js"]} styles={["pages.css"]}>
+      <Header />
+      <section class="dead-link" aria-labelledby="dead-link-title" data-hide-on-result>
+        <h2 class="dead-link__title" id="dead-link-title">
+          {title}
+        </h2>
+        <p class="dead-link__message">{message}</p>
+        {kind === "disabled" && reportHref !== null && (
+          <p>
+            <a href={reportHref}>{t.linkError.report}</a>
+          </p>
+        )}
+        <p class="dead-link__cta">{t.linkError.cta}</p>
       </section>
+      <Shorten />
     </Layout>
   );
 }

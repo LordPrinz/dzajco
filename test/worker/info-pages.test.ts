@@ -221,7 +221,7 @@ describe("GET /privacy-policy", () => {
 });
 
 describe("404 and 410 pages", () => {
-  it("use the shared layout and keep no-store, nosniff and the abuse link", async () => {
+  it("use the shared layout and keep no-store and nosniff, with no abuse link for a missing link", async () => {
     const withMail = { ...env, ABUSE_EMAIL: "abuse@dzaj.co" } as unknown as Cloudflare.Env;
     const { res, html } = await page("/no-such-link-xyz", withMail);
     expect(res.status).toBe(404);
@@ -229,7 +229,7 @@ describe("404 and 410 pages", () => {
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
     expect(html).toContain('href="/css/app.css"');
     expect(html).toContain("Nie znaleziono linku");
-    expect(html).toContain('href="mailto:abuse@dzaj.co?subject=Report%20abuse"');
+    expect(html).not.toContain("mailto:");
     expect(html).not.toMatch(/\sstyle=/i);
   });
 });

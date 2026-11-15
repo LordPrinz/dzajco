@@ -238,6 +238,18 @@ describe("POST / validation", () => {
     expect(await res.text()).toContain("Ta nazwa jest już zajęta.");
   });
 
+  it("sends a no-JS error from a dead-link page's form back to the home form", async () => {
+    // The dead-link page's form posts to `/` like the home page's.
+    const dead = await (await call(new Request(`${ORIGIN}/nope-dead-link`))).text();
+    expect(dead).toMatch(/<form class="shorten" id="shorten-form" method="post" action="\/"/);
+    const res = await call(submit({ url: "notaurl" }));
+    expect(res.status).toBe(400);
+    const html = await res.text();
+    expect(html).toContain('id="lookup-form"');
+    expect(html).toMatch(/id="form-error" role="alert">To nie wygląda na poprawny adres URL\./);
+    expect(html).toContain('value="notaurl"');
+  });
+
   it("asks for a link when the url is empty", async () => {
     const res = await call(submit({ url: "" }));
     expect(res.status).toBe(400);
