@@ -65,7 +65,8 @@ const api: ApiText = {
       },
     },
     delete: {
-      summary: "Deletes a link together with its stats.",
+      summary:
+        "Removes the link and its stats from the service. A summary is kept in an internal archive for 30 days (see the privacy policy).",
       input: "Authorization: Bearer <key>. The body is ignored.",
       responses: {
         204: "No content.",

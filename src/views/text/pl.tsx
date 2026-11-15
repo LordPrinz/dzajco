@@ -66,7 +66,8 @@ const api: ApiText = {
       },
     },
     delete: {
-      summary: "Usuwa link razem z jego statystykami.",
+      summary:
+        "Usuwa link i jego statystyki z serwisu. Podsumowanie trafia na 30 dni do wewnętrznego archiwum (zob. polityka prywatności).",
       input: "Authorization: Bearer <klucz>. Ciało jest ignorowane.",
       responses: {
         204: "Bez treści.",
