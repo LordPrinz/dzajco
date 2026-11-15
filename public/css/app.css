@@ -41,6 +41,8 @@
   --heading: #1f2937;
   --line: #d7d7d7;
   --accent: var(--jajco-500);
+  /* Yellow for large text on the light background: 3.6:1, enough for large text under WCAG AA. */
+  --accent-text: #b07a00;
   --on-accent: var(--jajco-950);
   /* A shade under jajco-700, which is 4.3:1 on --bg and too light for text. */
   --link: #935c02;
@@ -69,6 +71,7 @@
 }
 
 :root[data-theme="dark"] {
+  --accent-text: var(--jajco-500);
   --bg: #14110b;
   --surface: #211c12;
   --text: #f3f0e6;
@@ -93,6 +96,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --accent-text: var(--jajco-500);
     --bg: #14110b;
     --surface: #211c12;
     --text: #f3f0e6;
