@@ -57,7 +57,7 @@ Edit `vars` in `wrangler.jsonc`:
 
 | Var                     | Value                                                                                                                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_ORIGIN`         | The public origin, for example `https://dzaj.co`. No trailing slash. Used for short URLs and the own-host check. Not edited in the file: see below.                                         |
+| `PUBLIC_ORIGIN`         | The public origin, for example `https://dzaj.de`. No trailing slash. Used for short URLs and the own-host check. Not edited in the file: see below.                                         |
 | `SECRET_PEPPER_VERSION` | `"1"` at first deploy.                                                                                                                                                                      |
 | `CF_ACCOUNT_ID`         | 32 hex characters from `wrangler whoami` or the dashboard. Needed for the Analytics Engine SQL API. Without it (or without `CF_AE_TOKEN`) the rollup is skipped and fresh stats stay empty. |
 | `ABUSE_EMAIL`           | Address behind the "Report abuse" link on 404/410 pages. Empty hides the link.                                                                                                              |
@@ -118,7 +118,7 @@ The options available on the Free plan (periods, durations, characteristics) cha
 
 ```sh
 bun run db:migrate:remote
-PUBLIC_ORIGIN=https://dzaj.co bun run deploy
+PUBLIC_ORIGIN=https://dzaj.de bun run deploy
 ```
 
 - `db:migrate:remote` runs `wrangler d1 migrations apply DB --remote`. It asks for confirmation and takes a backup after applying. If a migration fails, earlier migrations of the same run stay applied. Note a Time Travel bookmark before migrating (`bunx wrangler d1 time-travel info DB`) and restore from it if needed (section 6).
