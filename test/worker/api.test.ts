@@ -351,6 +351,49 @@ describe("POST /api/v1/links", () => {
     expect(await errorCode(res)).toBe("id_taken");
   });
 
+  it("reuses a custom name whose link has expired", async () => {
+    const name = freshName();
+    await insertLink(env.DB, {
+      id: name,
+      target: "https://example.com/old",
+      secretHash: "v1:old",
+      expiresAt: Date.now() - 1000,
+      createdAt: Date.now() - 5000,
+      isCustom: true,
+    });
+    const res = await call(post({ url: "https://example.org/new", customName: name }));
+    expect(res.status).toBe(201);
+    const row = await env.DB.prepare("SELECT target FROM links WHERE id = ?")
+      .bind(name)
+      .first<{ target: string }>();
+    expect(row?.target).toBe("https://example.org/new");
+  });
+
+  it("keeps 409 for a custom name whose link has not expired yet", async () => {
+    const name = freshName();
+    await insertLink(env.DB, {
+      id: name,
+      target: "https://example.com/old",
+      secretHash: "v1:old",
+      expiresAt: Date.now() + 3_600_000,
+      createdAt: Date.now(),
+      isCustom: true,
+    });
+    const res = await call(post({ url: "https://example.org/new", customName: name }));
+    expect(res.status).toBe(409);
+    expect(await errorCode(res)).toBe("id_taken");
+  });
+
+  it.each([
+    ["customName", { customName: "a" }],
+    ["expiresAt", { expiresAt: "not-a-date" }],
+  ])("rejects an invalid %s without a D1 query", async (_field, extra) => {
+    const prepare = vi.spyOn(env.DB, "prepare");
+    const res = await call(post({ url: "https://example.com", ...extra }));
+    expect(res.status).toBe(400);
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
   it("gives exactly one 201 and one 409 when the same name is created in parallel", async () => {
     const name = freshName();
     const results = await Promise.all([
