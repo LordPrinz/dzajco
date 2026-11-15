@@ -28,51 +28,76 @@ export const SETTINGS = {
   has_wiki: true,
   has_projects: true,
   allow_squash_merge: true,
-  allow_merge_commit: false,
+  allow_merge_commit: true,
   allow_rebase_merge: false,
   allow_auto_merge: false,
   allow_update_branch: true,
   delete_branch_on_merge: true,
   squash_merge_commit_title: "PR_TITLE",
   squash_merge_commit_message: "BLANK",
+  merge_commit_title: "PR_TITLE",
+  merge_commit_message: "BLANK",
 };
 
-export function buildRuleset(withChecks: boolean) {
+// The owner may merge their own PR without an approval (solo work), never push directly.
+const BYPASS_ACTORS = [{ actor_id: 5, actor_type: "RepositoryRole", bypass_mode: "pull_request" }];
+
+function pullRequestRule(mergeMethod: "squash" | "merge") {
   return {
-    name: "trunk",
-    target: "branch",
-    enforcement: "active",
-    conditions: { ref_name: { include: ["~DEFAULT_BRANCH", "refs/heads/dev"], exclude: [] } },
-    // The owner may merge their own PR without an approval (solo work), never push directly.
-    bypass_actors: [{ actor_id: 5, actor_type: "RepositoryRole", bypass_mode: "pull_request" }],
-    rules: [
-      { type: "deletion" },
-      { type: "non_fast_forward" },
-      { type: "required_linear_history" },
-      {
-        type: "pull_request",
-        parameters: {
-          required_approving_review_count: 1,
-          dismiss_stale_reviews_on_push: true,
-          require_code_owner_review: false,
-          require_last_push_approval: false,
-          required_review_thread_resolution: true,
-          allowed_merge_methods: ["squash"],
-        },
-      },
-      ...(withChecks
-        ? [
-            {
-              type: "required_status_checks",
-              parameters: {
-                strict_required_status_checks_policy: false,
-                required_status_checks: REQUIRED_CHECKS.map((context) => ({ context })),
-              },
-            },
-          ]
-        : []),
-    ],
+    type: "pull_request",
+    parameters: {
+      required_approving_review_count: 1,
+      dismiss_stale_reviews_on_push: true,
+      require_code_owner_review: false,
+      require_last_push_approval: false,
+      required_review_thread_resolution: true,
+      allowed_merge_methods: [mergeMethod],
+    },
   };
+}
+
+function checksRules(withChecks: boolean) {
+  return withChecks
+    ? [
+        {
+          type: "required_status_checks",
+          parameters: {
+            strict_required_status_checks_policy: false,
+            required_status_checks: REQUIRED_CHECKS.map((context) => ({ context })),
+          },
+        },
+      ]
+    : [];
+}
+
+// "trunk" guards dev (squash, linear history); "release" guards the default branch (merge commit).
+export function buildRulesets(withChecks: boolean) {
+  const base = { target: "branch", enforcement: "active", bypass_actors: BYPASS_ACTORS };
+  return [
+    {
+      ...base,
+      name: "trunk",
+      conditions: { ref_name: { include: ["refs/heads/dev"], exclude: [] } },
+      rules: [
+        { type: "deletion" },
+        { type: "non_fast_forward" },
+        { type: "required_linear_history" },
+        pullRequestRule("squash"),
+        ...checksRules(withChecks),
+      ],
+    },
+    {
+      ...base,
+      name: "release",
+      conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
+      rules: [
+        { type: "deletion" },
+        { type: "non_fast_forward" },
+        pullRequestRule("merge"),
+        ...checksRules(withChecks),
+      ],
+    },
+  ];
 }
 
 interface Label {
@@ -146,17 +171,18 @@ export async function setupRepo(
     );
   }
 
-  const ruleset = buildRuleset(options.withChecks);
   const rulesets = await rest.get<{ id: number; name: string }[]>("/rulesets");
-  const found = rulesets.find((r) => r.name === ruleset.name);
-  const detail = found && (await rest.get<unknown>(`/rulesets/${found.id}`));
-  const what = `ruleset ${ruleset.name} (${options.withChecks ? "with" : "without"} required checks)`;
-  if (found && isSubset(ruleset, detail)) apply.unchanged(what);
-  else if (found)
-    await apply.change(`${what}: update`, () =>
-      rest.write("PUT", `/rulesets/${found.id}`, ruleset),
-    );
-  else await apply.change(`${what}: create`, () => rest.write("POST", "/rulesets", ruleset));
+  for (const ruleset of buildRulesets(options.withChecks)) {
+    const found = rulesets.find((r) => r.name === ruleset.name);
+    const detail = found && (await rest.get<unknown>(`/rulesets/${found.id}`));
+    const what = `ruleset ${ruleset.name} (${options.withChecks ? "with" : "without"} required checks)`;
+    if (found && isSubset(ruleset, detail)) apply.unchanged(what);
+    else if (found)
+      await apply.change(`${what}: update`, () =>
+        rest.write("PUT", `/rulesets/${found.id}`, ruleset),
+      );
+    else await apply.change(`${what}: create`, () => rest.write("POST", "/rulesets", ruleset));
+  }
 }
 
 if (import.meta.main) {

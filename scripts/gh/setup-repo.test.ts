@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { DEFAULT_LABELS, LABELS } from "./board.ts";
 import { createApplier, createRest, type Runner } from "./github.ts";
-import { buildRuleset, SETTINGS, setupRepo, TOPICS } from "./setup-repo.ts";
+import { buildRulesets, SETTINGS, setupRepo, TOPICS } from "./setup-repo.ts";
 
 interface State {
   settings: Record<string, unknown>;
@@ -11,7 +11,7 @@ interface State {
   alerts: boolean;
   fixes: boolean;
   rulesets: { id: number; name: string }[];
-  ruleset: unknown;
+  details: Record<number, unknown>;
 }
 
 const converged = (): State => ({
@@ -21,8 +21,13 @@ const converged = (): State => ({
   labels: LABELS.map((l) => ({ ...l, color: l.color.toUpperCase() })),
   alerts: true,
   fixes: true,
-  rulesets: [{ id: 1, name: "trunk" }],
-  ruleset: { ...buildRuleset(false), id: 1, source: "x" },
+  rulesets: [
+    { id: 1, name: "trunk" },
+    { id: 2, name: "release" },
+  ],
+  details: Object.fromEntries(
+    buildRulesets(false).map((r, i) => [i + 1, { ...r, id: i + 1, source: "x" }]),
+  ),
 });
 const fresh = (): State => ({
   settings: { description: "old", allow_auto_merge: true },
@@ -32,7 +37,7 @@ const fresh = (): State => ({
   alerts: false,
   fixes: false,
   rulesets: [],
-  ruleset: null,
+  details: {},
 });
 
 function fakeRunner(state: State, calls: string[]): Runner {
@@ -54,7 +59,8 @@ function fakeRunner(state: State, calls: string[]): Runner {
     if (p === "/vulnerability-alerts") return state.alerts ? ok(null) : { code: 1, stdout: "" };
     if (p === "/automated-security-fixes") return ok({ enabled: state.fixes });
     if (p === "/rulesets") return ok(state.rulesets);
-    if (p === "/rulesets/1") return ok(state.ruleset);
+    const detail = /^\/rulesets\/(\d+)$/.exec(p);
+    if (detail) return ok(state.details[Number(detail[1])]);
     throw new Error(`unexpected GET ${p}`);
   };
 }
@@ -71,38 +77,64 @@ const lines = (dryRun: boolean, state: State, withChecks = false) => {
   }));
 };
 
-describe("buildRuleset", () => {
-  test("targets the default branch and dev, without checks unless asked", () => {
-    const plain = buildRuleset(false);
-    expect(plain.conditions.ref_name.include).toEqual(["~DEFAULT_BRANCH", "refs/heads/dev"]);
-    expect(plain.rules.map((r) => r.type)).toEqual([
+describe("buildRulesets", () => {
+  test("trunk guards dev with squash and linear history, release guards the default branch with merge commits", () => {
+    const [trunk, release] = buildRulesets(false) as [
+      ReturnType<typeof buildRulesets>[number],
+      ReturnType<typeof buildRulesets>[number],
+    ];
+    expect(trunk.name).toBe("trunk");
+    expect(trunk.conditions.ref_name.include).toEqual(["refs/heads/dev"]);
+    expect(trunk.rules.map((r) => r.type)).toEqual([
       "deletion",
       "non_fast_forward",
       "required_linear_history",
       "pull_request",
     ]);
-    const checked = buildRuleset(true);
-    const rule = checked.rules.at(-1) as {
-      type: string;
-      parameters: { required_status_checks: { context: string }[] };
-    };
-    expect(rule.type).toBe("required_status_checks");
-    expect(rule.parameters.required_status_checks.map((c) => c.context)).toEqual([
-      "Conventions",
-      "Lint",
-      "Typecheck",
-      "Test",
-      "Worker tests",
-      "Build",
-      "E2E",
+    expect(release.name).toBe("release");
+    expect(release.conditions.ref_name.include).toEqual(["~DEFAULT_BRANCH"]);
+    expect(release.rules.map((r) => r.type)).toEqual([
+      "deletion",
+      "non_fast_forward",
+      "pull_request",
     ]);
+    const methods = (r: typeof trunk) =>
+      (
+        r.rules.find((x) => x.type === "pull_request") as {
+          parameters: { allowed_merge_methods: string[] };
+        }
+      ).parameters.allowed_merge_methods;
+    expect(methods(trunk)).toEqual(["squash"]);
+    expect(methods(release)).toEqual(["merge"]);
+    expect(release.bypass_actors).toEqual(trunk.bypass_actors);
   });
 
-  test("keeps auto-merge off and squash only", () => {
+  test("adds the required checks to both rulesets when asked", () => {
+    for (const ruleset of buildRulesets(true)) {
+      const rule = ruleset.rules.at(-1) as {
+        type: string;
+        parameters: { required_status_checks: { context: string }[] };
+      };
+      expect(rule.type).toBe("required_status_checks");
+      expect(rule.parameters.required_status_checks.map((c) => c.context)).toEqual([
+        "Conventions",
+        "Lint",
+        "Typecheck",
+        "Test",
+        "Worker tests",
+        "Build",
+        "E2E",
+      ]);
+    }
+  });
+
+  test("keeps auto-merge off and allows squash and merge commits only", () => {
     expect(SETTINGS).toMatchObject({
       allow_auto_merge: false,
       allow_squash_merge: true,
-      allow_merge_commit: false,
+      allow_merge_commit: true,
+      merge_commit_title: "PR_TITLE",
+      merge_commit_message: "BLANK",
       allow_rebase_merge: false,
     });
   });
@@ -114,7 +146,9 @@ describe("setupRepo", () => {
     expect(calls.filter((c) => !c.startsWith("GET "))).toEqual([]);
     expect(out.some((l) => l.startsWith("would change: repository settings"))).toBe(true);
     expect(out).toContain("would change: label bug: delete GitHub default");
-    expect(out.some((l) => l.includes("ruleset trunk") && l.includes("create"))).toBe(true);
+    for (const name of ["trunk", "release"]) {
+      expect(out.some((l) => l.includes(`ruleset ${name}`) && l.includes("create"))).toBe(true);
+    }
   });
 
   test("a real run on a fresh repository writes everything", async () => {
@@ -128,7 +162,7 @@ describe("setupRepo", () => {
       DEFAULT_LABELS.length,
     );
     expect(writes.some((c) => c.startsWith("PUT /vulnerability-alerts"))).toBe(true);
-    expect(writes.some((c) => c.startsWith("POST /rulesets"))).toBe(true);
+    expect(writes.filter((c) => c.startsWith("POST /rulesets"))).toHaveLength(2);
   });
 
   test("a converged repository reports unchanged and writes nothing", async () => {
@@ -138,10 +172,12 @@ describe("setupRepo", () => {
     expect(out.every((l) => l.startsWith("unchanged: "))).toBe(true);
   });
 
-  test("a changed ruleset is updated in place", async () => {
+  test("a changed ruleset is updated in place by name", async () => {
     const state = converged();
-    state.ruleset = { ...(state.ruleset as object), rules: [] };
+    state.details[2] = { ...(state.details[2] as object), rules: [] };
     const { calls } = await lines(false, state);
-    expect(calls.filter((c) => c.startsWith("PUT /rulesets/1"))).toHaveLength(1);
+    expect(calls.filter((c) => c.startsWith("PUT /rulesets/2"))).toHaveLength(1);
+    expect(calls.filter((c) => c.startsWith("PUT /rulesets/1"))).toHaveLength(0);
+    expect(calls.filter((c) => c.startsWith("POST /rulesets"))).toHaveLength(0);
   });
 });
