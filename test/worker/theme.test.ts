@@ -65,6 +65,13 @@ describe("POST /prefs/theme", () => {
     expect(cookie).toContain("SameSite=Lax");
     expect(cookie).toContain("Secure");
     expect(cookie).toMatch(/Max-Age=\d{8}/);
+    expect(cookie).toContain("HttpOnly");
+  });
+
+  it("keeps the current cookie for an unknown theme", async () => {
+    const res = await call(setTheme({ theme: "purple", back: "/" }));
+    expect(res.status).toBe(303);
+    expect(res.headers.get("set-cookie")).toBeNull();
   });
 
   it("clears the cookie for the system theme", async () => {
@@ -73,7 +80,7 @@ describe("POST /prefs/theme", () => {
     expect(res.headers.get("set-cookie")).toMatch(/^theme=;.*Max-Age=0/);
   });
 
-  it.each(["https://evil.example/", "//evil.example", "/\\evil.example", ""])(
+  it.each(["https://evil.example/", "//evil.example", "/\\evil.example", "", "/.//evil.example"])(
     "never redirects off the site (back=%p)",
     async (back) => {
       const res = await call(setTheme({ theme: "dark", back }));
