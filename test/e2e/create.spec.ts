@@ -96,3 +96,17 @@ test("a network failure shows a toast that hands focus back when closed", async 
   await expect(page.locator(".toasts .toast")).toHaveCount(0);
   await expect(page.getByLabel("Link do skrócenia")).toBeFocused();
 });
+
+test("opens the options and shows a custom name error next to the field", async ({ page }) => {
+  await page.goto("/");
+  await page.getByText("Więcej opcji").click();
+  await page.getByLabel("Własna nazwa").fill("a");
+  await page.getByText("Więcej opcji").click();
+  await page.getByLabel("Link do skrócenia").fill(uniqueTarget());
+  await page.getByRole("button", { name: "Dżajcuj" }).click();
+
+  await expect(page.locator("details.options")).toHaveAttribute("open", "");
+  await expect(page.locator("#options-error")).toContainText("Własna nazwa ma mieć");
+  await expect(page.getByLabel("Własna nazwa")).toBeFocused();
+  await expect(page.locator("#form-error")).toBeHidden();
+});

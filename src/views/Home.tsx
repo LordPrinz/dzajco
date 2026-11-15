@@ -29,6 +29,9 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
   const field = error === undefined ? undefined : (FIELD_OF_ERROR[error] ?? "url");
   const { t } = usePage();
   const message = error === undefined ? undefined : errorText(error, t.common);
+  // Each error sits next to its field: the link's under the pill, the others inside the options.
+  const urlMessage = field === "url" ? message : undefined;
+  const optionsMessage = field !== undefined && field !== "url" ? message : undefined;
   const hasOptions =
     values.customName !== "" ||
     values.expiry !== "never" ||
@@ -66,8 +69,8 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
           </button>
         </div>
         {/* Right under the field it describes; role=alert reads it out when it appears. */}
-        <p class="error" id="form-error" role="alert" hidden={message === undefined}>
-          {message}
+        <p class="error" id="form-error" role="alert" hidden={urlMessage === undefined}>
+          {urlMessage}
         </p>
 
         <details class="options" open={hasOptions}>
@@ -88,7 +91,7 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
               placeholder={t.home.customName}
               value={values.customName}
               aria-invalid={field === "customName" ? "true" : undefined}
-              aria-describedby={field === "customName" ? "form-error" : undefined}
+              aria-describedby={field === "customName" ? "options-error" : undefined}
             />
 
             <div class="expiry">
@@ -100,7 +103,7 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
                 id="expiry"
                 name="expiry"
                 aria-invalid={field === "expiry" ? "true" : undefined}
-                aria-describedby={field === "expiry" ? "form-error" : undefined}
+                aria-describedby={field === "expiry" ? "options-error" : undefined}
               >
                 {EXPIRY_PRESETS.map((preset) => (
                   <option value={preset.value} selected={values.expiry === preset.value}>
@@ -127,6 +130,9 @@ export function Home({ nonce, values = EMPTY_VALUES, error }: HomeProps) {
                 {t.home.customDateHint}
               </p>
             </div>
+            <p class="error" id="options-error" role="alert" hidden={optionsMessage === undefined}>
+              {optionsMessage}
+            </p>
           </div>
         </details>
         <p class="sr-only" role="status" id="form-status" />

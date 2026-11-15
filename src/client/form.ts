@@ -14,7 +14,7 @@ import {
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
 import { pageLocale, pageText } from "./lib/lang";
-import { dismissAll, toast } from "./lib/toast";
+import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
 
 const text = pageText();
 
@@ -119,7 +119,6 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
 }
 
 function setupShortenForm(form: HTMLFormElement): void {
-  const serverError = byId<HTMLElement>("form-error");
   const status = byId<HTMLElement>("form-status");
   const expiry = byId<HTMLSelectElement>("expiry");
   const customDate = byId<HTMLElement>("custom-date");
@@ -137,48 +136,51 @@ function setupShortenForm(form: HTMLFormElement): void {
   syncCustomDate();
 
   const fields = ["url", "customName", "expiry"] as const;
+  const errorBoxes = [byId("form-error"), byId("options-error")];
   const clearInvalid = () => {
     for (const name of fields) {
       byId(name)?.removeAttribute("aria-invalid");
       byId(name)?.removeAttribute("aria-describedby");
     }
-    if (serverError) serverError.hidden = true;
+    for (const box of errorBoxes) if (box) box.hidden = true;
   };
-  // Errors about a field show under the pill in #form-error (role=alert), next to what needs fixing.
   // Network and server errors have no field to point at, so they go to a toast.
   const fail = (code: string) => {
     const message = errorText(code, text);
     const fieldName = FIELD_OF_ERROR[code];
-    if (fieldName === undefined || !serverError) {
+    const box = byId(fieldName === "url" ? "form-error" : "options-error");
+    if (fieldName === undefined || !box) {
       // The submit button is disabled while the request runs, so focus returns to the link field.
       toast(message, "error", { returnFocus: byId("url") });
       return;
     }
     const field = byId(fieldName);
-    // Cleared first and filled a moment later, so the same message is read out again on a retry.
-    serverError.textContent = "";
-    serverError.hidden = false;
+    // A field inside the closed options panel cannot take focus.
+    const panel = field?.closest("details");
+    if (panel) panel.open = true;
+    // Cleared first so a repeated message is read out again.
+    box.textContent = "";
+    box.hidden = false;
     setTimeout(() => {
-      serverError.textContent = message;
-    }, 50);
+      box.textContent = message;
+    }, REANNOUNCE_MS);
     field?.setAttribute("aria-invalid", "true");
-    field?.setAttribute("aria-describedby", serverError.id);
+    field?.setAttribute("aria-describedby", box.id);
     field?.focus();
   };
-  // The red state goes as soon as the visitor starts fixing the field.
   for (const name of fields) byId(name)?.addEventListener("input", clearInvalid);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    // Also hides a server-rendered error from a no-JS attempt: it is stale once the script runs.
+    // Also clears an error the server rendered for a no-JS attempt.
     clearInvalid();
     dismissAll("error");
-    const early = formUrlError(String(new FormData(form).get("url") ?? ""));
+    const data = new FormData(form);
+    const early = formUrlError(String(data.get("url") ?? ""));
     if (early) {
       fail(early);
       return;
     }
-    const data = new FormData(form);
     const url = normalizeUrlInput(String(data.get("url") ?? ""));
     const customName = String(data.get("customName") ?? "").trim();
     const choice = {

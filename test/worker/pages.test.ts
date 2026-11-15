@@ -202,6 +202,10 @@ describe("POST / validation", () => {
     const html = await res.text();
     expect(html).toContain("Własna nazwa ma mieć od 3 do 32");
     expect(html).toMatch(/id="customName"[^>]*aria-invalid="true"/);
+    // The message sits inside the options, next to the field, and describes it.
+    expect(html).toMatch(/id="customName"[^>]*aria-describedby="options-error"/);
+    expect(html).toMatch(/id="options-error" role="alert">Własna nazwa ma mieć/);
+    expect(html).toMatch(/id="form-error" role="alert" hidden="">/);
   });
 
   it("rejects a custom expiry in the past", async () => {
