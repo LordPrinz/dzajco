@@ -97,9 +97,17 @@ function isPrivateIPv6(host: string): boolean {
   // Documentation (3fff::/20, RFC 9637).
   if (g0 === 0x3fff && g1 < 0x1000) return true;
   if (g0 === 0x2002) return true;
-  // Teredo (2001::/32, can carry any IPv4), documentation (2001:db8::/32), discard (100::/64).
+  // Teredo (2001::/32, can carry any IPv4), and documentation (2001:db8::/32).
   if (g0 === 0x2001 && (g1 === 0 || g1 === 0x0db8)) return true;
-  if (g0 === 0x0100 && g1 === 0 && g2 === 0 && g3 === 0) return true;
+  // Reserved or special-purpose and not routed to a public site: the rest of ::/8, 100::/16 (discard
+  // and its unallocated neighbours), benchmarking 2001:2::/48, ORCHID 2001:10::/28, ORCHIDv2 2001:20::/28, 5f00::/16.
+  if (g0 === 0 || g0 === 0x0100 || g0 === 0x5f00) return true;
+  if (
+    g0 === 0x2001 &&
+    ((g1 === 2 && g2 === 0) || (g1 & 0xfff0) === 0x10 || (g1 & 0xfff0) === 0x20)
+  ) {
+    return true;
+  }
   // Multicast (ff00::/8) and the deprecated site-local range (fec0::/10).
   if ((g0 & 0xff00) === 0xff00 || (g0 & 0xffc0) === 0xfec0) return true;
   return (g0 & 0xfe00) === 0xfc00 || (g0 & 0xffc0) === 0xfe80;
@@ -109,6 +117,8 @@ function isPrivateIPv6(host: string): boolean {
 export function isPrivateHost(host: string): boolean {
   if (host.startsWith("[")) return isPrivateIPv6(host.slice(1, -1));
   if (hostSuffixes(host).includes("localhost")) return true;
+  // A host without a dot (a trailing one does not count) only resolves inside a local network.
+  if (!host.replace(/\.+$/, "").includes(".")) return true;
   const v4 = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(host);
   return v4 ? isPrivateIPv4(Number(v4[1]), Number(v4[2]), Number(v4[3])) : false;
 }

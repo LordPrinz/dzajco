@@ -285,6 +285,8 @@ describe("POST /api/v1/links", () => {
     ["http://[::ffff:1.2.3.4]/", "private_target"],
     ["http://[64:ff9b::1.2.3.4]/", "private_target"],
     ["http://[::1.2.3.4]/", "private_target"],
+    ["https://intranet:8080/x", "private_target"],
+    ["http://[2001:10::1]/", "private_target"],
     ["https://bit.ly/x", "blocked_target"],
     ["https://dzaj.co/abc", "own_host"],
     ["http://localhost:8787/abc", "own_host"],
