@@ -95,10 +95,13 @@ CREATE TABLE v2_visit_import (
 ```
 
 `v2_visit_import` is the ledger of the v2 visit counters the importer has added to `link_stats`
-(`migrate:mongo --visits`, see DEPLOYMENT.md section 5). A row is inserted at most once, and its trigger
-adds the visits to `link_stats` in the same statement, so the import never counts a v2 visit twice and
-leaves visits counted by v3 alone. It has no foreign key: the rows outlive their link, so a later link
-with the same id does not get the old v2 visits.
+(`migrate:mongo --visits`, see DEPLOYMENT.md section 5). Each import statement inserts one row for a
+link and place, only when the ledger does not hold it yet and D1 holds the link with the same id, target
+and `secret_hash`. The trigger adds every inserted row to `link_stats` in the same statement, merged as
+the rollup merges. So a second run, or a run after the cutover, adds no v2 visit twice and leaves the
+visits counted by v3 alone. The table has no foreign key: its rows outlive their link. Only the importer
+may write to it, because the trigger applies any insert. Once the import is done, a later migration can
+`DROP TRIGGER v2_visit_import_apply`.
 
 `target_host` is the lowercased punycode host of the target. The cache-miss query uses it to check
 `blocked_hosts` in the same batch as the link read.

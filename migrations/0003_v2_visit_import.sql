@@ -1,7 +1,4 @@
--- Ledger of the v2 visit counters the importer has added to link_stats, one row per link and place.
--- A row is written at most once, and the trigger adds its visits in the same statement, so a second
--- import run, or one after the cutover, never counts v2 visits twice. No foreign key: the rows stay
--- after a link is deleted, so the v2 visits are not added to a later link with the same id.
+-- Ledger of the imported v2 visit counters; see docs/DESIGN.md (D1 schema) for how it is used.
 CREATE TABLE v2_visit_import (
   link_id TEXT NOT NULL,
   country TEXT NOT NULL,
@@ -12,7 +9,7 @@ CREATE TABLE v2_visit_import (
   PRIMARY KEY (link_id, country, city)
 ) WITHOUT ROWID;
 
--- Same merge as the rollup upsert: visits add up, coordinates are the visit-weighted mean.
+-- Same merge as the rollup upsert.
 CREATE TRIGGER v2_visit_import_apply AFTER INSERT ON v2_visit_import
 BEGIN
   INSERT INTO link_stats (link_id, country, city, lat, lon, visits)

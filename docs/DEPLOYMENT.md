@@ -179,6 +179,8 @@ The v2 data lives in MongoDB. The importer (`bun run migrate:mongo`) reads it an
 | Pepper         | `SECRET_PEPPER_V1` in the environment, the same value as the Worker secret. Never written to files or logs.                                                       |
 | Pepper version | Taken from `SECRET_PEPPER_VERSION` in `wrangler.jsonc` vars, unless `SECRET_PEPPER_VERSION` is exported.                                                          |
 
+Keep the Mongo exports (`links.json`, `locations.json`) outside the repository tree, so they cannot end up in a commit.
+
 Export the secrets into the shell without echo (the pepper as in section 2):
 
 ```sh
@@ -194,8 +196,9 @@ read -rs MONGODB_URI && export MONGODB_URI
 | `--yes`                | Required with `--remote`. It is a guard, not a prompt.                                                                           |
 | `--delta`              | The same idempotent run (`INSERT OR IGNORE`), for links created since the last run. v2 edits and deletions are not carried over. |
 | `--own-host <host>`    | Repeatable. Hosts treated as your own for the policy flags. Default: the host of `PUBLIC_ORIGIN`.                                |
-| `--visits`             | Also import the v2 visit counters into `link_stats` (needs migration 0003). See "Visit counters" below.                          |
+| `--visits`             | Import only the v2 visit counters (`visits-NNNN.sql`), no links. Run it after the link import. See "Visit counters".             |
 | `--locations <file>`   | The `locations` export for `--visits`, when it is not `locations.json` next to the `--from-json` file.                           |
+| `--env <name>`         | Wrangler environment of the target database, for example `dev` for the dev D1.                                                   |
 
 ### Report
 
@@ -212,7 +215,7 @@ read -rs MONGODB_URI && export MONGODB_URI
 | `legacyKeys`         | Links imported with a legacy secret key.                                                                                      |
 | `policyFlags`        | Targets that are private, own-host or shortener URLs. They are imported but flagged. Block them with `admin:block` if needed. |
 | `schemeAdded`        | v2 targets that started with `www.` and got `https://`.                                                                       |
-| `visits`             | Only with `--visits`: planned visits, unknown-country visits, unmapped names, missing locations, over-located links.          |
+| `visits`             | Only with `--visits` (then the only field): planned visits, unknown-country visits, unmapped names, over-located links.       |
 
 ### Steps
 
@@ -247,27 +250,32 @@ read -rs MONGODB_URI && export MONGODB_URI
 6. Switch the route. Remove the domain from the Vercel project (or point the DNS record away from Vercel) and attach it to the Worker as a custom domain (section 2). If the zone is already on Cloudflare, this is a DNS and route change only.
 7. Keep the Vercel deployment up for rollback until you trust the new site (at least a few days). Disconnect the Vercel Git integration afterwards so it stops building.
 8. Run the delta once more after the switch if v2 could still have received writes during DNS propagation.
-9. Import the visit counters once v2 gets no more visits (see below). Then delete any JSON export.
+9. Import the visit counters with a separate `--visits` run once v2 gets no more visits (see below). Then delete any JSON export.
 
 ### Visit counters
 
-The link import leaves every link at zero visits. `--visits` carries the v2 counters over: `visits` and `visitsLocation` of each imported link, with country, city and coordinates from the `locations` collection. The v2 country name becomes its ISO code, and the summary lists any name it could not map (its visits keep the city under the unknown country). Visits that `visitsLocation` does not cover go to the unknown-country row. When the located visits add up to more than `visits` (32 links in the 2026-11-10 export), the located sum is imported.
+The link import leaves every link at zero visits. A separate run with `--visits` carries the v2 counters over: `visits` and `visitsLocation` of each imported link, with country, city and coordinates from the `locations` collection. It writes and runs only `visits-NNNN.sql`. It never replays the link import, which after the cutover would bring back links that owners deleted or that were taken down.
 
-The rows go through the `v2_visit_import` table (migration 0003, apply it first with `db:migrate:remote`). Each statement inserts one row for a link and place, only when the row is not there yet and D1 holds that link with the same target. A trigger adds the row to `link_stats` in the same statement. So:
+The v2 country name becomes its ISO code. Visits whose country name is not in the table, and visits that `visitsLocation` does not cover, go to the unknown-country row (`??`, the same row the rollup uses); the report lists the unmapped names. When the located visits add up to more than `visits` (32 links in the 2026-11-10 export), the located sum is imported.
 
-- A second run adds nothing: every row that is already in `v2_visit_import` is skipped. The `visits-NNNN.sql` files are safe to re-run after a failure.
-- It works after the cutover. Visits that v3 has counted since then stay in `link_stats`, and the v2 visits are added on top, once.
-- A link that is not in D1 yet is skipped without a ledger row, so a later run still imports its visits.
-- A link deleted and re-created by someone else does not get the v2 visits: the ledger rows outlive the link.
-- Each place is imported once. v2 visits that arrive after the run are not added later, so run it after the DNS switch, when v2 no longer counts.
+Each row is written through the `v2_visit_import` ledger (migration 0003, apply it first; DESIGN.md explains the design). A row is added only if D1 holds the link with the same id, target and key hash, and only once. What that guarantees:
+
+- A second run adds nothing, and the `visits-NNNN.sql` files are safe to re-run after a failure.
+- After the cutover, visits counted by v3 stay in `link_stats` and the v2 visits are added on top, once.
+- A link that is not in D1 yet is skipped without a ledger row, so a later run still imports it.
+- A link whose id now belongs to someone else (other target or other key) is skipped. A link that was deleted after its visits were imported does not get them again if it comes back.
+- Each link and place is imported once, so v2 visits counted after the run are never added. Run it after the DNS switch.
+
+The key hash must match, so run with the same `SECRET_PEPPER_VERSION` and pepper as the link import. The planned totals in the report and the summary count every imported v2 link; links that the guard skips (id taken, target or key differs, link deleted) are in the plan but get no rows. Compare `SUM(visits)` in `link_stats` before and after the run to see what was added.
 
 ```sh
-bun run migrate:mongo --from-json links.json --visits --local --dry-run   # review report.json
-bun run migrate:mongo --from-json links.json --visits --local             # rehearse
-bun run migrate:mongo --from-json links.json --visits --remote --yes
+bun run migrate:mongo --from-json ../backup/links.json --visits --dry-run              # review report.json
+bun run migrate:mongo --from-json ../backup/links.json --visits --local                # rehearse locally
+bun run migrate:mongo --from-json ../backup/links.json --visits --remote --yes --env dev   # rehearse on dzajco-dev
+bun run migrate:mongo --from-json ../backup/links.json --visits --remote --yes
 ```
 
-With `--from-json` the importer reads `locations.json` from the same directory; export it with `mongoexport --collection locations --jsonArray`. The run also replays the link import, which inserts nothing that is already there. Public stats and the global numbers on the About page include the v2 visits; the global numbers after the next daily recompute.
+With `--from-json` the importer reads `locations.json` from the same directory; export it with `mongoexport --collection locations --jsonArray`. Public and owner stats show the v2 visits right away; the global numbers on the About page after the next daily recompute.
 
 ## 6. Rollback
 
@@ -363,6 +371,7 @@ Migration
 - [ ] Real import done, counts match the report
 - [ ] A migrated link redirects and deletes with its original v2 secret key
 - [ ] `--delta` rerun inserts nothing new
+- [ ] `--visits --remote --yes --env dev` rehearsed on the dev D1 (`dzajco-dev`): `link_stats` gets rows, and a second run leaves `SUM(visits)` unchanged
 - [ ] `--visits` run after the DNS switch; the stats of a busy migrated link show its v2 visits, and a second run leaves them as they are
 - [ ] D1 bookmark noted before the import; `time-travel restore` tried on the rehearsal database
 
