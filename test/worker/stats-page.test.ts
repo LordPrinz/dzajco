@@ -65,7 +65,9 @@ describe("GET /:id/stats", () => {
     expect(res.headers.get("content-type")).toContain("text/html");
     expect(res.headers.get("cache-control")).toBe("no-store");
     const html = await res.text();
-    expect(html).toContain(`>9</span>`);
+    // With visits the gauge shows the total instead of the zero-click nudge.
+    expect(html).toContain('<span class="counter__value">9</span>');
+    expect(html).not.toContain("Nie ma jeszcze kliknięć");
     expect(html).toContain("Polska");
     expect(html).toContain("Niemcy");
     expect(html).toContain('<meter class="bars__meter" min="0" max="5" value="5"');

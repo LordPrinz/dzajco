@@ -2,6 +2,7 @@ import type { CountryStat } from "../db/queries";
 import { LOCALE } from "../shared/lang";
 import { countryName } from "../shared/stats";
 import { FeatureIcon, type FeatureIconName } from "./FeatureIcon";
+import { formatUtc } from "./format";
 import { Layout } from "./Layout";
 import { usePage } from "./page-context";
 
@@ -81,14 +82,7 @@ export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
               )}
               <p class="doc__note">
                 {t.about.updated}{" "}
-                <time datetime={stats.updatedAt}>
-                  {new Date(stats.updatedAt).toLocaleString(locale, {
-                    dateStyle: "long",
-                    timeStyle: "short",
-                    timeZone: "UTC",
-                  })}{" "}
-                  UTC
-                </time>
+                <time datetime={stats.updatedAt}>{formatUtc(stats.updatedAt, lang)}</time>
               </p>
             </>
           )}

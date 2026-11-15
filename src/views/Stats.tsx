@@ -1,9 +1,9 @@
-import { type Lang, LOCALE } from "../shared/lang";
+import { withoutProtocol } from "../shared/short-url";
 import { type CountryRow, countryName } from "../shared/stats";
+import { formatUtc } from "./format";
 import { Header } from "./Header";
 import { Layout } from "./Layout";
 import { usePage } from "./page-context";
-import { withoutProtocol } from "./ResultCard";
 
 const TOP_COUNTRIES = 10;
 
@@ -28,17 +28,19 @@ export interface StatsProps {
  * Public stats of a link: the visit counter and the countries. Cities and the map belong to the owner;
  * their section stays hidden and empty until `stats.js` has fetched them with the key.
  */
-function formatDate(ms: number, lang: Lang): string {
-  return `${new Date(ms).toLocaleString(LOCALE[lang], {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "UTC",
-  })} UTC`;
-}
-
 export function Stats(props: StatsProps) {
-  const { nonce, id, shortUrl, target, createdAt, expiresAt, visits, countries, partial } = props;
-  const { reportHref } = props;
+  const {
+    nonce,
+    id,
+    shortUrl,
+    target,
+    createdAt,
+    expiresAt,
+    visits,
+    countries,
+    partial,
+    reportHref,
+  } = props;
   const top = countries.slice(0, TOP_COUNTRIES);
   const max = top[0]?.visits ?? 0;
   const { lang, t } = usePage();
@@ -71,15 +73,13 @@ export function Stats(props: StatsProps) {
           </p>
           <p class="stats__meta">
             {t.stats.created}{" "}
-            <time datetime={new Date(createdAt).toISOString()}>{formatDate(createdAt, lang)}</time>
+            <time datetime={new Date(createdAt).toISOString()}>{formatUtc(createdAt, lang)}</time>
             {" · "}
             {t.stats.expires}{" "}
             {expiresAt === null ? (
               t.stats.never
             ) : (
-              <time datetime={new Date(expiresAt).toISOString()}>
-                {formatDate(expiresAt, lang)}
-              </time>
+              <time datetime={new Date(expiresAt).toISOString()}>{formatUtc(expiresAt, lang)}</time>
             )}
           </p>
         </div>
@@ -152,7 +152,6 @@ export function Stats(props: StatsProps) {
 
         <div class="result__actions">
           {reportHref ? (
-            // The owner does not need to report their own link; stats.js hides this for them.
             <a class="button button--ghost" href={reportHref} data-report>
               {t.linkError.report}
             </a>

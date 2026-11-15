@@ -3,6 +3,7 @@ import { reportAbuseLink } from "../lib/abuse";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
 import { renderPage } from "../lib/page";
+import { shortUrlFor } from "../lib/short-url";
 import { rateLimit } from "../middleware/rate-limit";
 import { loadPublicStats } from "../services/stats";
 import { Stats } from "../views/Stats";
@@ -39,7 +40,7 @@ export function statsPageRoutes() {
       const html = renderPage(c, Stats, {
         nonce: c.var.nonce,
         id,
-        shortUrl: `${new URL(c.env.PUBLIC_ORIGIN).origin}/${encodeURIComponent(id)}`,
+        shortUrl: shortUrlFor(c.env, id),
         target: record.target,
         createdAt: record.createdAt,
         expiresAt: record.expiresAt,

@@ -29,7 +29,7 @@ export function LinkError({ nonce, kind, reportHref }: LinkErrorProps) {
         </h2>
         <p class="dead-link__message">{message}</p>
         {kind === "disabled" && reportHref !== null && (
-          <p class="dead-link__report">
+          <p>
             <a href={reportHref}>{t.linkError.report}</a>
           </p>
         )}
