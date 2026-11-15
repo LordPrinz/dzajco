@@ -189,6 +189,24 @@ body {
   border: 0;
 }
 
+/* First tab stop: hidden off-screen until it takes focus. */
+.skip-link {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
 /* Top bar with the page settings, right-aligned above the content. */
 .topbar {
   display: flex;
