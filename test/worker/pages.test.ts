@@ -78,6 +78,20 @@ describe("GET /", () => {
 });
 
 describe("POST / without JavaScript", () => {
+  it("reuses a custom name whose link has expired", async () => {
+    const name = freshName();
+    await env.DB.prepare(
+      "INSERT INTO links (id, target, target_host, secret_hash, expires_at, created_at, is_custom) VALUES (?, 'https://example.com/old', 'example.com', 'v1:old', ?, ?, 1)",
+    )
+      .bind(name, Date.now() - 1000, Date.now() - 5000)
+      .run();
+    const res = await call(
+      submit({ url: "https://example.org/new", customName: name, expiry: "1d", customDate: "" }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain(`${env.PUBLIC_ORIGIN}/${name}`);
+  });
+
   it("creates a link and shows the secretKey with a warning, uncached", async () => {
     const name = freshName();
     const res = await call(
