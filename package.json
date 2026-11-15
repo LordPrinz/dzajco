@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "bun run build:client && CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false wrangler dev",
-    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy --var PUBLIC_ORIGIN:${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN, for example https://dzaj.de}",
+    "deploy": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy --env=\"\" --var PUBLIC_ORIGIN:${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN, for example https://dzaj.de}",
+    "deploy:dev": "bun run check && bun run typecheck && bun run test && bun run test:worker && bun run build:client && bun run check:size && wrangler deploy --env dev",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.bun.json && tsc --noEmit -p tsconfig.client.json",
@@ -20,6 +21,7 @@
     "prepare": "husky",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:dev": "wrangler d1 migrations apply DB --remote --env dev",
     "gh:setup": "bun scripts/gh/setup.ts",
     "gh:setup-repo": "bun scripts/gh/setup-repo.ts",
     "gh:setup-project": "bun scripts/gh/setup-project.ts",
