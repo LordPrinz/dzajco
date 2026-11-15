@@ -370,7 +370,7 @@ export async function setupProject(deps: Deps): Promise<string[]> {
   manual.push(
     "Views: switch the default view to Board (columns = Status); add a Table view grouped by Assignees and a Roadmap view by Sprint.",
     "Workflows (... > Workflows): enable Auto-add to project (is:issue), Item added -> Backlog, Item reopened -> Todo, Item closed -> Done, Pull request merged -> Done, Code changes requested -> In Progress, Auto-close issue (Done).",
-    "Repository secret PROJECTS_TOKEN: a fine-grained PAT limited to your Projects (account permission `Projects: Read and write`, no repository access); use a classic PAT with only the `project` scope only if the fine-grained one cannot reach user projects (gh secret set PROJECTS_TOKEN).",
+    "Repository secret PROJECTS_TOKEN: a classic PAT with only the `project` scope (fine-grained tokens do not support user-owned Projects). Create it at https://github.com/settings/tokens/new?scopes=project&description=dzajco%20project%20sync, then run `gh secret set PROJECTS_TOKEN --repo LordPrinz/dzajco`.",
   );
   console.info(`\nBoard: ${project.url}`);
   return manual;

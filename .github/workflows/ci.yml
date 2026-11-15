@@ -5,7 +5,7 @@ on:
     # edited: fixing a PR title re-runs Conventions.
     types: [opened, synchronize, reopened, edited]
   push:
-    branches: [main, v3.0]
+    branches: [main, dev]
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
@@ -103,7 +103,7 @@ jobs:
       # workerd and wrangler need Node.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.3
+          node-version: 26.13.1
       - run: bun install --frozen-lockfile
       - run: bun run test:worker
 
@@ -125,9 +125,10 @@ jobs:
       # wrangler needs Node.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.3
+          node-version: 26.13.1
       - run: bun install --frozen-lockfile
       - run: bun run build:client
       - run: bun run check:size
       # Builds the Worker without credentials and prints its bundle size.
-      - run: bunx wrangler deploy --dry-run --outdir dist
+      - run: bunx wrangler deploy --env="" --dry-run --outdir dist
+      - run: bunx wrangler deploy --env dev --dry-run --outdir dist-dev

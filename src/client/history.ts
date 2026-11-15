@@ -14,6 +14,10 @@ import {
   statsPath,
   visibleEntries,
 } from "../shared/history";
+import { pageLocale, pageText } from "./lib/lang";
+import { toast } from "./lib/toast";
+
+const text = pageText();
 
 const DATE_FORMAT: Intl.DateTimeFormatOptions = { dateStyle: "long", timeStyle: "short" };
 
@@ -46,7 +50,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
 
 function formatDate(iso: string): string {
   const at = new Date(iso);
-  return Number.isNaN(at.getTime()) ? iso : at.toLocaleString("pl-PL", DATE_FORMAT);
+  return Number.isNaN(at.getTime()) ? iso : at.toLocaleString(pageLocale(), DATE_FORMAT);
 }
 
 function meta(label: string, value: string): HTMLElement {
@@ -58,26 +62,22 @@ function meta(label: string, value: string): HTMLElement {
 interface Page {
   list: HTMLElement;
   empty: HTMLElement;
-  status: HTMLElement;
 }
 
-function setStatus(page: Page, message: string): void {
-  page.status.textContent = message;
-}
-
-function copyButton(value: string, page: Page): HTMLButtonElement {
-  const button = el("button", "button button--ghost button--small", "Kopiuj");
+function copyButton(value: string): HTMLButtonElement {
+  const button = el("button", "button button--ghost button--small", text.copy.button);
   button.type = "button";
   button.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(value);
-      button.textContent = "Skopiowano";
-      setStatus(page, "Skopiowano do schowka");
+      button.textContent = text.copy.done;
+      toast(text.copy.toast, "success");
     } catch {
-      button.textContent = "Nie udało się";
+      button.textContent = text.copy.failed;
+      toast(text.copy.failedToast, "error");
     }
     setTimeout(() => {
-      button.textContent = "Kopiuj";
+      button.textContent = text.copy.button;
     }, 2000);
   });
   return button;
@@ -102,17 +102,17 @@ async function remove(
   if (outcome === "removed") {
     save(removeEntry(load(), entry.id));
     item.remove();
-    setStatus(page, `Usunięto link ${entry.id}`);
+    toast(text.history.deleted(entry.id), "success");
     if (page.list.children.length === 0) page.empty.hidden = false;
     return;
   }
   button.disabled = false;
   const messages = {
-    rate_limited: "Za dużo żądań. Spróbuj ponownie za minutę.",
-    key_rejected: "Ten klucz nie pasuje do linku.",
-    failed: "Nie udało się usunąć linku. Spróbuj ponownie.",
+    rate_limited: text.history.rateLimited,
+    key_rejected: text.history.keyRejected,
+    failed: text.history.deleteFailed,
   } as const;
-  setStatus(page, messages[outcome]);
+  toast(messages[outcome], "error");
 }
 
 function render(entry: HistoryEntry, page: Page): HTMLElement {
@@ -123,23 +123,28 @@ function render(entry: HistoryEntry, page: Page): HTMLElement {
   link.href = short;
   item.append(link);
 
-  item.append(meta("Cel", entry.url));
-  if (entry.createdAt !== "") item.append(meta("Utworzono", formatDate(entry.createdAt)));
-  item.append(meta("Wygasa", entry.expire === "never" ? "nigdy" : formatDate(entry.expire)));
+  item.append(meta(text.history.target, entry.url));
+  if (entry.createdAt !== "") item.append(meta(text.history.created, formatDate(entry.createdAt)));
+  item.append(
+    meta(
+      text.history.expires,
+      entry.expire === "never" ? text.history.never : formatDate(entry.expire),
+    ),
+  );
 
   const actions = el("div", "history__actions");
-  actions.append(copyButton(short, page));
-  const stats = el("a", "button button--ghost button--small", "Statystyki");
+  actions.append(copyButton(short));
+  const stats = el("a", "button button--ghost button--small", text.history.stats);
   stats.href = statsPath(entry.id);
   actions.append(stats);
   if (canDelete(entry)) {
-    const del = el("button", "button button--danger button--small", "Usuń");
+    const del = el("button", "button button--danger button--small", text.history.delete);
     del.type = "button";
-    del.setAttribute("aria-label", `Usuń link ${entry.id}`);
+    del.setAttribute("aria-label", text.history.deleteLabel(entry.id));
     del.addEventListener("click", () => remove(entry, item, del, page));
     actions.append(del);
   } else {
-    actions.append(el("span", "history__readonly", "Tylko do odczytu (brak klucza)"));
+    actions.append(el("span", "history__readonly", text.history.readOnly));
   }
   item.append(actions);
   return item;
@@ -148,9 +153,8 @@ function render(entry: HistoryEntry, page: Page): HTMLElement {
 function init(): void {
   const list = document.getElementById("history-list");
   const empty = document.getElementById("history-empty");
-  const status = document.getElementById("history-status");
-  if (!list || !empty || !status) return;
-  const page: Page = { list, empty, status };
+  if (!list || !empty) return;
+  const page: Page = { list, empty };
 
   // Expired links are gone from the service already; v2 dropped them from the history too.
   const now = Date.now();

@@ -27,7 +27,7 @@ The Worker listens on http://localhost:8787. `GET /healthz` returns `{"ok":true}
 
 ## Docker
 
-`bun run infra:up` builds a Debian image (Node 24 and Bun 1.4.4) and starts `wrangler dev` in it on http://localhost:8787. It applies the D1 migrations on start and keeps the database in a volume. It needs no Cloudflare account or `CF_AE_TOKEN`; without the token the app uses `LocalVisitSource`, so fresh stats are empty locally. The pepper comes from `SECRET_PEPPER_V1` in an untracked `infra/.env`, with a dev-only default.
+`bun run infra:up` builds a Debian image (Node 26 and Bun 1.4.4) and starts `wrangler dev` in it on http://localhost:8787. It applies the D1 migrations on start and keeps the database in a volume. It needs no Cloudflare account or `CF_AE_TOKEN`; without the token the app uses `LocalVisitSource`, so fresh stats are empty locally. The pepper comes from `SECRET_PEPPER_V1` in an untracked `infra/.env`, with a dev-only default.
 
 ```sh
 bun run infra:up
@@ -60,4 +60,6 @@ The image is for development and tests only. Production is the Cloudflare Worker
 | `bun run infra:up` / `infra:down`                | Start and stop the Docker dev environment                       |
 | `bun run types`                                  | Regenerate `worker-configuration.d.ts`                          |
 | `bun run db:migrate:local` / `db:migrate:remote` | Apply D1 migrations                                             |
+| `bun run db:migrate:dev`                         | Apply D1 migrations to the dev environment                      |
 | `bun run deploy`                                 | Run all checks, then `wrangler deploy`                          |
+| `bun run deploy:dev`                             | Run all checks, then deploy to test.dzaj.de (`--env dev`)       |

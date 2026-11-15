@@ -9,7 +9,8 @@ test("creates a link without JavaScript and shows the key with its warning", asy
   await page.getByRole("button", { name: "Dżajcuj" }).click();
 
   await expect(page.getByRole("heading", { name: "Twój link jest gotowy" })).toBeVisible();
-  await expect(page.locator('[data-field="shortUrl"]')).toHaveText(/^http:\/\/.+\/[\w-]+$/);
+  await expect(page.locator('[data-field="shortUrl"]')).toHaveText(/^[^/:]+(:\d+)?\/[\w-]+$/);
+  await expect(page.locator('[data-field="shortUrl"]')).toHaveAttribute("href", /^http:\/\//);
   await expect(page.locator('[data-field="target"]')).toHaveText(target);
   await expect(page.locator('[data-field="secretKey"]')).not.toBeEmpty();
   await expect(page.getByText("Zapisz klucz")).toBeVisible();

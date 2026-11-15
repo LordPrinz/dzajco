@@ -6,11 +6,19 @@ import {
   CUSTOM_EXPIRY,
   errorText,
   expiresAtFrom,
+  FIELD_OF_ERROR,
+  formUrlError,
   HISTORY_KEY,
   type HistoryEntry,
   normalizeUrlInput,
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
+import { withoutProtocol } from "../shared/short-url";
+import { enableCopy } from "./lib/copy";
+import { pageLocale, pageText } from "./lib/lang";
+import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
+
+const text = pageText();
 
 interface CreatedLink {
   id: string;
@@ -34,13 +42,36 @@ function readHistory(): HistoryEntry[] {
   }
 }
 
-/** Stores the entry, replacing one with the same id; storage can be blocked, so failures are silent. */
-function saveToHistory(entry: HistoryEntry): void {
+/** Stores the entry, replacing one with the same id. False when storage is blocked or full. */
+function saveToHistory(entry: HistoryEntry): boolean {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(upsertEntry(readHistory(), entry)));
+    return true;
   } catch {
     // Private mode or a full quota: the result stays on screen, only the history misses it.
+    return false;
   }
+}
+
+/** Once the key is in History, the warning becomes a quiet note; it stays loud if saving failed. */
+function markKeySaved(root: ParentNode): void {
+  const box = root.querySelector<HTMLElement>("[data-key-box]");
+  if (!box) return;
+  box.classList.replace("notice--warning", "notice--quiet");
+  setField(box, "keyTitle", text.savedKey.title);
+  setField(box, "keyText", text.savedKey.text);
+}
+
+/** Share opens the system share sheet where the browser has one (mostly phones). */
+function enableShare(root: ParentNode): void {
+  const button = root.querySelector<HTMLButtonElement>("[data-share]");
+  const link = root.querySelector<HTMLElement>('[data-field="shortUrl"]');
+  if (!button || !link || typeof navigator.share !== "function") return;
+  button.hidden = false;
+  button.addEventListener("click", () => {
+    // A closed share sheet rejects too; there is nothing to report then.
+    navigator.share({ url: link.dataset.value ?? link.textContent ?? "" }).catch(() => {});
+  });
 }
 
 function setField(root: ParentNode, name: string, text: string): void {
@@ -48,27 +79,13 @@ function setField(root: ParentNode, name: string, text: string): void {
   if (el) el.textContent = text;
 }
 
-function enableCopy(root: ParentNode): void {
-  const status = root.querySelector<HTMLElement>('[data-field="copied"]');
-  for (const button of root.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
-    button.hidden = false;
-    button.addEventListener("click", async () => {
-      const source = root.querySelector<HTMLElement>(`[data-field="${button.dataset.copy}"]`);
-      try {
-        await navigator.clipboard.writeText(source?.textContent ?? "");
-        button.textContent = "Skopiowano";
-        if (status) status.textContent = "Skopiowano do schowka";
-      } catch {
-        button.textContent = "Nie udało się";
-      }
-      setTimeout(() => {
-        button.textContent = "Kopiuj";
-      }, 2000);
-    });
-  }
-}
-
-function showResult(link: CreatedLink, target: string, host: string, isIdn: boolean): void {
+function showResult(
+  link: CreatedLink,
+  target: string,
+  host: string,
+  isIdn: boolean,
+  saved: boolean,
+): void {
   const template = byId<HTMLTemplateElement>("result-template");
   const slot = byId("result-slot");
   if (!template || !slot) return;
@@ -82,7 +99,10 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
   const short = card.querySelector<HTMLAnchorElement>('[data-field="shortUrl"]');
   if (short) {
     short.href = link.shortUrl;
-    short.textContent = link.shortUrl;
+    short.dataset.value = link.shortUrl;
+    short.textContent = withoutProtocol(link.shortUrl);
+    // The template's label ends with "Short link: "; the full URL completes it.
+    short.setAttribute("aria-label", `${short.getAttribute("aria-label") ?? ""}${link.shortUrl}`);
   }
   setField(card, "target", target);
   setField(card, "secretKey", link.secretKey);
@@ -93,7 +113,7 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
   const time = card.querySelector<HTMLTimeElement>("time");
   if (expiry && time && link.expiresAt) {
     time.dateTime = link.expiresAt;
-    time.textContent = new Date(link.expiresAt).toLocaleString("pl-PL", {
+    time.textContent = new Date(link.expiresAt).toLocaleString(pageLocale(), {
       dateStyle: "long",
       timeStyle: "short",
     });
@@ -104,20 +124,27 @@ function showResult(link: CreatedLink, target: string, host: string, isIdn: bool
 
   // The fragment is empty once its children move into the slot, so the copy handlers need the section.
   enableCopy(section);
+  enableShare(section);
+  if (saved) markKeySaved(section);
   slot.replaceChildren(card);
-  slot.querySelector<HTMLElement>("#result-title")?.focus();
+  // The result takes the place of the form: the forms go, the card shows right under the hero.
+  for (const id of ["shorten-form", "lookup-form"]) byId(id)?.setAttribute("hidden", "");
+  for (const el of document.querySelectorAll("[data-hide-on-result]"))
+    el.setAttribute("hidden", "");
+  slot.querySelector<HTMLElement>("#result-title")?.focus({ preventScroll: true });
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  section.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
 }
 
 function setupShortenForm(form: HTMLFormElement): void {
-  const error = byId<HTMLElement>("form-error");
   const status = byId<HTMLElement>("form-status");
   const expiry = byId<HTMLSelectElement>("expiry");
   const customDate = byId<HTMLElement>("custom-date");
   // The script reads the date in the browser's zone; the no-JS form keeps UTC.
   const dateLabel = byId<HTMLElement>("custom-date-label");
-  if (dateLabel) dateLabel.textContent = "Własna data wygaśnięcia (czas lokalny)";
+  if (dateLabel) dateLabel.textContent = text.form.localDateLabel;
   const dateHint = byId<HTMLElement>("custom-date-hint");
-  if (dateHint) dateHint.textContent = "Czas lokalny. Używana tylko przy wyborze „Własna data”.";
+  if (dateHint) dateHint.textContent = text.form.localDateHint;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 
   const syncCustomDate = () => {
@@ -126,16 +153,52 @@ function setupShortenForm(form: HTMLFormElement): void {
   expiry?.addEventListener("change", syncCustomDate);
   syncCustomDate();
 
-  const fail = (message: string) => {
-    if (!error) return;
-    error.textContent = message;
-    error.hidden = false;
+  const fields = ["url", "customName", "expiry"] as const;
+  const errorBoxes = [byId("form-error"), byId("options-error")];
+  const clearInvalid = () => {
+    for (const name of fields) {
+      byId(name)?.removeAttribute("aria-invalid");
+      byId(name)?.removeAttribute("aria-describedby");
+    }
+    for (const box of errorBoxes) if (box) box.hidden = true;
   };
+  // Network and server errors have no field to point at, so they go to a toast.
+  const fail = (code: string) => {
+    const message = errorText(code, text);
+    const fieldName = FIELD_OF_ERROR[code];
+    const box = byId(fieldName === "url" ? "form-error" : "options-error");
+    if (fieldName === undefined || !box) {
+      // The submit button is disabled while the request runs, so focus returns to the link field.
+      toast(message, "error", { returnFocus: byId("url") });
+      return;
+    }
+    const field = byId(fieldName);
+    // A field inside the closed options panel cannot take focus.
+    const panel = field?.closest("details");
+    if (panel) panel.open = true;
+    // Cleared first so a repeated message is read out again.
+    box.textContent = "";
+    box.hidden = false;
+    setTimeout(() => {
+      box.textContent = message;
+    }, REANNOUNCE_MS);
+    field?.setAttribute("aria-invalid", "true");
+    field?.setAttribute("aria-describedby", box.id);
+    field?.focus();
+  };
+  for (const name of fields) byId(name)?.addEventListener("input", clearInvalid);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (error) error.hidden = true;
+    // Also clears an error the server rendered for a no-JS attempt.
+    clearInvalid();
+    dismissAll("error");
     const data = new FormData(form);
+    const early = formUrlError(String(data.get("url") ?? ""));
+    if (early) {
+      fail(early);
+      return;
+    }
     const url = normalizeUrlInput(String(data.get("url") ?? ""));
     const customName = String(data.get("customName") ?? "").trim();
     const choice = {
@@ -148,7 +211,7 @@ function setupShortenForm(form: HTMLFormElement): void {
     if (customName !== "") body.customName = customName;
 
     if (submit) submit.disabled = true;
-    if (status) status.textContent = "Skracanie…";
+    if (status) status.textContent = text.form.sending;
     try {
       const response = await fetch("/api/v1/links", {
         method: "POST",
@@ -158,7 +221,7 @@ function setupShortenForm(form: HTMLFormElement): void {
       const json = (await response.json()) as { error?: { code?: string } } & Partial<CreatedLink>;
       if (response.status === 201 && json.id && json.shortUrl && json.secretKey && json.url) {
         const link = json as CreatedLink;
-        saveToHistory({
+        const saved = saveToHistory({
           id: link.id,
           url: link.url,
           expire: link.expiresAt ?? "never",
@@ -166,16 +229,16 @@ function setupShortenForm(form: HTMLFormElement): void {
           secretKey: link.secretKey,
         });
         const target = new URL(link.url);
-        showResult(link, target.href, target.hostname, hostIsIdn(target.hostname));
+        showResult(link, target.href, target.hostname, hostIsIdn(target.hostname), saved);
         form.reset();
         syncCustomDate();
         if (status) status.textContent = "";
       } else {
-        fail(errorText(json.error?.code ?? "unknown"));
+        fail(json.error?.code ?? "unknown");
         if (status) status.textContent = "";
       }
     } catch {
-      fail(errorText("unknown"));
+      fail("unknown");
     } finally {
       if (submit) submit.disabled = false;
     }
@@ -187,15 +250,17 @@ function setupResultPage(section: HTMLElement): void {
   const secretKey = section.querySelector<HTMLElement>('[data-field="secretKey"]')?.textContent;
   const { id, url, expire } = section.dataset;
   if (id && url && secretKey) {
-    saveToHistory({
+    const saved = saveToHistory({
       id,
       url,
       expire: expire ?? "never",
       createdAt: new Date().toISOString(),
       secretKey,
     });
+    if (saved) markKeySaved(section);
   }
   enableCopy(section);
+  enableShare(section);
 }
 
 function codeFromInput(input: string): string {

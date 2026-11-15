@@ -2,13 +2,14 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 import worker from "../../src/index";
-import { ENDPOINTS, ERROR_CODES } from "../../src/views/ApiDocs";
+import { ENDPOINTS, ERROR_CODES } from "../../src/views/text/api";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 
 async function get(path: string, bindings: Cloudflare.Env = env): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(new Request(`${ORIGIN}${path}`), bindings, ctx);
+  const res = await worker.fetch(inPolish(new Request(`${ORIGIN}${path}`)), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -27,6 +28,9 @@ describe.each(["/history", "/about", "/docs/api", "/privacy-policy"])("GET %s", 
     expect(html.startsWith("<!doctype html>")).toBe(true);
     expect(html).toContain('<html lang="pl">');
     expect(html).toContain('href="/css/pages.css"');
+    // The live region exists before any toast, so screen readers announce the first one too.
+    expect(html).toContain('<div class="toasts__region" id="toasts-alert" role="alert"></div>');
+    expect(html).toContain('<div class="toasts__region" id="toasts-status" role="status"></div>');
 
     const nonce = /nonce-([^';\s]+)/.exec(res.headers.get("content-security-policy") ?? "")?.[1];
     expect(nonce).toBeTruthy();
@@ -88,6 +92,14 @@ describe("GET /about", () => {
     expect(html).toContain("Wejść w aktywnych linkach");
     expect(html).toContain("Usunięte i wygasłe linki");
     expect((await page("/docs/api")).html).toContain("tylko aktywne linki");
+  });
+
+  it("gives each of the six features an inline, decorative icon", async () => {
+    const { html } = await page("/about");
+    const icons = html.match(/<svg class="features__icon"[^>]*>/g) ?? [];
+    expect(icons).toHaveLength(6);
+    for (const icon of icons) expect(icon).toContain('aria-hidden="true"');
+    expect(html).not.toMatch(/<(?:img|use)\b[^>]*features/);
   });
 
   it("embeds the sponsor button without an inline style", async () => {
@@ -194,6 +206,9 @@ describe("GET /privacy-policy", () => {
     expect(html).toContain("tile.openstreetmap.org");
     expect(html).toContain("links-history");
     expect(html).toContain("nie trafia na nasz serwer");
+    expect(html).toContain("Archiwum usuniętych linków");
+    expect(html).toContain("30 dni");
+    expect(html).toContain("<code>theme</code>");
   });
 
   it("links the contact address only when ABUSE_EMAIL is set", async () => {
@@ -206,7 +221,7 @@ describe("GET /privacy-policy", () => {
 });
 
 describe("404 and 410 pages", () => {
-  it("use the shared layout and keep no-store, nosniff and the abuse link", async () => {
+  it("use the shared layout and keep no-store and nosniff, with no abuse link for a missing link", async () => {
     const withMail = { ...env, ABUSE_EMAIL: "abuse@dzaj.co" } as unknown as Cloudflare.Env;
     const { res, html } = await page("/no-such-link-xyz", withMail);
     expect(res.status).toBe(404);
@@ -214,7 +229,7 @@ describe("404 and 410 pages", () => {
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
     expect(html).toContain('href="/css/app.css"');
     expect(html).toContain("Nie znaleziono linku");
-    expect(html).toContain('href="mailto:abuse@dzaj.co?subject=Report%20abuse"');
+    expect(html).not.toContain("mailto:");
     expect(html).not.toMatch(/\sstyle=/i);
   });
 });

@@ -2,6 +2,8 @@ import { type Context, Hono } from "hono";
 import { reportAbuseLink } from "../lib/abuse";
 import type { AppEnv } from "../lib/app-env";
 import { clientIpKey } from "../lib/client-ip";
+import { renderPage } from "../lib/page";
+import { shortUrlFor } from "../lib/short-url";
 import { rateLimit } from "../middleware/rate-limit";
 import { loadPublicStats } from "../services/stats";
 import { Stats } from "../views/Stats";
@@ -35,13 +37,17 @@ export function statsPageRoutes() {
       }
 
       const stats = await loadPublicStats(c.env, id, now);
-      const html = Stats({
+      const html = renderPage(c, Stats, {
         nonce: c.var.nonce,
         id,
+        shortUrl: shortUrlFor(c.env, id),
+        target: record.target,
+        createdAt: record.createdAt,
+        expiresAt: record.expiresAt,
         ...stats,
         reportHref: reportAbuseLink(c.env, { linkId: id }),
       });
-      return c.html(`<!doctype html>${html}`, 200, { "Cache-Control": "no-store" });
+      return c.html(html, 200, { "Cache-Control": "no-store" });
     },
   );
 

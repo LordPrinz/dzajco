@@ -23,9 +23,7 @@ test("v2 entry with a key can be deleted", async ({ page }) => {
   await expect(item.getByRole("link", { name: new RegExp(`/${link.id}$`) })).toBeVisible();
   await item.getByRole("button", { name: `Usuń link ${link.id}` }).click();
 
-  await expect(
-    page.getByRole("status").filter({ hasText: `Usunięto link ${link.id}` }),
-  ).toBeAttached();
+  await expect(page.locator("#toasts-status")).toContainText(`Usunięto link ${link.id}`);
   await expect(item).toHaveCount(0);
   const stored = await page.evaluate((name) => localStorage.getItem(name), HISTORY_KEY);
   expect(JSON.parse(stored ?? "[]")).toEqual([]);

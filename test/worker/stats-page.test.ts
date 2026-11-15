@@ -5,6 +5,7 @@ import { startCursor } from "../../src/analytics/day";
 import { freshCacheKey } from "../../src/analytics/fresh";
 import { blockHost, insertLink } from "../../src/db/queries";
 import worker from "../../src/index";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 const allowAll: RateLimit = { limit: async () => ({ success: true }) };
@@ -25,7 +26,7 @@ function testEnv(overrides: Partial<Cloudflare.Env> = {}): Cloudflare.Env {
 
 async function call(path: string, bindings: Cloudflare.Env = testEnv(), init?: RequestInit) {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(new Request(`${ORIGIN}${path}`, init), bindings, ctx);
+  const res = await worker.fetch(inPolish(new Request(`${ORIGIN}${path}`, init)), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -64,7 +65,9 @@ describe("GET /:id/stats", () => {
     expect(res.headers.get("content-type")).toContain("text/html");
     expect(res.headers.get("cache-control")).toBe("no-store");
     const html = await res.text();
-    expect(html).toContain(`>9</span>`);
+    // With visits the gauge shows the total instead of the zero-click nudge.
+    expect(html).toContain('<span class="counter__value">9</span>');
+    expect(html).not.toContain("Nie ma jeszcze kliknięć");
     expect(html).toContain("Polska");
     expect(html).toContain("Niemcy");
     expect(html).toContain('<meter class="bars__meter" min="0" max="5" value="5"');
@@ -72,6 +75,42 @@ describe("GET /:id/stats", () => {
     expect(html).not.toContain(CITY_A);
     expect(html).not.toContain(CITY_B);
     expect(html).not.toContain("52.23");
+  });
+
+  it("opens with the short link, a Copy button, the target and the dates", async () => {
+    const id = freshId();
+    await seed(id, { expiresAt: Date.parse("2030-01-02T03:04:00Z") });
+    const html = await (await call(`/${id}/stats`)).text();
+    const short = `${new URL(env.PUBLIC_ORIGIN).origin}/${id}`;
+    expect(html).toContain(`data-value="${short}"`);
+    expect(html).toContain(`>${short.replace(/^https?:\/\//, "")}</a>`);
+    expect(html).toContain('data-copy="shortUrl"');
+    expect(html).toContain("https://example.com/stats-target");
+    expect(html).toContain("Utworzono:");
+    expect(html).toContain('datetime="2030-01-02T03:04:00.000Z"');
+    // The report link is marked so stats.js can hide it from the owner.
+    const withMail = testEnv({
+      ABUSE_EMAIL: "abuse@dzaj.co",
+    } as unknown as Partial<Cloudflare.Env>);
+    expect(await (await call(`/${id}/stats`, withMail)).text()).toMatch(
+      /href="mailto:[^"]+" data-report/,
+    );
+  });
+
+  it("shows 'no clicks yet' with a Copy button instead of a zero gauge", async () => {
+    const id = freshId();
+    await insertLink(env.DB, {
+      id,
+      target: "https://example.com/quiet",
+      secretHash: null,
+      expiresAt: null,
+      createdAt: Date.now(),
+      isCustom: true,
+    });
+    const html = await (await call(`/${id}/stats`)).text();
+    expect(html).toContain("Nie ma jeszcze kliknięć");
+    expect(html).toContain("nigdy");
+    expect(html).not.toContain('class="counter__value"');
   });
 
   it("returns the same numbers and no cities from the JSON endpoint without a key", async () => {

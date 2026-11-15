@@ -19,7 +19,7 @@ on:
       - scripts/ci/smoke.ts
       - .github/workflows/docker.yml
   push:
-    branches: [v3.0]
+    branches: [main, dev]
     paths:
       - Dockerfile
       - .dockerignore

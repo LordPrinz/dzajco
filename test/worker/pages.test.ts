@@ -2,6 +2,7 @@ import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test"
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import worker from "../../src/index";
+import { inPolish } from "./polish";
 
 const ORIGIN = "https://dzaj.co";
 const allowAll: RateLimit = { limit: async () => ({ success: true }) };
@@ -19,7 +20,7 @@ function testEnv(overrides: Partial<Cloudflare.Env> = {}): Cloudflare.Env {
 
 async function call(req: Request, bindings: Cloudflare.Env = testEnv()): Promise<Response> {
   const ctx = createExecutionContext();
-  const res = await worker.fetch(req, bindings, ctx);
+  const res = await worker.fetch(inPolish(req), bindings, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -128,6 +129,12 @@ describe("POST / without JavaScript", () => {
     const key = /data-field="secretKey">([A-Za-z0-9_-]{22})</.exec(html)?.[1];
     expect(key).toBeTruthy();
     expect(html).toContain("Zapisz go, nie pokażemy go ponownie");
+    // The short link shows without its protocol; the href and Copy keep the full URL.
+    const shown = `${env.PUBLIC_ORIGIN}/${name}`.replace(/^https?:\/\//, "");
+    expect(html).toContain(`>${shown}</a>`);
+    expect(html).toContain(`data-value="${env.PUBLIC_ORIGIN}/${name}"`);
+    // A settings post would redirect away and lose the key, so the result page has no switches.
+    expect(html).not.toContain('action="/prefs/');
     expect(html).toContain(`${env.PUBLIC_ORIGIN}/${name}`);
     expect(html).toContain("Wygasa:");
 
@@ -199,6 +206,10 @@ describe("POST / validation", () => {
     const html = await res.text();
     expect(html).toContain("Własna nazwa ma mieć od 3 do 32");
     expect(html).toMatch(/id="customName"[^>]*aria-invalid="true"/);
+    // The message sits inside the options, next to the field, and describes it.
+    expect(html).toMatch(/id="customName"[^>]*aria-describedby="options-error"/);
+    expect(html).toMatch(/id="options-error" role="alert">Własna nazwa ma mieć/);
+    expect(html).toMatch(/id="form-error" role="alert" hidden="">/);
   });
 
   it("rejects a custom expiry in the past", async () => {
@@ -227,10 +238,32 @@ describe("POST / validation", () => {
     expect(await res.text()).toContain("Ta nazwa jest już zajęta.");
   });
 
-  it("rejects an empty url", async () => {
+  it("sends a no-JS error from a dead-link page's form back to the home form", async () => {
+    // The dead-link page's form posts to `/` like the home page's.
+    const dead = await (await call(new Request(`${ORIGIN}/nope-dead-link`))).text();
+    expect(dead).toMatch(/<form class="shorten" id="shorten-form" method="post" action="\/"/);
+    const res = await call(submit({ url: "notaurl" }));
+    expect(res.status).toBe(400);
+    const html = await res.text();
+    expect(html).toContain('id="lookup-form"');
+    expect(html).toMatch(/id="form-error" role="alert">To nie wygląda na poprawny adres URL\./);
+    expect(html).toContain('value="notaurl"');
+  });
+
+  it("asks for a link when the url is empty", async () => {
     const res = await call(submit({ url: "" }));
     expect(res.status).toBe(400);
-    expect(await res.text()).toContain("To nie wygląda na poprawny adres URL.");
+    expect(await res.text()).toContain("Najpierw wklej link.");
+  });
+
+  it("calls a bare word an invalid link, not a private address", async () => {
+    const res = await call(submit({ url: "notaurl" }));
+    expect(res.status).toBe(400);
+    const html = await res.text();
+    expect(html).toContain("To nie wygląda na poprawny adres URL.");
+    expect(html).not.toContain("prywatne");
+    // The message sits right after the pill, where the field is.
+    expect(html.indexOf('id="form-error"')).toBeGreaterThan(html.indexOf('class="pill__submit"'));
   });
 
   it("answers 415 to another content type", async () => {

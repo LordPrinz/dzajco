@@ -10,6 +10,8 @@ import {
   ownerRequest,
   parseCities,
 } from "../shared/stats";
+import { enableCopy } from "./lib/copy";
+import { pageLang } from "./lib/lang";
 
 function readKey(id: string): string | null {
   try {
@@ -37,7 +39,7 @@ function renderCities(list: HTMLElement, cities: readonly CityRow[]): void {
       item.className = "bars__item";
       const label = document.createElement("span");
       label.className = "bars__label";
-      label.textContent = `${city.city}, ${countryName(city.country)}`;
+      label.textContent = `${city.city}, ${countryName(city.country, pageLang())}`;
       const meter = document.createElement("meter");
       meter.className = "bars__meter";
       meter.min = 0;
@@ -92,8 +94,11 @@ async function init(): Promise<void> {
   const owner = root?.querySelector<HTMLElement>("[data-owner]");
   const id = root?.dataset.id;
   if (!root || !owner || !id) return;
+  enableCopy(root);
   const key = readKey(id);
   if (key === null) return;
+  // This browser made the link: reporting it as abuse makes no sense for its owner.
+  for (const report of root.querySelectorAll("[data-report]")) report.setAttribute("hidden", "");
   const cities = await fetchCities(id, key);
   if (cities === null) return;
 

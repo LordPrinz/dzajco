@@ -73,11 +73,12 @@ describe("parseCities", () => {
 
 describe("countryName", () => {
   it("names known codes and labels unknown ones", () => {
-    expect(countryName("PL")).toBe("Polska");
-    expect(countryName("pl")).toBe("Polska");
-    expect(countryName("")).toBe("Nieznany kraj");
-    expect(countryName("XX")).toBe("Nieznany kraj");
-    expect(countryName("T1")).toBe("Nieznany kraj");
+    expect(countryName("PL", "pl")).toBe("Polska");
+    expect(countryName("pl", "pl")).toBe("Polska");
+    expect(countryName("PL", "en")).toBe("Poland");
+    expect(countryName("", "pl")).toBe("Nieznany kraj");
+    expect(countryName("XX", "pl")).toBe("Nieznany kraj");
+    expect(countryName("T1", "en")).toBe("Unknown country");
   });
 });
 

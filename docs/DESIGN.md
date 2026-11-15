@@ -23,7 +23,7 @@ describes the target design. Larger decisions have an ADR in [`adr/`](adr). Plan
 ### Repository layout
 
 ```
-dzajco/                          (trunk: v3.0)
+dzajco/                          (trunk: dev)
 ├── src/
 │   ├── domain/        # pure code: url-policy, ids, reserved, expiry, secret, bots, schemas (+ *.test.ts, bun test)
 │   ├── db/            # queries.ts (D1)
@@ -37,18 +37,18 @@ dzajco/                          (trunk: v3.0)
 │   ├── views/         # Hono JSX: Layout, Header, Home, Created, ResultCard, History, Stats, About, ApiDocs, Privacy, LinkError, Notice
 │   ├── client/        # browser scripts, built with `bun build` into public/assets
 │   └── index.ts       # fetch + scheduled
-├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql
+├── migrations/        # 0001_init.sql, 0002_blocked_hosts.sql, 0003_v2_visit_import.sql, 0004_deleted_links.sql
 ├── public/            # _headers, css, img, assets/ (build output)
 ├── test/worker/       # vitest-pool-workers (+ cf fixtures, applyD1Migrations)
 ├── test/e2e/          # Playwright
 ├── scripts/
-│   ├── admin/         # block.ts (abuse CLI: block or unblock a host, delete a link)
+│   ├── admin/         # block.ts (abuse CLI: block or unblock a host, delete a link), deleted.ts (read the archive)
 │   ├── gh/            # repo, board and issue scripts (+ tests)
 │   ├── git/           # commit and branch conventions (+ tests)
 │   ├── ci/            # coverage.ts, size.ts, smoke.ts
 │   ├── lib/           # jsonc.ts, sql.ts
-│   └── migrate/       # mongo-to-d1.ts
-├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:7)
+│   └── migrate/       # mongo-to-d1.ts, transform.ts, visits.ts, countries.ts
+├── infra/docker-compose.yml   # web (wrangler dev) + profile migrate-test (mongo:9)
 ├── Dockerfile                 # dev/test: node:24-bookworm-slim + bun + wrangler (workerd needs glibc)
 ├── wrangler.jsonc  vitest.config.ts  biome.json  bunfig.toml  tsconfig.json  .editorconfig  .env.example
 ├── docs/{DESIGN.md,ROADMAP.md,DEPLOYMENT.md,adr/}
@@ -88,7 +88,25 @@ CREATE TABLE link_stats (
 CREATE TABLE global_stats (id INTEGER PRIMARY KEY CHECK (id = 1), links INTEGER, visits INTEGER, countries TEXT, updated_at INTEGER);   -- countries: JSON list of the top 20 {code, visits}
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT) WITHOUT ROWID;   -- rollup cursor {day, offset}
 CREATE TABLE blocked_hosts (host TEXT PRIMARY KEY, reason TEXT, created_at INTEGER NOT NULL) WITHOUT ROWID;
+CREATE TABLE v2_visit_import (
+  link_id TEXT NOT NULL, country TEXT NOT NULL, city TEXT NOT NULL, lat REAL, lon REAL,
+  visits INTEGER NOT NULL, PRIMARY KEY (link_id, country, city)
+) WITHOUT ROWID;   -- + trigger v2_visit_import_apply: adds each new row to link_stats
+CREATE TABLE deleted_links (
+  id TEXT NOT NULL, target TEXT NOT NULL, target_host TEXT NOT NULL, expires_at INTEGER,
+  created_at INTEGER NOT NULL, is_custom INTEGER NOT NULL, deleted_at INTEGER NOT NULL,
+  visits INTEGER NOT NULL, countries TEXT NOT NULL   -- countries: JSON list of {code, visits}
+);   -- rowid table, indexed on deleted_at and id
 ```
+
+`v2_visit_import` is the ledger of the v2 visit counters the importer has added to `link_stats`
+(`migrate:mongo --visits`, see DEPLOYMENT.md section 5). Each import statement inserts one row for a
+link and place, only when the ledger does not hold it yet and D1 holds the link with the same id, target
+and `secret_hash`. The trigger adds every inserted row to `link_stats` in the same statement, merged as
+the rollup merges. So a second run, or a run after the cutover, adds no v2 visit twice and leaves the
+visits counted by v3 alone. The table has no foreign key: its rows outlive their link. Only the importer
+may write to it, because the trigger applies any insert. Once the import is done, a later migration can
+`DROP TRIGGER v2_visit_import_apply`.
 
 `target_host` is the lowercased punycode host of the target. The cache-miss query uses it to check
 `blocked_hosts` in the same batch as the link read.
@@ -96,6 +114,15 @@ CREATE TABLE blocked_hosts (host TEXT PRIMARY KEY, reason TEXT, created_at INTEG
 D1 enforces foreign keys by default. The rollup therefore inserts with
 `INSERT … SELECT … WHERE EXISTS (SELECT 1 FROM links WHERE id = ?) ON CONFLICT DO UPDATE`. Visits for a
 link deleted before the rollup are skipped and do not fail the batch.
+
+`deleted_links` keeps links their owner deleted for 30 days, for abuse reports and mistakes. The DELETE
+route copies the link row without `secret_hash`, adds `deleted_at` and a stats summary (total visits and
+visits per country from `link_stats`, so visits not rolled up yet are missing), and deletes the link, all
+in one `db.batch`. Both statements check the same id and hash, so a hash change between the read and the
+batch archives nothing. Rows are keyed by the implicit rowid, not the link id: the name is free again at
+once, and one id can appear several times. The redirect does not read the archive, so a deleted link
+answers 404 as before. Only owner deletes are archived: the expired-link cleanup, the lazy delete on the
+redirect path and `admin:block link` drop the row without a copy. `bun run admin:deleted` reads it.
 
 ### Redirect path
 
@@ -145,9 +172,11 @@ A link is expired when `expires_at <= now`, everywhere (redirect, API, cleanup).
   call handles at most `ROLLUP_MAX_PAGES` pages (default 10), to stay inside the Free subrequest limit. A D1
   `batch()` counts as one query toward the per-invocation limit (Free: 50), but the per-statement limits (100
   bound parameters, 100 KB) still apply, so a page is split into statements that fit. The next hours finish
-  the rest. `deleteExpired` runs after 01:00 UTC, whatever the cursor is, in batches of 500, at most 3 batches
-  per cron call (so the call stays inside the Free limit of 50 even at 20 rollup pages). The day marker is
-  written only after a short batch, so a bigger backlog continues in the next hourly run. The `global_stats`
+  the rest. The cleanup runs after 01:00 UTC, whatever the cursor is, in batches of 500, at most 3 batches
+  per cron call (so the call stays inside the Free limit of 50 even at 20 rollup pages). `deleteExpired`
+  gets at most 2 of them. The last one, plus any `deleteExpired` leaves unused, purges `deleted_links` rows
+  older than 30 days, so an expired-link backlog cannot keep archive rows past their 30 days. The day
+  marker is written only after a short batch of both, so a bigger backlog continues in the next hourly run. The `global_stats`
   recompute runs once the cursor has reached today.
 - Fresh data (everything not yet in D1) comes from two queries with the same `GROUP BY` and `ORDER BY`: day
   D from `OFFSET <offset>`, and `timestamp >= D+1`. Both cover all links. The result is cached in the Cache
@@ -290,7 +319,7 @@ Cost per operation:
 | Redirect (cache hit)             | 0                                                   | 0                                                                                                              | 1 point                                                           | AE write runs in `waitUntil`                                                                                                                                                                 |
 | Redirect (cache miss)            | 0                                                   | 1 plus one `blocked_hosts` primary key lookup per label of the host (a recursive CTE lists the parent domains) | 1 point                                                           | the cached record carries the `blocked` flag                                                                                                                                                 |
 | Create link                      | 1 to 2 (PK, `links_expires`)                        | 1                                                                                                              | 0                                                                 |                                                                                                                                                                                              |
-| Delete link                      | 1 to 2 plus `link_stats` rows                       | 1                                                                                                              | 0                                                                 |                                                                                                                                                                                              |
+| Delete link                      | 4 to 5 plus `link_stats` rows                       | 1 plus the `link_stats` rows (archive summary)                                                                 | 0                                                                 | includes the `deleted_links` row and its two indexes                                                                                                                                         |
 | Stats (public or owner)          | 0                                                   | 1 plus the number of stats rows                                                                                | at most 2 SQL API queries per 5 min per colo, shared by all links | data after the rollup cursor comes from AE                                                                                                                                                   |
 | Rollup (hourly cron, in pages)   | 1 per (link, country, city) of the day, plus cursor | about the same                                                                                                 | 1 to N queries                                                    | at most `ROLLUP_MAX_PAGES` x 500 groups per call. D1 and fetch wait time is not CPU, but building statements is, so `cpuTime` is measured in T16 and `ROLLUP_MAX_PAGES` is lowered if needed |
 | `global_stats` (daily cron step) | 1                                                   | one `SUM` over `link_stats` per day                                                                            | 0                                                                 |                                                                                                                                                                                              |
@@ -374,7 +403,9 @@ Other measures:
   only in Cloudflare's own logs. The privacy page says so. Analytics Engine stores one event per visit (time,
   link id, country, city, approximate coordinates, no IP and no User-Agent) for up to 3 months.
 - CI and tokens. Actions pinned to SHAs, `permissions: {}` at workflow level, least privilege per job.
-  Deploys are manual only (`bun run deploy`).
+  Pushes to `dev` deploy the dev Worker on `test.dzaj.de` from CI, with a Cloudflare token kept in the GitHub
+  environment `dev`. Pushes to `main` deploy production after the owner approves the environment `production`,
+  which holds its own token. `bun run deploy` stays as a manual fallback.
 
 ### Abuse
 
@@ -389,6 +420,9 @@ A shortener is open to abuse, so v3.0 has a minimum set of controls (task T10c):
 - Admin CLI `scripts/admin/block.ts`: `bun run admin:block host <host> [--reason <text>]`,
   `bun run admin:block unblock <host>` and `bun run admin:block link <id>` (deletes a link). Each needs exactly
   one of `--remote` or `--local`. Remote `unblock` and `link` also need `--yes`. `--dry-run` only prints the SQL. It runs `wrangler d1 execute`.
+- Admin CLI `scripts/admin/deleted.ts`: `bun run admin:deleted [id]` lists the most recent owner deletes,
+  or every archived copy of one id, from `deleted_links` (30 days). It only reads. Same `--remote` or
+  `--local` rule, plus `--env <name>`, `--limit <n>` and `--dry-run`.
 - Follow-up: Google Safe Browsing checks.
 
 Accepted risks:
@@ -411,4 +445,4 @@ Accepted risks:
 - Queues.
 - KV.
 - D1 read replication (a follow-up once latency is measured).
-- Automatic deploys from CI.
+- Deploys without the owner's approval: production deploys from CI wait for the `production` environment approval.

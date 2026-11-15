@@ -1,12 +1,14 @@
 // v2 (MongoDB) to D1 importer. Reads the `links` collection (driver or a mongoexport file),
 // writes INSERT OR IGNORE batches plus a report, and optionally runs them with the project's wrangler.
+// With --visits it writes only the v2 visit counters instead (ledger rows of migration 0003).
 // See USAGE below or run with --help.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { currentVersion, peppersFromEnv } from "../../src/domain/secret";
 import { parseJsonc } from "../lib/jsonc";
 import { buildSqlFiles, type MigrationReport, transformLinks } from "./transform";
+import { buildVisitSqlFiles, parseLocations, transformVisits, type VisitReport } from "./visits";
 
 export interface MigrateArgs {
   fromJson: string | null;
@@ -17,6 +19,9 @@ export interface MigrateArgs {
   local: boolean;
   remote: boolean;
   delta: boolean;
+  visits: boolean;
+  locations: string | null;
+  env: string | null;
   ownHosts: string[];
 }
 
@@ -42,6 +47,11 @@ export const USAGE = [
   "  --delta             a later catch-up run. It is the same run: every statement is",
   "                      INSERT OR IGNORE, so ids already in D1 are left as they are and only",
   "                      new ids are added. Changes and deletions in v2 are not carried over.",
+  "  --visits            import only the v2 visit counters (visits-NNNN.sql), no links; run it",
+  "                      after the link import. Idempotent; see docs/DEPLOYMENT.md section 5",
+  "  --locations <file>  the `locations` export for --visits (default: locations.json next to",
+  "                      --from-json; with MongoDB the collection)",
+  "  --env <name>        wrangler environment of the D1 database, for example dev",
   "  --help, -h          show this text",
   "",
   "Keys are hashed with SECRET_PEPPER_V<n> from the env. n is SECRET_PEPPER_VERSION from the env,",
@@ -51,7 +61,7 @@ export const USAGE = [
 ].join("\n");
 
 const DEFAULT_OUT = join(import.meta.dirname, "../../.wrangler/migrate");
-const BATCH_FILE = /^links-\d{4}\.sql$/;
+const BATCH_FILE = /^(links|visits)-\d{4}\.sql$/;
 const SECRET_ENV = /^(SECRET_PEPPER_V\d+|MONGODB_URI)$/;
 
 export function parseArgs(argv: string[]): MigrateArgs {
@@ -64,6 +74,9 @@ export function parseArgs(argv: string[]): MigrateArgs {
     local: false,
     remote: false,
     delta: false,
+    visits: false,
+    locations: null,
+    env: null,
     ownHosts: [],
   };
   let yes = false;
@@ -79,6 +92,9 @@ export function parseArgs(argv: string[]): MigrateArgs {
     else if (arg === "--remote") args.remote = true;
     else if (arg === "--yes") yes = true;
     else if (arg === "--delta") args.delta = true;
+    else if (arg === "--visits") args.visits = true;
+    else if (arg === "--locations") args.locations = value(++i, arg);
+    else if (arg === "--env") args.env = value(++i, arg);
     else if (arg === "--from-json") args.fromJson = value(++i, arg);
     else if (arg === "--mongo-uri") args.mongoUri = value(++i, arg);
     else if (arg === "--mongo-db") args.mongoDb = value(++i, arg);
@@ -90,6 +106,7 @@ export function parseArgs(argv: string[]): MigrateArgs {
   if (args.fromJson !== null && args.mongoUri !== null) {
     throw new Error("Pass only one of --from-json or --mongo-uri");
   }
+  if (args.locations !== null && !args.visits) throw new Error("--locations needs --visits");
   if (args.local && args.remote) throw new Error("Pass exactly one of --local or --remote");
   if (!args.dryRun && !args.local && !args.remote) {
     throw new Error(`Pass exactly one of --local or --remote, or --dry-run.\n${USAGE}`);
@@ -108,12 +125,25 @@ export interface MainDeps {
   wrangler: string;
   exists: (path: string) => boolean;
   spawn: (command: string[], env: Record<string, string | undefined>) => Promise<number>;
-  readMongo: (uri: string, db: string | undefined) => Promise<unknown[]>;
+  readMongo: (
+    uri: string,
+    db: string | undefined,
+    collection: "links" | "locations",
+  ) => Promise<unknown[]>;
   /** wrangler.jsonc text, or null when there is none. */
   readConfig: () => string | null;
 }
 
-async function readMongo(uri: string, db: string | undefined): Promise<unknown[]> {
+const PROJECTIONS = {
+  links: { _id: 1, full: 1, expire: 1, secretKey: 1, visits: 1, visitsLocation: 1 },
+  locations: { _id: 1, lat: 1, lon: 1 },
+};
+
+async function readMongo(
+  uri: string,
+  db: string | undefined,
+  collection: "links" | "locations",
+): Promise<unknown[]> {
   // Loaded only here, so the tests and --from-json runs do not need the driver.
   const { MongoClient } = await import("mongodb");
   const client = new MongoClient(uri);
@@ -121,8 +151,8 @@ async function readMongo(uri: string, db: string | undefined): Promise<unknown[]
     await client.connect();
     return await client
       .db(db)
-      .collection("links")
-      .find({}, { projection: { _id: 1, full: 1, expire: 1, secretKey: 1 } })
+      .collection(collection)
+      .find({}, { projection: PROJECTIONS[collection] })
       .sort({ _id: 1 })
       .toArray();
   } finally {
@@ -196,32 +226,65 @@ function summary(report: MigrationReport): string[] {
   ];
 }
 
-async function loadDocs(args: MigrateArgs, deps: MainDeps): Promise<unknown[]> {
+function readJsonArray(path: string, flag: string): unknown[] {
+  const docs: unknown = JSON.parse(readFileSync(path, "utf8"));
+  if (!Array.isArray(docs)) throw new Error(`${flag} expects a JSON array (--jsonArray)`);
+  return docs;
+}
+
+async function loadDocs(
+  args: MigrateArgs,
+  deps: MainDeps,
+  collection: "links" | "locations",
+): Promise<unknown[]> {
   if (args.fromJson !== null) {
-    const docs: unknown = JSON.parse(readFileSync(args.fromJson, "utf8"));
-    if (!Array.isArray(docs)) throw new Error("--from-json expects a JSON array (--jsonArray)");
-    return docs;
+    if (collection === "links") return readJsonArray(args.fromJson, "--from-json");
+    const path = args.locations ?? join(dirname(args.fromJson), "locations.json");
+    if (!deps.exists(path)) {
+      throw new Error(`--visits needs the locations export: ${path} not found, pass --locations`);
+    }
+    return readJsonArray(path, "--locations");
+  }
+  if (args.locations !== null && collection === "locations") {
+    return readJsonArray(args.locations, "--locations");
   }
   const uri = args.mongoUri ?? (deps.env.MONGODB_URI as string);
   try {
-    return await deps.readMongo(uri, args.mongoDb);
+    return await deps.readMongo(uri, args.mongoDb, collection);
   } catch (error) {
     throw new Error(`MongoDB read failed: ${redactUri(message(error), uri)}`);
   }
 }
 
-function writeOutput(out: string, files: string[], report: MigrationReport): string[] {
+function writeOutput(
+  out: string,
+  files: { prefix: string; sql: string[] }[],
+  report: MigrationReport | { visits: VisitReport },
+): string[] {
   mkdirSync(out, { recursive: true });
   for (const name of readdirSync(out)) {
     if (BATCH_FILE.test(name)) rmSync(join(out, name));
   }
-  const paths = files.map((sql, i) => {
-    const path = join(out, `links-${String(i + 1).padStart(4, "0")}.sql`);
-    writeFileSync(path, sql);
-    return path;
-  });
+  const paths = files.flatMap(({ prefix, sql }) =>
+    sql.map((text, i) => {
+      const path = join(out, `${prefix}-${String(i + 1).padStart(4, "0")}.sql`);
+      writeFileSync(path, text);
+      return path;
+    }),
+  );
   writeFileSync(join(out, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
   return paths;
+}
+
+function visitSummary(report: VisitReport): string[] {
+  const list = (items: string[]) => `${items.length} ${JSON.stringify(items)}`;
+  return [
+    `visits: ${report.visits} on ${report.links} link(s), ${report.rows} row(s) (planned; rows already imported, and links not in D1 with the same target and key, are skipped)`,
+    `visits without a location (unknown country): ${report.unknownVisits}`,
+    `unmapped country names: ${list(report.unmappedCountries)}`,
+    `locations missing coordinates: ${report.missingLocations.length}`,
+    `links with more located visits than visits: ${list(report.locatedOverTotal)}`,
+  ];
 }
 
 export async function main(argv: string[], deps: MainDeps = defaultDeps): Promise<number> {
@@ -263,15 +326,24 @@ export async function main(argv: string[], deps: MainDeps = defaultDeps): Promis
 
   let paths: string[];
   try {
-    const docs = await loadDocs(args, deps);
-    const { rows, report } = await transformLinks(docs, {
+    const docs = await loadDocs(args, deps, "links");
+    const { rows, report, sources } = await transformLinks(docs, {
       now: deps.now(),
       version,
       peppers: peppersFromEnv(deps.env),
       ownHosts,
     });
-    paths = writeOutput(args.out, buildSqlFiles(rows), report);
-    for (const line of summary(report)) deps.log(line);
+    if (args.visits) {
+      // Visits only: replaying the link SQL after the cutover would bring back deleted links.
+      const locations = parseLocations(await loadDocs(args, deps, "locations"));
+      const visits = transformVisits(rows, sources, locations);
+      const sql = buildVisitSqlFiles(visits.rows);
+      paths = writeOutput(args.out, [{ prefix: "visits", sql }], { visits: visits.report });
+      for (const line of visitSummary(visits.report)) deps.log(line);
+    } else {
+      paths = writeOutput(args.out, [{ prefix: "links", sql: buildSqlFiles(rows) }], report);
+      for (const line of summary(report)) deps.log(line);
+    }
     deps.log(`wrote ${paths.length} SQL file(s) and report.json to ${args.out}`);
   } catch (error) {
     deps.error(message(error));
@@ -289,6 +361,7 @@ export async function main(argv: string[], deps: MainDeps = defaultDeps): Promis
   for (const path of paths) {
     const target = args.local ? "--local" : "--remote";
     const command = [deps.wrangler, "d1", "execute", "DB", target, "--file", path];
+    if (args.env !== null) command.push("--env", args.env);
     let code: number;
     try {
       code = await deps.spawn(command, childEnv);
@@ -297,7 +370,7 @@ export async function main(argv: string[], deps: MainDeps = defaultDeps): Promis
       return 1;
     }
     if (code !== 0) {
-      deps.error(`wrangler failed on ${path}; re-running is safe (INSERT OR IGNORE)`);
+      deps.error(`wrangler failed on ${path}; re-running is safe (every statement is idempotent)`);
       return code;
     }
   }

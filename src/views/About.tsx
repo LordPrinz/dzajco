@@ -1,6 +1,10 @@
 import type { CountryStat } from "../db/queries";
+import { LOCALE } from "../shared/lang";
 import { countryName } from "../shared/stats";
+import { FeatureIcon, type FeatureIconName } from "./FeatureIcon";
+import { formatUtc } from "./format";
 import { Layout } from "./Layout";
+import { usePage } from "./page-context";
 
 export interface AboutStats {
   links: number;
@@ -10,118 +14,89 @@ export interface AboutStats {
   updatedAt: string | null;
 }
 
-const FEATURES = [
-  {
-    title: "Bez logowania",
-    text: "Żadnych kont. Skracasz link od razu, bez zakładania profilu.",
-  },
-  {
-    title: "Data wygaśnięcia",
-    text: "Ustaw, kiedy link ma przestać działać. Dobre do promocji i tymczasowych udostępnień.",
-  },
-  {
-    title: "Własne nazwy",
-    text: "Nadaj linkowi własną nazwę albo pozwól wygenerować krótki, unikalny identyfikator.",
-  },
-  {
-    title: "Ręczne usuwanie",
-    text: "Kluczem z momentu utworzenia usuniesz link, kiedy tylko zechcesz.",
-  },
-  {
-    title: "Licznik wejść",
-    text: "Zobacz, ile razy link został otwarty i z jakich krajów. Pełne dane, z miastami, widzi właściciel klucza.",
-  },
-  {
-    title: "Historia",
-    text: "Linki z tej przeglądarki wracają na liście, żeby łatwo je skopiować lub usunąć.",
-  },
-] as const;
+/** In display order; each name is also the key of the feature's text. */
+const FEATURES: readonly FeatureIconName[] = [
+  "login",
+  "expiry",
+  "name",
+  "delete",
+  "visitors",
+  "history",
+];
 
 const TOP = 8;
-const NUMBER = new Intl.NumberFormat("pl-PL");
-
-function formatUpdated(iso: string): string {
-  return new Date(iso).toLocaleString("pl-PL", {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "UTC",
-  });
-}
 
 export function About({ nonce, stats }: { nonce: string; stats: AboutStats }) {
+  const { lang, t } = usePage();
+  const locale = LOCALE[lang];
+  const number = new Intl.NumberFormat(locale);
   const top = [...stats.countries].sort((a, b) => b.visits - a.visits).slice(0, TOP);
 
   return (
-    <Layout nonce={nonce} title="O nas" styles={["pages.css"]}>
+    <Layout nonce={nonce} title={t.about.title} styles={["pages.css"]}>
       <article class="doc">
-        <h1 class="doc__title">
-          Dlaczego <span class="doc__accent">dzajco</span>
-        </h1>
-        <p class="doc__lead">
-          Prosty i szybki skracacz linków. Ma robić jedno: z długiego adresu zrobić krótki, który
-          działa tak długo, jak tego chcesz.
-        </p>
+        <h1 class="doc__title">{t.about.heading(<span class="doc__accent">dzajco</span>)}</h1>
+        <p class="doc__lead">{t.about.lead}</p>
 
         <ul class="features">
-          {FEATURES.map((feature) => (
+          {FEATURES.map((name) => (
             <li class="features__item">
-              <h2 class="features__title">{feature.title}</h2>
-              <p>{feature.text}</p>
+              <span class="features__badge">
+                <FeatureIcon name={name} />
+              </span>
+              <h2 class="features__title">{t.about.features[name].title}</h2>
+              <p>{t.about.features[name].text}</p>
             </li>
           ))}
         </ul>
 
         <section class="doc__section" aria-labelledby="global-stats">
-          <h2 id="global-stats">Serwis w liczbach</h2>
+          <h2 id="global-stats">{t.about.numbers}</h2>
           {stats.updatedAt === null ? (
-            <p>Statystyki pojawią się po pierwszym codziennym przeliczeniu.</p>
+            <p>{t.about.notYet}</p>
           ) : (
             <>
               <dl class="totals">
                 <div class="totals__item">
-                  <dt>Aktywnych linków</dt>
-                  <dd data-stat="links">{NUMBER.format(stats.links)}</dd>
+                  <dt>{t.about.links}</dt>
+                  <dd data-stat="links">{number.format(stats.links)}</dd>
                 </div>
                 <div class="totals__item">
-                  <dt>Wejść w aktywnych linkach</dt>
-                  <dd data-stat="visits">{NUMBER.format(stats.visits)}</dd>
+                  <dt>{t.about.visits}</dt>
+                  <dd data-stat="visits">{number.format(stats.visits)}</dd>
                 </div>
               </dl>
 
               {top.length > 0 && (
                 <>
-                  <h3 class="doc__subtitle">Kraje z największą liczbą wejść</h3>
+                  <h3 class="doc__subtitle">{t.about.topCountries}</h3>
                   <ol class="scoreboard">
                     {top.map((country) => (
                       <li class="scoreboard__item">
-                        <span class="scoreboard__name">{countryName(country.code)}</span>
-                        <span class="scoreboard__visits">{NUMBER.format(country.visits)}</span>
+                        <span class="scoreboard__name">{countryName(country.code, lang)}</span>
+                        <span class="scoreboard__visits">{number.format(country.visits)}</span>
                       </li>
                     ))}
                   </ol>
                 </>
               )}
               <p class="doc__note">
-                Zaktualizowano:{" "}
-                <time datetime={stats.updatedAt}>{formatUpdated(stats.updatedAt)} UTC</time>
+                {t.about.updated}{" "}
+                <time datetime={stats.updatedAt}>{formatUtc(stats.updatedAt, lang)}</time>
               </p>
             </>
           )}
-          <p class="doc__note">
-            Usunięte i wygasłe linki nie wchodzą do tych liczb, a razem z nimi znikają ich wejścia.
-          </p>
-          <p class="doc__note">
-            Liczby przelicza się raz na dobę, więc mogą się spóźniać nawet o około 24 godziny.
-          </p>
+          <p class="doc__note">{t.about.liveOnly}</p>
+          <p class="doc__note">{t.about.daily}</p>
         </section>
 
         <section class="doc__section" aria-labelledby="support">
-          <h2 id="support">Wesprzyj projekt</h2>
-          <p>Dzajco jest darmowe. Jeśli Ci się przydaje, możesz wesprzeć rozwój projektu.</p>
+          <h2 id="support">{t.about.support}</h2>
+          <p>{t.about.supportText}</p>
           <iframe
             class="sponsor"
             src="https://github.com/sponsors/LordPrinz/button"
-            title="Wesprzyj LordPrinz na GitHub Sponsors"
+            title={t.about.sponsor}
             width="114"
             height="32"
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"

@@ -1,22 +1,16 @@
 import type { CreateLinkResult } from "../services/links";
+import { formatUtc } from "./format";
 import { Header } from "./Header";
 import { Layout } from "./Layout";
+import { usePage } from "./page-context";
 import { ResultCard } from "./ResultCard";
 
 type Created = Extract<CreateLinkResult, { ok: true }>;
 
-function formatExpiry(iso: string | null): string | null {
-  if (iso === null) return null;
-  return `${new Date(iso).toLocaleString("pl-PL", {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "UTC",
-  })} UTC`;
-}
-
 export function Created({ nonce, link }: { nonce: string; link: Created }) {
+  const { lang, t } = usePage();
   return (
-    <Layout nonce={nonce} title="Link utworzony" scripts={["form.js"]}>
+    <Layout nonce={nonce} title={t.created.title} scripts={["form.js"]} settings={false}>
       <Header />
       <ResultCard
         id={link.id}
@@ -26,7 +20,7 @@ export function Created({ nonce, link }: { nonce: string; link: Created }) {
         host={link.host}
         isIdn={link.isIdn}
         expiresAt={link.expiresAt}
-        expiresLabel={formatExpiry(link.expiresAt)}
+        expiresLabel={link.expiresAt === null ? null : formatUtc(link.expiresAt, lang)}
       />
     </Layout>
   );

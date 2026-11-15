@@ -28,8 +28,8 @@ services:
 
   # Source database for the migration tests (T15). Only started with --profile migrate-test.
   mongo:
-    # mongo:7
-    image: mongo:7@sha256:9896df581dfd0718b7abe112f4c37598d0986c54060e4ec1384997e6503c8c71
+    # mongo:9
+    image: mongo:9@sha256:1444adda2e4b8d6a0d7f242a625d834a78d6e3aa6e4ed1b0b4c2dab2318c5e3d
     profiles: ["migrate-test"]
     ports:
       - "127.0.0.1:27017:27017"

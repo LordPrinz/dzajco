@@ -1,0 +1,78 @@
+name: Deploy dev
+
+# Every push to dev (a merged PR) deploys the dev Worker to https://test.dzaj.de.
+# Production is not deployed from CI.
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+# One deploy at a time; a running deploy is never cancelled half way through a migration.
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  HUSKY: "0"
+  CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV: "false"
+
+jobs:
+  deploy:
+    name: Deploy test.dzaj.de
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    environment:
+      name: dev
+      url: https://test.dzaj.de
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      # wrangler and workerd need Node.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.13.1
+      - run: bun install --frozen-lockfile
+      # The same checks as `deploy:dev`, before anything touches the dev database.
+      - run: bun run check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run test:worker
+      - run: bun run build:client
+      - run: bun run check:size
+      - name: Migrate the dev database
+        run: bun run db:migrate:dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deploy
+        run: bunx wrangler deploy --env dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # A new custom domain needs a few minutes for DNS and the certificate, so retry for up to 5 minutes.
+      # Cloudflare's bot protection may challenge runner IPs (403 with cf-mitigated); the Worker still
+      # answered behind it, so that counts as up. A 5xx or no answer fails the job.
+      - name: Smoke check
+        run: |
+          for i in $(seq 1 30); do
+            headers=$(curl -s -o /dev/null -D - https://test.dzaj.de/ || true)
+            code=$(printf '%s\n' "$headers" | awk 'NR==1 {print $2}')
+            if [ "$code" = 200 ]; then exit 0; fi
+            if [ "$code" = 403 ] && printf '%s\n' "$headers" | grep -qi '^cf-mitigated:'; then
+              echo "Cloudflare challenged the runner; the site is up."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "test.dzaj.de answered ${code:-nothing}"
+          printf '%s\n' "$headers"
+          exit 1

@@ -1,20 +1,27 @@
 // Daily cron steps. The cron fires hourly; a `meta` row per step remembers the last UTC day it
-// finished. Both steps wait until yesterday is closed (01:00 UTC). `deleteExpired` then runs no
-// matter what, so expired links do not pile up while Analytics Engine is failing. `global_stats`
-// also waits, when analytics is configured, until the rollup has written yesterday to D1.
+// finished. Both steps wait until yesterday is closed (01:00 UTC). The cleanup step (`deleteExpired`,
+// then `purgeDeletedLinks`) then runs no matter what, so expired links do not pile up while Analytics
+// Engine is failing. Expired links are dropped, not archived: only owner deletes go to
+// `deleted_links`. `global_stats` also waits, when analytics is configured, until the rollup has
+// written yesterday to D1.
 
 import { dayOf, isDayClosed } from "../analytics/day";
-import { deleteExpired, readCursor, recomputeGlobalStats } from "../db/queries";
+import { deleteExpired, purgeDeletedLinks, readCursor, recomputeGlobalStats } from "../db/queries";
 
-const EXPIRED_KEY = "daily_expired";
+// The stored marker keeps its old name, so a deploy does not repeat a cleanup that already ran today.
+const CLEANUP_KEY = "daily_expired";
 const GLOBAL_KEY = "daily_global_stats";
-export const EXPIRED_BATCH = 500;
-// One run deletes at most this many batches. The Free plan allows 50 subrequests per invocation. At
-// ROLLUP_MAX_PAGES = 20 the rollup uses 40 (20 SQL API fetches + 20 D1 batches) and the rest of the run
-// about 7 D1 queries (marker reads and writes, cursor read, global_stats), so 3 batches make 50.
-export const MAX_EXPIRED_BATCHES = 3;
+export const CLEANUP_BATCH = 500;
+// One run deletes at most this many batches: expired links get all but the last, and the archive purge
+// always gets the last one (plus any the expired links leave unused), so an expired backlog cannot hold
+// archive rows past their 30 days. The Free plan allows 50 subrequests per invocation. At
+// ROLLUP_MAX_PAGES = 20 the rollup uses 40 (20 SQL API fetches + 20 D1 batches) and the rest of the
+// run about 7 D1 queries (marker reads and writes, cursor read, global_stats), so 3 batches make 50.
+export const MAX_CLEANUP_BATCHES = 3;
 
 const DAY_MS = 86_400_000;
+/** How long `deleted_links` keeps a link deleted by its owner. */
+export const ARCHIVE_MS = 30 * DAY_MS;
 
 /**
  * Runs `step` unless the marker under `key` already says `today`. The marker is written after the step
@@ -49,12 +56,20 @@ export async function runDaily(
 ): Promise<{ expired: boolean; globalStats: boolean }> {
   const today = dayOf(now);
   if (!isDayClosed(dayOf(now - DAY_MS), now)) return { expired: false, globalStats: false };
-  const expired = await oncePerDay(db, EXPIRED_KEY, today, async () => {
-    for (let i = 0; i < MAX_EXPIRED_BATCHES; i++) {
-      if ((await deleteExpired(db, now, EXPIRED_BATCH)).length < EXPIRED_BATCH) return true;
+  const expired = await oncePerDay(db, CLEANUP_KEY, today, async () => {
+    let batches = 0;
+    let expiredDone = false;
+    while (!expiredDone && batches < MAX_CLEANUP_BATCHES - 1) {
+      batches++;
+      expiredDone = (await deleteExpired(db, now, CLEANUP_BATCH)).length < CLEANUP_BATCH;
     }
-    // Every batch was full, so more may be waiting.
-    return false;
+    let purgeDone = false;
+    while (!purgeDone && batches < MAX_CLEANUP_BATCHES) {
+      batches++;
+      purgeDone = (await purgeDeletedLinks(db, now - ARCHIVE_MS, CLEANUP_BATCH)) < CLEANUP_BATCH;
+    }
+    // A full last batch on either side means more may be waiting: the next hourly run continues.
+    return expiredDone && purgeDone;
   });
   if (analyticsConfigured) {
     const cursor = await readCursor(db);

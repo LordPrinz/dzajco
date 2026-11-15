@@ -6,6 +6,7 @@ import type { RollupCursor } from "../../src/analytics/ports";
 import { blockHost, insertLink } from "../../src/db/queries";
 import { hashSecret } from "../../src/domain/secret";
 import worker from "../../src/index";
+import { buildDeleteRequest } from "../../src/shared/history";
 import { FakeAe, type FakePoint } from "./fake-ae";
 
 const PEPPER = "stats-test-pepper";
@@ -233,6 +234,95 @@ describe("DELETE /api/v1/links/:id", () => {
     expect((await call(del(id, { authorization: `Bearer ${key}` }))).status).toBe(204);
     const row = await env.DB.prepare("SELECT 1 FROM link_stats WHERE link_id = ?").bind(id).first();
     expect(row).toBeNull();
+  });
+
+  it("archives the deleted link without its hash, with a visits summary", async () => {
+    const { id, key, createdAt } = await create("https://example.com/archived");
+    await addStats(id, [
+      { country: "PL", city: "Warsaw", visits: 3 },
+      { country: "PL", city: "Krakow", visits: 2 },
+      { country: "DE", city: "", visits: 1 },
+    ]);
+    const before = Date.now();
+    expect((await call(del(id, { authorization: `Bearer ${key}` }))).status).toBe(204);
+    const { results } = await env.DB.prepare("SELECT * FROM deleted_links WHERE id = ?")
+      .bind(id)
+      .all<Record<string, unknown>>();
+    expect(results).toHaveLength(1);
+    const row = results[0] as Record<string, unknown>;
+    expect(row).not.toHaveProperty("secret_hash");
+    expect(row).toMatchObject({
+      target: "https://example.com/archived",
+      target_host: "example.com",
+      expires_at: null,
+      created_at: createdAt,
+      is_custom: 0,
+      visits: 6,
+    });
+    expect(row.deleted_at).toBeGreaterThanOrEqual(before);
+    expect(JSON.parse(row.countries as string)).toEqual([
+      { code: "PL", visits: 5 },
+      { code: "DE", visits: 1 },
+    ]);
+    // The redirect answers as for any deleted link.
+    expect((await call(request(`/${id}`))).status).toBe(404);
+  });
+
+  it("archives a delete sent the way the history page sends it", async () => {
+    const { id, key } = await create();
+    const entry = {
+      id,
+      url: "https://example.com/stats",
+      expire: "",
+      createdAt: "",
+      secretKey: key,
+    };
+    const sent = buildDeleteRequest(entry);
+    expect(sent).not.toBeNull();
+    const res = await call(request(sent?.path ?? "", sent?.init));
+    expect(res.status).toBe(204);
+    const row = await env.DB.prepare("SELECT visits, countries FROM deleted_links WHERE id = ?")
+      .bind(id)
+      .first<{ visits: number; countries: string }>();
+    expect(row).toEqual({ visits: 0, countries: "[]" });
+  });
+
+  it("does not archive on a wrong key", async () => {
+    const { id } = await create();
+    expect((await call(del(id, { authorization: `Bearer ${WRONG_KEY}` }))).status).toBe(403);
+    const row = await env.DB.prepare("SELECT 1 FROM deleted_links WHERE id = ?").bind(id).first();
+    expect(row).toBeNull();
+  });
+
+  it("frees the name at once: the same custom name can be created and deleted again", async () => {
+    const name = `reuse${Date.now().toString(36)}`;
+    const make = async (url: string) => {
+      const res = await call(
+        request("/api/v1/links", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ url, customName: name }),
+        }),
+      );
+      expect(res.status).toBe(201);
+      return ((await res.json()) as { secretKey: string }).secretKey;
+    };
+    const first = await make("https://example.com/first");
+    expect((await call(del(name, { authorization: `Bearer ${first}` }))).status).toBe(204);
+    const second = await make("https://example.com/second");
+    const redirect = await call(request(`/${name}`));
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get("location")).toBe("https://example.com/second");
+    expect((await call(del(name, { authorization: `Bearer ${second}` }))).status).toBe(204);
+    const { results } = await env.DB.prepare(
+      "SELECT target FROM deleted_links WHERE id = ? ORDER BY rowid",
+    )
+      .bind(name)
+      .all<{ target: string }>();
+    expect(results.map((r) => r.target)).toEqual([
+      "https://example.com/first",
+      "https://example.com/second",
+    ]);
   });
 
   it("does not answer a cross-origin preflight for DELETE", async () => {

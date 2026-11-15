@@ -148,7 +148,12 @@ function readTarget(value: unknown): TargetResult {
 export async function transformLinks(
   docs: Iterable<unknown>,
   options: TransformOptions,
-): Promise<{ rows: LinkRow[]; report: MigrationReport }> {
+): Promise<{
+  rows: LinkRow[];
+  report: MigrationReport;
+  /** The v2 document of each row, by row id (the visit import reads its counters). */
+  sources: Map<string, Record<string, unknown>>;
+}> {
   if (!options.peppers[options.version]) {
     throw new Error(`Missing secret pepper for version ${options.version}`);
   }
@@ -168,6 +173,7 @@ export async function transformLinks(
     policyFlags: [],
   };
   const rows: LinkRow[] = [];
+  const sources = new Map<string, Record<string, unknown>>();
   const seen = new Set<string>();
   const invalid = (id: string, reason: InvalidReason) => report.invalid.push({ id, reason });
 
@@ -220,6 +226,7 @@ export async function transformLinks(
       createdAt: options.now,
       isCustom: !isRandomId(id),
     });
+    sources.set(id, doc as Record<string, unknown>);
     if (hasKey) report.legacyKeys += 1;
     if (target.schemeAdded) report.schemeAdded.push(id);
     if (encoder.encode(id).length > NAME_MAX_BYTES) report.overlongIds.push(id);
@@ -231,7 +238,7 @@ export async function transformLinks(
   report.insertedIds = rows.map((row) => row.id);
   report.skippedExpired = report.expiredIds.length;
   report.skippedInvalid = report.invalid.length;
-  return { rows, report };
+  return { rows, report, sources };
 }
 
 function sqlInteger(value: number | null): string {

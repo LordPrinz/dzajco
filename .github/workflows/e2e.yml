@@ -3,7 +3,7 @@ name: E2E
 on:
   pull_request:
   push:
-    branches: [v3.0]
+    branches: [main, dev]
 
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}
@@ -30,7 +30,7 @@ jobs:
           bun-version: 1.4.4
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.3
+          node-version: 26.13.1
       - run: bun install --frozen-lockfile
       - run: bun run build:client
       - run: bunx playwright install --with-deps chromium

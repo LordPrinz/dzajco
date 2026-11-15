@@ -15,6 +15,7 @@ import {
   LINK_RECORD_SQL,
   ownerStats,
   publicStats,
+  purgeDeletedLinks,
   readCursor,
   recomputeGlobalStats,
   upsertStatsBatch,
@@ -50,6 +51,7 @@ beforeEach(async () => {
   await db.batch([
     db.prepare("DELETE FROM link_stats"),
     db.prepare("DELETE FROM links"),
+    db.prepare("DELETE FROM deleted_links"),
     db.prepare("DELETE FROM blocked_hosts"),
     db.prepare("DELETE FROM meta"),
     db.prepare("DELETE FROM global_stats"),
@@ -248,6 +250,65 @@ describe("deleteLink", () => {
     expect(await deleteLink(db, "gone", async (h) => h.startsWith("v1:"))).toBe("deleted");
     expect(await count("links", "id = 'gone'")).toBe(0);
     expect(await count("link_stats", "link_id = 'gone'")).toBe(0);
+  });
+
+  it("copies the link, without its hash, and its stats summary to deleted_links", async () => {
+    await insertLink(db, link("arch", { expiresAt: NOW + 99, isCustom: true }));
+    await upsertStatsBatch(
+      db,
+      [row("arch", "PL", "Warsaw", 3), row("arch", "DE", "", 4), row("arch", "PL", "", 1)],
+      null,
+      { day: "2026-11-13", offset: 3 },
+    );
+    expect(await deleteLink(db, "arch", async () => true, NOW + 7)).toBe("deleted");
+    const archived = await db
+      .prepare("SELECT * FROM deleted_links WHERE id = 'arch'")
+      .first<Record<string, unknown>>();
+    expect(archived).toEqual({
+      id: "arch",
+      target: "https://example.com/a",
+      target_host: "example.com",
+      expires_at: NOW + 99,
+      created_at: NOW,
+      is_custom: 1,
+      deleted_at: NOW + 7,
+      visits: 8,
+      countries: JSON.stringify([
+        { code: "DE", visits: 4 },
+        { code: "PL", visits: 4 },
+      ]),
+    });
+  });
+
+  it("archives nothing when the hash changes between verify and delete", async () => {
+    await insertLink(db, link("race2"));
+    const result = await deleteLink(db, "race2", async () => {
+      await db.prepare("UPDATE links SET secret_hash = 'v1:other' WHERE id = 'race2'").run();
+      return true;
+    });
+    expect(result).toBe("forbidden");
+    expect(await count("links", "id = 'race2'")).toBe(1);
+    expect(await count("deleted_links", "id = 'race2'")).toBe(0);
+  });
+});
+
+describe("purgeDeletedLinks", () => {
+  it("removes rows with deleted_at before the cutoff, oldest first, at most limit", async () => {
+    await db.batch(
+      [NOW - 30, NOW - 20, NOW - 10, NOW, NOW + 5].map((deletedAt, i) =>
+        db
+          .prepare(
+            `INSERT INTO deleted_links (id, target, target_host, expires_at, created_at, is_custom,
+               deleted_at, visits, countries) VALUES ('same', ?, 'example.com', NULL, 0, 0, ?, 0, '[]')`,
+          )
+          .bind(`https://example.com/${i}`, deletedAt),
+      ),
+    );
+    expect(await purgeDeletedLinks(db, NOW, 2)).toBe(2);
+    expect(await count("deleted_links", `deleted_at < ${NOW - 10}`)).toBe(0);
+    expect(await purgeDeletedLinks(db, NOW, 500)).toBe(1);
+    expect(await purgeDeletedLinks(db, NOW, 500)).toBe(0);
+    expect(await count("deleted_links")).toBe(2);
   });
 });
 

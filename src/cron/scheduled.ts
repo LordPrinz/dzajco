@@ -1,4 +1,4 @@
-import { AeVisitSource } from "../analytics/ae-source";
+import { createVisitSource } from "../analytics/ae-source";
 import { runDaily } from "./daily";
 import { d1RollupStore, parseMaxPages, runRollup } from "./rollup";
 
@@ -16,7 +16,7 @@ export async function runScheduled(env: Cloudflare.Env, now: number): Promise<vo
     try {
       const result = await runRollup({
         store: d1RollupStore(env.DB),
-        source: new AeVisitSource({ accountId: env.CF_ACCOUNT_ID, token: env.CF_AE_TOKEN }),
+        source: createVisitSource(env),
         now,
         maxPages: parseMaxPages(env.ROLLUP_MAX_PAGES),
       });

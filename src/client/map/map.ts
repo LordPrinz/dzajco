@@ -32,6 +32,7 @@
 
 import { circleMarker, latLngBounds, map, tileLayer } from "leaflet";
 import { type CityRow, countryName } from "../../shared/stats";
+import { pageLang } from "../lib/lang";
 
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION =
@@ -69,7 +70,7 @@ export async function showMap(container: HTMLElement, cities: readonly CityRow[]
     const at: [number, number] = [city.lat, city.lon];
     points.push(at);
     const popup = document.createElement("span");
-    popup.textContent = `${city.city}, ${countryName(city.country)}: ${city.visits}`;
+    popup.textContent = `${city.city}, ${countryName(city.country, pageLang())}: ${city.visits}`;
     circleMarker(at, {
       radius: radiusFor(city.visits),
       color: "#a66a02",

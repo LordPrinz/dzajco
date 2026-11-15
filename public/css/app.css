@@ -22,7 +22,8 @@
     U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Tokens: the v2 "jajco" yolk scale on cool grays. */
+/* Tokens: the v2 "jajco" yolk scale on cool grays. Every pair used for text meets WCAG AA (4.5:1)
+   in both themes; check new ones before adding them. */
 :root {
   --jajco-50: #fffee7;
   --jajco-100: #fffec1;
@@ -40,16 +41,22 @@
   --heading: #1f2937;
   --line: #d7d7d7;
   --accent: var(--jajco-500);
+  /* Yellow for large text on the light background: 3.6:1, enough for large text under WCAG AA. */
+  --accent-text: #b07a00;
   --on-accent: var(--jajco-950);
-  --link: var(--jajco-700);
+  /* A shade under jajco-700, which is 4.3:1 on --bg and too light for text. */
+  --link: #935c02;
+  --icon: var(--jajco-700);
+  --icon-bg: var(--jajco-50);
   --scrollbar: #d1d5db;
   --shadow: 0 1px 3px rgb(0 0 0 / 0.1), 0 1px 2px rgb(0 0 0 / 0.06);
-  --focus: var(--jajco-700);
+  --focus: var(--link);
   --danger-bg: #fef2f2;
   --danger-text: #991b1b;
   --warn-bg: var(--jajco-50);
   --warn-line: var(--jajco-600);
   --warn-text: var(--jajco-950);
+  --map-tiles: none;
 
   --font: "Open Sans", Lato, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -57,8 +64,39 @@
   color-scheme: light dark;
 }
 
+/* The theme switch sets `data-theme` on <html>; without it the system setting decides. The dark
+   tokens are listed twice because a media query cannot share a rule with a plain selector. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --accent-text: var(--jajco-500);
+  --bg: #14110b;
+  --surface: #211c12;
+  --text: #f3f0e6;
+  --text-muted: #a8a290;
+  --heading: #fbf7e4;
+  --line: #3a3322;
+  --link: var(--jajco-400);
+  --icon: var(--jajco-500);
+  --icon-bg: #33270a;
+  --scrollbar: #4a412b;
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
+  --focus: var(--jajco-400);
+  --danger-bg: #3b1414;
+  --danger-text: #fecaca;
+  --warn-bg: #33270a;
+  --warn-line: var(--jajco-600);
+  --warn-text: var(--jajco-100);
+  /* OpenStreetMap only has light tiles; inverting them keeps the hues and fits the dark page. */
+  --map-tiles: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.5);
+  color-scheme: dark;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    --accent-text: var(--jajco-500);
     --bg: #14110b;
     --surface: #211c12;
     --text: #f3f0e6;
@@ -66,6 +104,8 @@
     --heading: #fbf7e4;
     --line: #3a3322;
     --link: var(--jajco-400);
+    --icon: var(--jajco-500);
+    --icon-bg: #33270a;
     --scrollbar: #4a412b;
     --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
     --focus: var(--jajco-400);
@@ -74,6 +114,9 @@
     --warn-bg: #33270a;
     --warn-line: var(--jajco-600);
     --warn-text: var(--jajco-100);
+    /* OpenStreetMap only has light tiles; inverting them keeps the hues and fits the dark page. */
+    --map-tiles: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.5);
+    color-scheme: dark;
   }
 }
 
@@ -102,8 +145,10 @@ html {
 
 body {
   margin: 0;
-  min-height: 100vh;
-  padding-bottom: 4rem;
+  display: flex;
+  flex-direction: column;
+  /* The visible viewport on phones, so a short page shows the footer without scrolling. */
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: var(--font);
   color: var(--text);
@@ -112,8 +157,8 @@ body {
 }
 
 ::selection {
-  background: var(--jajco-500);
-  color: var(--jajco-50);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 ::-webkit-scrollbar {
@@ -144,18 +189,88 @@ body {
   border: 0;
 }
 
+/* Top bar with the page settings, right-aligned above the content. */
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: min(100% - 2 * var(--gutter), 70rem);
+  margin-inline: auto;
+  padding-top: 0.875rem;
+}
+
+.switch {
+  margin: 0;
+}
+
+.switch__group {
+  display: flex;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0.1875rem;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.switch__option {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.switch__option:hover {
+  color: var(--text);
+}
+
+.switch__option[aria-pressed="true"] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.switch__option:focus-visible {
+  outline-offset: 0;
+}
+
+.switch__option--text {
+  width: auto;
+  min-width: 2.25rem;
+  padding-inline: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.switch__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 /* Layout: one centred column, as wide as the v2 eight-column grid. */
 .page {
   width: min(100% - 2 * var(--gutter), 70rem);
+  flex: 1 0 auto;
   margin-inline: auto;
-  padding-bottom: 4rem;
+  padding-bottom: 3rem;
 }
 
 .hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-block: 4rem 0.75rem;
+  padding-block: 2.5rem 0.75rem;
   text-align: center;
 }
 
@@ -177,6 +292,8 @@ body {
 /* Inputs: the v2 pill. */
 .input {
   width: 100%;
+  /* One height for every input, the date picker included (its inner fields add their own padding). */
+  block-size: 3.5rem;
   padding: 1rem 1.5rem;
   border: 0;
   border-radius: 9999px;
@@ -190,8 +307,36 @@ body {
   color: var(--text-muted);
 }
 
+.input::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.input::-webkit-date-and-time-value {
+  text-align: start;
+}
+
+/* Autofill would paint the browser's own background and text colours over the theme. */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow:
+    inset 0 0 0 100vmax var(--surface),
+    var(--shadow);
+  transition: background-color 600000s 0s;
+}
+
+/* Rings hug the control instead of the global 2px gap. */
+.input:focus-visible,
+.expiry__select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+
 .input[aria-invalid="true"] {
   outline: 2px solid var(--danger-text);
+  outline-offset: 0;
 }
 
 .shorten,
@@ -201,20 +346,25 @@ body {
   padding: 0.25rem;
 }
 
+/* v2 form: the round right end of the input lies over the button, which is rounded on the right only. */
 .pill {
+  --pill-overlap: 2.5rem;
   display: flex;
   align-items: stretch;
 }
 
 .pill__input {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
 }
 
 .pill__submit {
-  padding: 0 1.5rem 0 1.75rem;
+  position: relative;
+  flex: none;
+  margin-inline-start: calc(-1 * var(--pill-overlap));
+  padding: 0 1.75rem 0 calc(var(--pill-overlap) + 1.5rem);
   border: 0;
   border-start-end-radius: 9999px;
   border-end-end-radius: 9999px;
@@ -227,8 +377,24 @@ body {
   transition: background-color 0.15s ease;
 }
 
+/* An inset ring follows the button's own corners and stays inside it. */
+.pill__submit:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 3px var(--accent),
+    inset 0 0 0 5px var(--on-accent),
+    var(--shadow);
+}
+
 .pill__submit:hover {
   background: var(--jajco-400);
+}
+
+.pill__submit:hover:focus-visible {
+  box-shadow:
+    inset 0 0 0 3px var(--jajco-400),
+    inset 0 0 0 5px var(--on-accent),
+    var(--shadow);
 }
 
 .pill__submit:disabled {
@@ -272,35 +438,59 @@ body {
   margin-top: 0.5rem;
 }
 
+/* One control: the select fills the row and the label sits on its left end, so a click on the
+   label opens the list and the focus ring goes round both. */
 .expiry {
-  display: flex;
-  align-items: stretch;
+  --expiry-label: 7.5rem;
+  position: relative;
+  display: grid;
 }
 
 .expiry__label {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
-  padding: 0 1.5rem;
+  justify-content: center;
+  width: var(--expiry-label);
   border-start-start-radius: 9999px;
   border-end-start-radius: 9999px;
   font-weight: 600;
   color: var(--on-accent);
   background: var(--accent);
-  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+/* Own chevron, kept clear of the right end; the native one sits in the corner. */
+.expiry::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 1.5rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-inline-end: 2px solid var(--text);
+  border-block-end: 2px solid var(--text);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
 }
 
 .expiry__select {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  padding: 0.75rem 1rem;
+  block-size: 3.5rem;
+  appearance: none;
+  padding: 0 3rem 0 calc(var(--expiry-label) + 1rem);
   border: 0;
-  border-start-end-radius: 9999px;
-  border-end-end-radius: 9999px;
+  border-radius: 9999px;
   font: inherit;
   font-size: 0.875rem;
   color: var(--text);
   background: var(--surface);
   box-shadow: var(--shadow);
+  cursor: pointer;
 }
 
 .hint {
@@ -310,7 +500,7 @@ body {
 }
 
 .error {
-  margin: 0 0 1rem;
+  margin: 0.75rem 0 0;
   padding: 0.75rem 1.25rem;
   border-radius: 0.75rem;
   font-size: 0.9375rem;
@@ -358,6 +548,47 @@ body {
 
 .result p {
   margin: 0;
+}
+
+.result__link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--bg);
+}
+
+.result__short {
+  flex: 1 1 14rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  color: var(--link);
+}
+
+.result__short:hover {
+  text-decoration: underline;
+}
+
+.result__share {
+  display: flex;
+  flex: 0 1 auto;
+  gap: 0.5rem;
+}
+
+.result__copy {
+  min-width: 7rem;
+}
+
+.result__again {
+  align-self: center;
+  margin-inline-start: 0.5rem;
+  font-weight: 600;
 }
 
 .result__target,
@@ -420,6 +651,21 @@ body {
   background: var(--surface);
 }
 
+/* The key once it is saved to History: still there to copy, no longer a warning. */
+.notice--quiet {
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.notice--quiet .notice__title {
+  color: var(--text);
+}
+
+.notice--quiet .copy-row__value {
+  background: var(--surface);
+}
+
 .notice--idn {
   color: var(--danger-text);
   background: var(--danger-bg);
@@ -447,7 +693,9 @@ body {
   transition: background-color 0.15s ease;
 }
 
+/* Border and fill change together, so the hover state has no ring of the old colour. */
 .button:hover {
+  border-color: var(--jajco-400);
   background: var(--jajco-400);
 }
 
@@ -464,14 +712,10 @@ a {
   color: var(--link);
 }
 
-/* Footer: fixed bar like v2. */
+/* Footer: at the end of the page, so it never covers content. */
 .footer {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: 50;
-  padding: 0.5rem 0.25rem;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: blur(6px);
+  padding: 0.75rem 0.25rem 1rem;
+  border-top: 1px solid var(--line);
 }
 
 .footer__list {
@@ -509,9 +753,110 @@ a {
   color: var(--link);
 }
 
+/* Toasts: stacked at the bottom of the viewport, newest last. */
+.toasts {
+  position: fixed;
+  inset: auto 0 1rem;
+  z-index: 60;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0 var(--gutter);
+  pointer-events: none;
+}
+
+.toasts__region {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.toasts__region:empty {
+  display: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(100%, 28rem);
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-inline-start: 4px solid var(--toast-mark);
+  border-radius: 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow:
+    0 10px 25px -5px rgb(0 0 0 / 0.18),
+    0 4px 10px -4px rgb(0 0 0 / 0.12);
+  pointer-events: auto;
+  animation: toast-in 0.2s ease-out;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.toast--success {
+  --toast-mark: var(--accent);
+}
+
+.toast--info {
+  --toast-mark: var(--text-muted);
+}
+
+.toast--error {
+  --toast-mark: var(--danger-text);
+  border-color: color-mix(in srgb, var(--danger-text) 25%, transparent);
+  border-inline-start-color: var(--toast-mark);
+  color: var(--danger-text);
+  background: var(--danger-bg);
+}
+
+.toast--leaving {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
+.toast__message {
+  flex: 1;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.toast__close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.toast__close:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
 @media (max-width: 30rem) {
   .hero {
-    padding-top: 2.5rem;
+    padding-top: 1.5rem;
   }
 
   .hero__title {
@@ -522,12 +867,25 @@ a {
     font-size: 1.0625rem;
   }
 
+  .pill {
+    --pill-overlap: 1.75rem;
+  }
+
   .pill__submit {
-    padding-inline: 1rem 1.25rem;
+    padding-inline: calc(var(--pill-overlap) + 1rem) 1.25rem;
   }
 
   .copy-row {
     flex-wrap: wrap;
+  }
+
+  .result__short {
+    font-size: 1.5rem;
+  }
+
+  .result__share,
+  .result__share .button {
+    flex: 1 1 auto;
   }
 }
 
@@ -537,5 +895,7 @@ a {
     transition: none !important;
     /* biome-ignore lint/complexity/noImportantStyles: reduced motion must override every component scroll behavior */
     scroll-behavior: auto !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must override every component animation */
+    animation: none !important;
   }
 }

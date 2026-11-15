@@ -19,7 +19,7 @@
 }
 
 .doc__accent {
-  color: var(--link);
+  color: var(--accent-text);
 }
 
 .doc__lead {
@@ -138,6 +138,7 @@
 }
 
 .button--danger:hover {
+  border-color: var(--danger-text);
   color: var(--danger-bg);
   background: var(--danger-text);
 }
@@ -148,21 +149,43 @@
 }
 
 /* About */
-.features {
+.doc .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
   gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.features__item {
+/* Icon on the left, title and text beside it, as in the v2 "why Dzajco" section. The `.doc` prefix beats
+   the generic `.doc ul` and `.doc li` spacing. */
+.doc .features__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1rem;
+  align-content: start;
   margin: 0;
   padding: 1.25rem;
   border-radius: 0.75rem;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.features__badge {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  color: var(--icon);
+  background: var(--icon-bg);
+}
+
+.features__icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .features__title {
@@ -309,6 +332,13 @@
   overflow-wrap: anywhere;
 }
 
+/* Status codes stay whole on phones instead of breaking into "20" and "1". */
+.table .table__status {
+  width: 1%;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
 .table th {
   font-weight: 600;
   color: var(--heading);
@@ -332,13 +362,30 @@
   overflow-wrap: normal;
 }
 
-/* 404 and 410 */
-.result--center {
+/* Dead-link pages: what happened, then the shorten form. */
+.dead-link {
+  max-width: 48rem;
+  margin: 2rem auto 0;
   text-align: center;
 }
 
-.result--center .result__actions {
-  justify-content: center;
+.dead-link__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  color: var(--heading);
+}
+
+.dead-link p {
+  margin: 0.25rem 0;
+}
+
+.dead-link__message {
+  color: var(--text-muted);
+}
+
+.dead-link .dead-link__cta {
+  margin-top: 1.5rem;
+  font-weight: 600;
 }
 
 @media (max-width: 30rem) {

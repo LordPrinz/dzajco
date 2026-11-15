@@ -275,6 +275,69 @@ describe("AeVisitSource row mapping", () => {
   });
 });
 
+describe("dataset name", () => {
+  it("defaults to dzajco_visits and takes another name from the argument", () => {
+    expect(buildDayQuery("2026-11-13", 0, 1)).toContain("FROM dzajco_visits\n");
+    expect(buildDayQuery("2026-11-13", 0, 1, "dzajco_visits_dev")).toContain(
+      "FROM dzajco_visits_dev\n",
+    );
+    expect(buildSinceQuery("2026-11-13", 0, 1, "dzajco_visits_dev")).toContain(
+      "FROM dzajco_visits_dev\n",
+    );
+  });
+
+  it.each([
+    "",
+    "Dzajco",
+    "a-b",
+    "a b",
+    "visits; DROP TABLE x",
+    "visits--",
+    "visits`",
+    "a".repeat(65),
+  ])("refuses the name %j", (name) => {
+    expect(() => buildDayQuery("2026-11-13", 0, 1, name)).toThrow("Invalid AE_DATASET");
+    expect(() => buildSinceQuery("2026-11-13", 0, 1, name)).toThrow("Invalid AE_DATASET");
+    expect(() => new AeVisitSource({ accountId: ACCOUNT, token: "t", dataset: name })).toThrow(
+      "Invalid AE_DATASET",
+    );
+  });
+
+  it("queries the configured dataset", async () => {
+    let body: unknown;
+    const fetcher: Fetcher = async (_url, init) => {
+      body = init.body;
+      return new Response(JSON.stringify({ data: [] }));
+    };
+    const source = createVisitSource(
+      { CF_ACCOUNT_ID: ACCOUNT, CF_AE_TOKEN: "t", AE_DATASET: "dzajco_visits_dev" },
+      fetcher,
+    );
+    await source.queryDay("2026-11-13", 0, 500);
+    expect(body).toBe(buildDayQuery("2026-11-13", 0, 500, "dzajco_visits_dev"));
+  });
+
+  it("falls back to the default dataset for an empty AE_DATASET", async () => {
+    let body: unknown;
+    const fetcher: Fetcher = async (_url, init) => {
+      body = init.body;
+      return new Response(JSON.stringify({ data: [] }));
+    };
+    const source = createVisitSource(
+      { CF_ACCOUNT_ID: ACCOUNT, CF_AE_TOKEN: "t", AE_DATASET: "" },
+      fetcher,
+    );
+    await source.queryDay("2026-11-13", 0, 500);
+    expect(body).toBe(buildDayQuery("2026-11-13", 0, 500));
+  });
+
+  it("refuses a bad AE_DATASET from the environment", () => {
+    expect(() =>
+      createVisitSource({ CF_ACCOUNT_ID: ACCOUNT, CF_AE_TOKEN: "t", AE_DATASET: "x; y" }),
+    ).toThrow("Invalid AE_DATASET");
+  });
+});
+
 describe("createVisitSource", () => {
   it("uses the local source without a token or account id", () => {
     expect(createVisitSource({ CF_ACCOUNT_ID: ACCOUNT, CF_AE_TOKEN: "" })).toBeInstanceOf(

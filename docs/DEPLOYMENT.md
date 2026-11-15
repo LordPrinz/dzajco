@@ -1,6 +1,6 @@
 # Deployment
 
-How to set up, deploy, migrate to and operate dzajco on Cloudflare. Deploys are manual: nothing in CI runs `wrangler deploy`.
+How to set up, deploy, migrate to and operate dzajco on Cloudflare. Production deploys run from CI on every push to `main` (see section 4). The dev environment on `test.dzaj.de` is deployed by CI on every push to `dev` (see "Dev environment").
 
 Commands use the project's own wrangler (`bunx wrangler` or `./node_modules/.bin/wrangler`). Replace `<...>` placeholders with your values.
 
@@ -39,8 +39,8 @@ The `dzajco_visits` dataset is created by the first write. There is nothing to r
 ```sh
 openssl rand -base64 32          # generate once, store in a password manager
 read -rs SECRET_PEPPER_V1 && export SECRET_PEPPER_V1   # paste the pepper, no echo
-printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1
-bunx wrangler secret put CF_AE_TOKEN                   # prompts for the value
+printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1 --env=""
+bunx wrangler secret put CF_AE_TOKEN --env=""         # prompts for the value
 ```
 
 Never put a secret value on a command line (`VAR=value cmd`): it lands in shell history and the process list. Keep `SECRET_PEPPER_V1` exported in this shell only for the import in section 5, which needs the same value.
@@ -116,6 +116,22 @@ The options available on the Free plan (periods, durations, characteristics) cha
 
 ## 4. Deploy
 
+Production deploys run from CI. Every push to `main` starts `.github/workflows/deploy-prod.yml`, which waits until the owner approves the GitHub environment `production`. After approval it runs the same checks as `deploy`, then `db:migrate:remote`, then `wrangler deploy --env="" --var PUBLIC_ORIGIN:https://dzaj.de`. There is no smoke check yet, because `dzaj.de` still points to the old site until the DNS switch. One deploy runs at a time and a running one is not cancelled.
+
+A release is a PR from `dev` to `main`, merged as a merge commit. The `release` ruleset allows only that merge method on `main`, and `trunk` keeps feature PRs into `dev` squash-only.
+
+Set the environment up once. In the repository settings, create the environment `production` and add the owner as required reviewer. Then add its two secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`: the account id from `wrangler.jsonc`.
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare Workers" template with _Account: D1: Edit_ added, limited to this account and the `dzaj.de` zone.
+
+```sh
+gh secret set CLOUDFLARE_ACCOUNT_ID --env production --repo LordPrinz/dzajco
+gh secret set CLOUDFLARE_API_TOKEN --env production --repo LordPrinz/dzajco   # prompts for the value
+```
+
+The manual deploy stays as a fallback, for example when CI is down:
+
 ```sh
 bun run db:migrate:remote
 PUBLIC_ORIGIN=https://dzaj.de bun run deploy
@@ -129,6 +145,55 @@ Watch live logs:
 ```sh
 bunx wrangler tail
 ```
+
+### Dev environment (test.dzaj.de)
+
+Branch flow: feature branches merge into `dev` (squash), `dev` is deployed to `https://test.dzaj.de`, and `dev` goes to `main` (production, `dzaj.de`) through a PR merged as a merge commit.
+
+The dev environment is `env.dev` in `wrangler.jsonc`: Worker `dzajco-dev`, custom domain `test.dzaj.de`, its own D1 database `dzajco-dev`, Analytics Engine dataset `dzajco_visits_dev` and rate limit namespaces `2001` to `2004`. `workers_dev` and `preview_urls` are off, and the hourly cron runs.
+
+Wrangler does not inherit bindings or vars into an environment, so `env.dev` repeats them.
+
+`AE_DATASET` names the dataset the SQL queries read. It is set to `dzajco_visits_dev` in `env.dev` and left out of the top-level `vars`, where the Worker falls back to `dzajco_visits`. An empty value also falls back to the default.
+
+The name must match `^[a-z0-9_]{1,64}$`; anything else makes the query builder throw before any SQL is built. Keep it equal to the `dataset` of the `VISITS` binding of the same environment.
+
+One-time setup, with a Cloudflare account that has `dzaj.de` as an active zone:
+
+```sh
+printf '%s' "$SECRET_PEPPER_V1" | bunx wrangler secret put SECRET_PEPPER_V1 --env dev
+bunx wrangler secret put CF_AE_TOKEN --env dev     # prompts for the value
+```
+
+Use a pepper of its own for dev, not the production one. Create a separate `CF_AE_TOKEN` for dev too (_Account Analytics: Read_), so it can be revoked on its own. Analytics Engine tokens are account-wide, so a dev token can read the production dataset; keep it out of anything shared.
+
+The `dzajco-dev` database already exists and is empty. The custom domain and its DNS record are created by the first deploy, because the route in `wrangler.jsonc` has `custom_domain: true`. The `dzajco_visits_dev` dataset appears after the first redirect.
+
+Deploy, always migrating first:
+
+```sh
+bun run db:migrate:dev
+bun run deploy:dev
+```
+
+- `db:migrate:dev` runs `wrangler d1 migrations apply DB --remote --env dev`.
+- `deploy:dev` runs the same checks as `deploy`, then `wrangler deploy --env dev`. `PUBLIC_ORIGIN` comes from `env.dev`, so nothing needs to be exported.
+- `bun run deploy` (production) passes `--env=""` so wrangler targets the top-level config now that `env.dev` exists.
+- Check the result with `bunx wrangler deploy --env dev --dry-run`; it lists the dev bindings.
+
+Every push to `dev` runs `.github/workflows/deploy-dev.yml`. It runs the same checks as `deploy:dev`, then `db:migrate:dev`, then `wrangler deploy --env dev`, and finally requests `https://test.dzaj.de/`. One deploy runs at a time and a running one is not cancelled. The commands above stay for a manual deploy.
+
+The workflow uses the GitHub environment `dev` with two secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`: the account id from `wrangler.jsonc`.
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare Workers" template with _Account: D1: Edit_ added, limited to this account and the `dzaj.de` zone.
+
+```sh
+gh secret set CLOUDFLARE_ACCOUNT_ID --env dev --repo LordPrinz/dzajco
+gh secret set CLOUDFLARE_API_TOKEN --env dev --repo LordPrinz/dzajco   # prompts for the value
+```
+
+The first deploy moves `test.dzaj.de` to `dzajco-dev`. If the production Worker still has that domain, remove it there first (Workers & Pages, `dzajco`, Settings, Domains & Routes).
 
 ### Post-deploy checks
 
@@ -175,8 +240,11 @@ The v2 data lives in MongoDB. The importer (`bun run migrate:mongo`) reads it an
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | MongoDB        | `MONGODB_URI` in the environment (preferred). `--mongo-uri` also works but lands in shell history, and the importer warns about it. Optional `--mongo-db <name>`. |
 | JSON export    | `--from-json <file>`, a `mongoexport --jsonArray` file. It contains the plaintext v2 secret keys: delete it after the import.                                     |
+| Locations      | Only for `--visits`. The `locations` collection: read from MongoDB, or `locations.json` next to the `--from-json` file, or `--locations <file>`.                  |
 | Pepper         | `SECRET_PEPPER_V1` in the environment, the same value as the Worker secret. Never written to files or logs.                                                       |
 | Pepper version | Taken from `SECRET_PEPPER_VERSION` in `wrangler.jsonc` vars, unless `SECRET_PEPPER_VERSION` is exported.                                                          |
+
+Keep the Mongo exports (`links.json`, `locations.json`) outside the repository tree, so they cannot end up in a commit.
 
 Export the secrets into the shell without echo (the pepper as in section 2):
 
@@ -193,6 +261,9 @@ read -rs MONGODB_URI && export MONGODB_URI
 | `--yes`                | Required with `--remote`. It is a guard, not a prompt.                                                                           |
 | `--delta`              | The same idempotent run (`INSERT OR IGNORE`), for links created since the last run. v2 edits and deletions are not carried over. |
 | `--own-host <host>`    | Repeatable. Hosts treated as your own for the policy flags. Default: the host of `PUBLIC_ORIGIN`.                                |
+| `--visits`             | Import only the v2 visit counters (`visits-NNNN.sql`), no links. Run it after the link import. See "Visit counters".             |
+| `--locations <file>`   | The `locations` export for `--visits`, when it is not `locations.json` next to the `--from-json` file.                           |
+| `--env <name>`         | Wrangler environment of the target database, for example `dev` for the dev D1.                                                   |
 
 ### Report
 
@@ -209,6 +280,7 @@ read -rs MONGODB_URI && export MONGODB_URI
 | `legacyKeys`         | Links imported with a legacy secret key.                                                                                      |
 | `policyFlags`        | Targets that are private, own-host or shortener URLs. They are imported but flagged. Block them with `admin:block` if needed. |
 | `schemeAdded`        | v2 targets that started with `www.` and got `https://`.                                                                       |
+| `visits`             | Only with `--visits` (then the only field): planned visits, unknown-country visits, unmapped names, over-located links.       |
 
 ### Steps
 
@@ -242,7 +314,33 @@ read -rs MONGODB_URI && export MONGODB_URI
 
 6. Switch the route. Remove the domain from the Vercel project (or point the DNS record away from Vercel) and attach it to the Worker as a custom domain (section 2). If the zone is already on Cloudflare, this is a DNS and route change only.
 7. Keep the Vercel deployment up for rollback until you trust the new site (at least a few days). Disconnect the Vercel Git integration afterwards so it stops building.
-8. Run the delta once more after the switch if v2 could still have received writes during DNS propagation. Delete any JSON export.
+8. Run the delta once more after the switch if v2 could still have received writes during DNS propagation.
+9. Import the visit counters with a separate `--visits` run once v2 gets no more visits (see below). Then delete any JSON export.
+
+### Visit counters
+
+The link import leaves every link at zero visits. A separate run with `--visits` carries the v2 counters over: `visits` and `visitsLocation` of each imported link, with country, city and coordinates from the `locations` collection. It writes and runs only `visits-NNNN.sql`. It never replays the link import, which after the cutover would bring back links that owners deleted or that were taken down.
+
+The v2 country name becomes its ISO code. Visits whose country name is not in the table, and visits that `visitsLocation` does not cover, go to the unknown-country row (`??`, the same row the rollup uses); the report lists the unmapped names. When the located visits add up to more than `visits` (32 links in the 2026-11-10 export), the located sum is imported.
+
+Each row is written through the `v2_visit_import` ledger (migration 0003, apply it first; DESIGN.md explains the design). A row is added only if D1 holds the link with the same id, target and key hash, and only once. What that guarantees:
+
+- A second run adds nothing, and the `visits-NNNN.sql` files are safe to re-run after a failure.
+- After the cutover, visits counted by v3 stay in `link_stats` and the v2 visits are added on top, once.
+- A link that is not in D1 yet is skipped without a ledger row, so a later run still imports it.
+- A link whose id now belongs to someone else (other target or other key) is skipped. A link that was deleted after its visits were imported does not get them again if it comes back.
+- Each link and place is imported once, so v2 visits counted after the run are never added. Run it after the DNS switch.
+
+The key hash must match, so run with the same `SECRET_PEPPER_VERSION` and pepper as the link import. The planned totals in the report and the summary count every imported v2 link; links that the guard skips (id taken, target or key differs, link deleted) are in the plan but get no rows. Compare `SUM(visits)` in `link_stats` before and after the run to see what was added.
+
+```sh
+bun run migrate:mongo --from-json ../backup/links.json --visits --dry-run              # review report.json
+bun run migrate:mongo --from-json ../backup/links.json --visits --local                # rehearse locally
+bun run migrate:mongo --from-json ../backup/links.json --visits --remote --yes --env dev   # rehearse on dzajco-dev
+bun run migrate:mongo --from-json ../backup/links.json --visits --remote --yes
+```
+
+With `--from-json` the importer reads `locations.json` from the same directory; export it with `mongoexport --collection locations --jsonArray`. Public and owner stats show the v2 visits right away; the global numbers on the About page after the next daily recompute.
 
 ## 6. Rollback
 
@@ -281,7 +379,7 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
 
    ```sh
    openssl rand -base64 32
-   bunx wrangler secret put SECRET_PEPPER_V2
+   bunx wrangler secret put SECRET_PEPPER_V2 --env=""
    ```
 
 2. Set `SECRET_PEPPER_VERSION` to `"2"` in `wrangler.jsonc` and run `bun run deploy`.
@@ -300,9 +398,19 @@ Stored secret keys carry their pepper version (`v<n>:<hex>`). To rotate:
 
   Add `--dry-run` to print the SQL without running it. Cached copies of a deleted link can still redirect for up to 60 seconds.
 
-- Abuse reports arrive at `ABUSE_EMAIL`. Block the host or delete the link, then reply.
+- Look up a link its owner deleted. Deleted links stay in the `deleted_links` table for 30 days (the daily cron purges older rows), with the target, dates and a visits summary, but not the secret hash:
+
+  ```sh
+  bun run admin:deleted --remote              # the 50 most recent deletes
+  bun run admin:deleted <id> --remote         # every archived copy of one id
+  bun run admin:deleted --env dev --remote --limit 200
+  ```
+
+  It only reads. Expired links and links removed with `admin:block link` are not archived.
+
+- Abuse reports arrive at `ABUSE_EMAIL`. Block the host or delete the link, then reply. If the owner already deleted it, `admin:deleted <id>` shows where it pointed.
 - Logs: `bunx wrangler tail`, or Observability in the dashboard (enabled in `wrangler.jsonc`). The Worker does not log the `Authorization` header, form bodies or create responses. Cloudflare's own invocation logs record request details; the rehearsal checklist checks that they do not keep the `Authorization` value. Client IPs appear only in Cloudflare's own logs (request logs and Workers Logs metadata); the app never writes them.
-- Dependency updates: Dependabot opens weekly PRs (Bun, GitHub Actions, Docker) against `v3.0`. Merge them after CI passes, then redeploy manually.
+- Dependency updates: Dependabot opens weekly PRs (Bun, GitHub Actions, Docker) against `dev`. Merge them after CI passes, then redeploy manually.
 
 ## 10. Rehearsal checklist
 
@@ -338,6 +446,8 @@ Migration
 - [ ] Real import done, counts match the report
 - [ ] A migrated link redirects and deletes with its original v2 secret key
 - [ ] `--delta` rerun inserts nothing new
+- [ ] `--visits --remote --yes --env dev` rehearsed on the dev D1 (`dzajco-dev`): `link_stats` gets rows, and a second run leaves `SUM(visits)` unchanged
+- [ ] `--visits` run after the DNS switch; the stats of a busy migrated link show its v2 visits, and a second run leaves them as they are
 - [ ] D1 bookmark noted before the import; `time-travel restore` tried on the rehearsal database
 
 Rollback and ops
@@ -345,4 +455,5 @@ Rollback and ops
 - [ ] `wrangler rollback` tested on a deliberate no-op version
 - [ ] Pepper rotation tried (V2 added, version bumped, old link still verifies)
 - [ ] `bun run admin:block host <host> --remote` and `unblock` tried
+- [ ] A link deleted with its key shows up in `bun run admin:deleted --remote`
 - [ ] Production cutover plan agreed: DNS switch time, delta run, Vercel kept for rollback

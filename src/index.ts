@@ -8,6 +8,7 @@ import { siteExtras } from "./middleware/site-extras";
 import { apiRoutes } from "./routes/api";
 import { infoPageRoutes } from "./routes/info-pages";
 import { pageRoutes } from "./routes/pages";
+import { prefsRoutes } from "./routes/prefs";
 import { redirectRoutes } from "./routes/redirect";
 import { statsRoutes } from "./routes/stats";
 import { statsPageRoutes } from "./routes/stats-page";
@@ -22,6 +23,7 @@ app.get("/healthz", (c) => c.json({ ok: true }));
 app.route("/api/v1", apiRoutes());
 app.route("/api/v1", statsRoutes());
 app.route("/", pageRoutes());
+app.route("/", prefsRoutes());
 app.route("/", infoPageRoutes());
 app.route("/", statsPageRoutes());
 
