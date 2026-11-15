@@ -34,7 +34,7 @@ export class FakeAe {
 
   #run(sql: string) {
     if (!sql.includes("SUM(_sample_interval)")) throw new Error("query must sum _sample_interval");
-    if (!sql.includes("GROUP BY index1, blob1, blob2, blob3"))
+    if (!sql.includes("GROUP BY linkId, country, city, createdAt"))
       throw new Error("query must group by blob3");
     const weighted = "sumIf(double1 * _sample_interval, (double1 != 0 OR double2 != 0))";
     if (!sql.includes(weighted)) throw new Error("query must average only points with coordinates");

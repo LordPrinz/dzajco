@@ -130,7 +130,7 @@ describe("rollup cron", () => {
     ae.points = groups("a", PAGE_SIZE + 200);
 
     await rollup(CLOSED, 1);
-    expect(ae.queries[0]).toContain("ORDER BY index1, blob1, blob2");
+    expect(ae.queries[0]).toContain("ORDER BY linkId, country, city, createdAt");
     expect(ae.queries[0]).toContain("LIMIT 500 OFFSET 0");
     expect(await readCursor(db)).toEqual({ day: D, offset: 500 });
     expect(await d1Total()).toBe(500);

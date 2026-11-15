@@ -155,8 +155,8 @@ Replace `$ORIGIN` with your `PUBLIC_ORIGIN`.
      --data "SELECT index1 AS linkId, blob1 AS country, blob2 AS city, SUM(_sample_interval) AS visits
    FROM dzajco_visits
    WHERE timestamp >= toDateTime('<YYYY-MM-DD> 00:00:00') AND timestamp < toDateTime('<YYYY-MM-DD+1> 00:00:00')
-   GROUP BY index1, blob1, blob2
-   ORDER BY index1, blob1, blob2
+   GROUP BY linkId, country, city
+   ORDER BY linkId, country, city
    LIMIT 10
    FORMAT JSON"
    ```

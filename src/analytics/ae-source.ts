@@ -33,14 +33,16 @@ function buildQuery(where: string, offset: number, limit: number): string {
   checkInt("limit", limit, 1, MAX_LIMIT);
   // The SQL API runs in Etc/UTC, so toDateTime of a bare date-time is UTC midnight. Coordinates are
   // the sample-weighted mean over points that have them; with none the division gives NaN (-> null).
+  // GROUP BY and ORDER BY use the aliases: Analytics Engine answers 422 ("unable to find type of
+  // column") when an aliased column is named by its raw name there.
   const mean = (col: string) =>
     `sumIf(${col} * _sample_interval, ${HAS_COORDS}) / sumIf(_sample_interval, ${HAS_COORDS})`;
   return `SELECT index1 AS linkId, blob1 AS country, blob2 AS city, blob3 AS createdAt,
   SUM(_sample_interval) AS visits, ${mean("double1")} AS lat, ${mean("double2")} AS lon
 FROM ${DATASET}
 WHERE ${where}
-GROUP BY index1, blob1, blob2, blob3
-ORDER BY index1, blob1, blob2, blob3
+GROUP BY linkId, country, city, createdAt
+ORDER BY linkId, country, city, createdAt
 LIMIT ${limit} OFFSET ${offset}
 FORMAT JSON`;
 }
@@ -145,8 +147,11 @@ export class AeVisitSource implements VisitSource {
       signal: AbortSignal.timeout(this.#timeoutMs),
     });
     if (!res.ok) {
-      await res.body?.cancel();
-      throw new Error(`Analytics Engine SQL API returned ${res.status}`);
+      // The body is Cloudflare's error text (for example which column it rejected), never a credential.
+      const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").trim().slice(0, 200);
+      throw new Error(
+        `Analytics Engine SQL API returned ${res.status}${detail === "" ? "" : `: ${detail}`}`,
+      );
     }
     return parseRows(await res.json());
   }
