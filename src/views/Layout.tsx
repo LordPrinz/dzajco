@@ -78,13 +78,18 @@ export function Layout({
         ))}
       </head>
       <body>
+        <a class="skip-link" href="#main">
+          {t.nav.skip}
+        </a>
         {settings && (
           <header class="topbar">
             <LangSwitch />
             <ThemeSwitch />
           </header>
         )}
-        <main class="page">{children}</main>
+        <main class="page" id="main" tabindex={-1}>
+          {children}
+        </main>
         <footer class="footer">
           <nav aria-label={t.nav.footer}>
             <ul class="footer__list">

@@ -77,6 +77,9 @@ describe("GET /", () => {
     expect(html).toContain(`property="og:image" content="${env.PUBLIC_ORIGIN}/img/og.jpg"`);
     expect(html).not.toMatch(/<details class="options"[^>]*\bopen\b/);
     expect(html).toContain('<form class="shorten"');
+    expect(html).toMatch(/<body>\s*<a class="skip-link" href="#main">Przejdź do treści<\/a>/);
+    expect(html).toContain('<main class="page" id="main" tabindex="-1">');
+    expect(html).toMatch(/<input[^>]*id="customName"[^>]*maxlength="32"/);
 
     const nonce = /nonce-([^';\s]+)/.exec(res.headers.get("content-security-policy") ?? "")?.[1];
     expect(nonce).toBeTruthy();

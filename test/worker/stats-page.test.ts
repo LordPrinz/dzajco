@@ -111,6 +111,7 @@ describe("GET /:id/stats", () => {
     expect(html).toContain("Nie ma jeszcze kliknięć");
     expect(html).toContain("nigdy");
     expect(html).not.toContain('class="counter__value"');
+    expect(html.match(/data-copy="shortUrl"/g)).toHaveLength(1);
   });
 
   it("returns the same numbers and no cities from the JSON endpoint without a key", async () => {

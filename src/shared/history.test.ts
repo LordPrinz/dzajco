@@ -1,9 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import {
+  addOutcome,
   buildDeleteRequest,
   canDelete,
   deleteOutcome,
+  entryFromLink,
   isExpired,
+  isLinkId,
   MAX_RENDERED,
   newestFirst,
   parseHistory,
@@ -12,6 +15,7 @@ import {
   statsPath,
   upsertEntry,
   visibleEntries,
+  withKey,
 } from "./history";
 
 // What v2 and the v3 form write to localStorage: createdAt is a Date serialised to ISO.
@@ -185,5 +189,88 @@ describe("upsertEntry", () => {
 
   it("appends an entry with a new id", () => {
     expect(upsertEntry([old], { ...fresh, id: "next" })).toHaveLength(2);
+  });
+});
+
+describe("adding a link with its key", () => {
+  it("maps the stats answer to an outcome", () => {
+    expect(addOutcome(200)).toBe("ok");
+    expect(addOutcome(403)).toBe("key_rejected");
+    expect(addOutcome(404)).toBe("not_found");
+    expect(addOutcome(410)).toBe("not_found");
+    expect(addOutcome(429)).toBe("rate_limited");
+    expect(addOutcome(0)).toBe("failed");
+    expect(addOutcome(500)).toBe("failed");
+  });
+
+  it("sets the key on an entry that is already there and keeps the rest", () => {
+    const readOnly = {
+      id: "abcd",
+      url: "https://example.com",
+      expire: "never",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    };
+    const other = { ...readOnly, id: "other" };
+    expect(withKey([readOnly, other], "abcd", "k")).toEqual([
+      { ...readOnly, secretKey: "k" },
+      other,
+    ]);
+  });
+
+  it("has nothing to update when the link is not in the history", () => {
+    expect(withKey([], "abcd", "k")).toBeNull();
+  });
+
+  it("builds an entry from the link details", () => {
+    expect(
+      entryFromLink(
+        {
+          id: "abcd",
+          url: "https://example.com/",
+          expiresAt: "2099-01-01T00:00:00.000Z",
+          createdAt: "2026-11-01T10:00:00.000Z",
+        },
+        "abcd",
+        "k",
+      ),
+    ).toEqual({
+      id: "abcd",
+      url: "https://example.com/",
+      expire: "2099-01-01T00:00:00.000Z",
+      createdAt: "2026-11-01T10:00:00.000Z",
+      secretKey: "k",
+    });
+  });
+
+  it("reads a missing expiry as never and a missing date as unknown", () => {
+    expect(
+      entryFromLink({ id: "abcd", url: "https://example.com/", expiresAt: null }, "abcd", "k"),
+    ).toEqual(expect.objectContaining({ expire: "never", createdAt: "" }));
+  });
+
+  it("rejects a body that is not a link", () => {
+    expect(entryFromLink(null, "abcd", "k")).toBeNull();
+    expect(entryFromLink({ error: { code: "not_found" } }, "abcd", "k")).toBeNull();
+    expect(entryFromLink({ id: "abcd", url: 5 }, "abcd", "k")).toBeNull();
+  });
+
+  it("rejects a link other than the one whose key was checked", () => {
+    expect(entryFromLink({ id: "other", url: "https://example.com/" }, "abcd", "k")).toBeNull();
+    // The checked code is NFC; a decomposed id in the body does not match it.
+    expect(entryFromLink({ id: "zółw", url: "https://example.com/" }, "zółw", "k")).toBeNull();
+  });
+
+  it("accepts only codes that can name a link", () => {
+    expect(isLinkId("abc123")).toBe(true);
+    expect(isLinkId("moje linki")).toBe(true);
+    expect(isLinkId("zażółć")).toBe(true);
+    expect(isLinkId("")).toBe(false);
+    expect(isLinkId(".")).toBe(false);
+    expect(isLinkId("..")).toBe(false);
+    expect(isLinkId("a/b")).toBe(false);
+    expect(isLinkId("a​b")).toBe(false);
+    expect(isLinkId("a\nb")).toBe(false);
+    expect(isLinkId("x".repeat(64))).toBe(true);
+    expect(isLinkId("x".repeat(65))).toBe(false);
   });
 });

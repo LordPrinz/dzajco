@@ -91,9 +91,6 @@ export function Stats(props: StatsProps) {
               <div class="stats__zero">
                 <p class="stats__zero-title">{t.stats.noClicks}</p>
                 <p class="stats__empty">{t.stats.noClicksHint}</p>
-                <button type="button" class="button" data-copy="shortUrl" hidden>
-                  {t.common.copy.button}
-                </button>
               </div>
             ) : (
               <p class="counter">

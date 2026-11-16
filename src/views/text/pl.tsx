@@ -24,6 +24,7 @@ const api: ApiText = {
   input: "Wejście.",
   status: "Status",
   body: "Treść",
+  responses: "Odpowiedzi",
   code: "Kod",
   meaning: "Znaczenie",
   route: "Trasa",
@@ -47,7 +48,7 @@ const api: ApiText = {
       summary: "Zwraca adres docelowy linku bez przekierowania.",
       input: "Brak.",
       responses: {
-        200: "{ id, url, expiresAt }",
+        200: "{ id, url, expiresAt, createdAt }",
         404: "not_found",
         410: "expired albo link_disabled",
         429: "rate_limited",
@@ -180,7 +181,7 @@ const api: ApiText = {
     v1: "Endpoint w v1",
     changes: "Co się zmieniło",
     rows: [
-      "Odpowiedź { id, url, expiresAt } zamiast { fullLink }.",
+      "Odpowiedź { id, url, expiresAt, createdAt } zamiast { fullLink }.",
       "Odpowiedź { visits, countries, partial }. Miasta (cities) tylko z kluczem. Strona /:id/info przekierowuje (301) na /:id/stats.",
       "Pole expire to teraz expiresAt (ISO 8601 lub null). Odpowiedź 201: { id, shortUrl, url, secretKey, expiresAt }, bez message. Błędy walidacji mają status 400 zamiast 422, zajęta nazwa 409. Wymagany Content-Type: application/json.",
       "Klucz idzie w nagłówku Authorization: Bearer <klucz>, nie w ciele { secretKey } i nigdy w adresie. Sukces to 204 bez treści.",
@@ -208,6 +209,7 @@ export const pl = {
     api: "API",
     privacy: "Prywatność",
     footer: "Nawigacja w stopce",
+    skip: "Przejdź do treści",
   },
   settings: {
     theme: "Motyw",
@@ -288,12 +290,18 @@ export const pl = {
   history: {
     title: "Historia",
     heading: "Historia linków",
-    lead: "Linki utworzone w tej przeglądarce. Lista jest zapisana tylko tutaj, na Twoim urządzeniu.",
-    loading: "Wczytywanie historii…",
+    lead: "Linki utworzone albo dodane w tej przeglądarce. Lista jest zapisana tylko tutaj, na Twoim urządzeniu.",
     noscript: "Historia wymaga włączonego JavaScriptu.",
     empty: "Brak zapisanych linków.",
     emptyLink: "Skróć pierwszy link",
     note: "Usunąć można tylko linki zapisane razem z kluczem. Wpisy bez klucza są tylko do odczytu.",
+    add: {
+      heading: "Dodaj link z kluczem",
+      lead: "Link utworzony na innym urządzeniu? Wklej go z kluczem do zarządzania. Sprawdzimy klucz i zapiszemy link w tej przeglądarce.",
+      codeLabel: "Krótki link albo kod",
+      keyLabel: "Klucz do zarządzania",
+      submit: "Dodaj link",
+    },
   },
   stats: {
     title: (id: string) => `Statystyki ${id}`,
@@ -312,7 +320,7 @@ export const pl = {
     noClicks: "Nie ma jeszcze kliknięć",
     noClicksHint: "Udostępnij link i zajrzyj tu później.",
     ownerHint:
-      "Miasta i mapa są widoczne tylko w przeglądarce, w której utworzono link (potrzebny jest klucz z historii).",
+      "Miasta i mapa są widoczne tylko w przeglądarce, która ma klucz tego linku w Historii. Na innym urządzeniu dodaj link z kluczem na stronie Historia.",
   },
   about: {
     title: "O nas",
@@ -411,8 +419,10 @@ export const pl = {
           Lista Twoich linków, razem z kluczami do ich usuwania, jest zapisana w pamięci lokalnej
           przeglądarki (localStorage, klucz <code>links-history</code>). Mieszka tylko na Twoim
           urządzeniu i nie trafia na nasz serwer. Wyczyszczenie danych przeglądarki usuwa ją
-          bezpowrotnie. Do usunięcia linku potrzebny jest klucz, więc zapisz go osobno, jeśli chcesz
-          mieć dostęp z innego urządzenia.
+          bezpowrotnie. Do usunięcia linku i zobaczenia miast potrzebny jest klucz. Zapisz go
+          osobno, jeśli chcesz mieć dostęp z innego urządzenia: tam dodasz link z kluczem na stronie
+          Historia. Gdy usuwasz link, oglądasz jego miasta albo go dodajesz, klucz trafia na serwer
+          tylko w nagłówku, do sprawdzenia; lista zostaje w tej przeglądarce.
         </>
       ),
     },

@@ -43,7 +43,7 @@ export const pl = {
   toastClose: "Zamknij",
   savedKey: {
     title: "Klucz do zarządzania",
-    text: "Zapisany w Historii tej przeglądarki. Skopiuj go, jeśli chcesz usunąć link albo widzieć miasta na innym urządzeniu.",
+    text: "Zapisany w Historii tej przeglądarki. Skopiuj go, żeby dodać link do Historii na innym urządzeniu. Tam też go usuniesz i zobaczysz miasta.",
   },
   form: {
     sending: "Skracanie…",
@@ -62,7 +62,21 @@ export const pl = {
     deleted: (id: string) => `Usunięto link ${id}`,
     rateLimited: "Za dużo żądań. Spróbuj ponownie za minutę.",
     keyRejected: "Ten klucz nie pasuje do linku.",
+    confirmTitle: "Usunąć link?",
+    confirmBody: (short: string) =>
+      `Link ${short} zostanie usunięty razem ze statystykami. Tego nie da się cofnąć.`,
+    cancel: "Anuluj",
     deleteFailed: "Nie udało się usunąć linku. Spróbuj ponownie.",
+    adding: "Sprawdzanie klucza…",
+    added: (id: string) => `Dodano link ${id}`,
+    keyUpdated: (id: string) => `Zapisano klucz linku ${id}`,
+    addErrors: {
+      empty_code: "Wpisz krótki link albo jego kod.",
+      key_rejected: "Ten klucz nie pasuje do linku.",
+      not_found: "Nie ma takiego linku albo już wygasł.",
+      rate_limited: "Za dużo żądań. Spróbuj ponownie za minutę.",
+      failed: "Nie udało się sprawdzić klucza. Spróbuj ponownie.",
+    },
   },
 };
 

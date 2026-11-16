@@ -1,3 +1,4 @@
+import { NAME_MAX_LENGTH } from "../domain/ids";
 import { CUSTOM_EXPIRY, EXPIRY_PRESETS, errorText, FIELD_OF_ERROR } from "../shared/form";
 import { usePage } from "./page-context";
 import { ResultCard } from "./ResultCard";
@@ -86,7 +87,7 @@ export function Shorten({ values = EMPTY_VALUES, error }: ShortenProps) {
               autocomplete="off"
               autocapitalize="off"
               spellcheck={false}
-              maxlength={128}
+              maxlength={NAME_MAX_LENGTH}
               placeholder={t.home.customName}
               value={values.customName}
               aria-invalid={field === "customName" ? "true" : undefined}

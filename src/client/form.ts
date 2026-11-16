@@ -13,9 +13,10 @@ import {
   normalizeUrlInput,
 } from "../shared/form";
 import { upsertEntry } from "../shared/history";
-import { withoutProtocol } from "../shared/short-url";
+import { codeFromInput, withoutProtocol } from "../shared/short-url";
 import { enableCopy } from "./lib/copy";
 import { pageLocale, pageText } from "./lib/lang";
+import { formatLocal } from "./lib/local-time";
 import { dismissAll, REANNOUNCE_MS, toast } from "./lib/toast";
 
 const text = pageText();
@@ -113,10 +114,7 @@ function showResult(
   const time = card.querySelector<HTMLTimeElement>("time");
   if (expiry && time && link.expiresAt) {
     time.dateTime = link.expiresAt;
-    time.textContent = new Date(link.expiresAt).toLocaleString(pageLocale(), {
-      dateStyle: "long",
-      timeStyle: "short",
-    });
+    time.textContent = formatLocal(link.expiresAt, pageLocale());
     expiry.hidden = false;
   }
   const stats = card.querySelector<HTMLAnchorElement>('[data-field="stats"]');
@@ -261,17 +259,6 @@ function setupResultPage(section: HTMLElement): void {
   }
   enableCopy(section);
   enableShare(section);
-}
-
-function codeFromInput(input: string): string {
-  const value = input.trim();
-  if (!URL.canParse(value)) return value;
-  const segment = new URL(value).pathname.split("/")[1] ?? "";
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return segment;
-  }
 }
 
 function setupLookup(form: HTMLFormElement): void {
