@@ -26,16 +26,5 @@ services:
       retries: 30
       start_period: 20s
 
-  # Source database for the migration tests (T15). Only started with --profile migrate-test.
-  mongo:
-    # mongo:9
-    image: mongo:9@sha256:1444adda2e4b8d6a0d7f242a625d834a78d6e3aa6e4ed1b0b4c2dab2318c5e3d
-    profiles: ["migrate-test"]
-    ports:
-      - "127.0.0.1:27017:27017"
-    volumes:
-      - mongo-data:/data/db
-
 volumes:
   d1-state:
-  mongo-data:

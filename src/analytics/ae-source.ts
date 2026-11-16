@@ -11,11 +11,11 @@ const MAX_LIMIT = 10_000;
 /** The sink writes `doubles: []` without coordinates, which reads back as 0, 0. */
 const HAS_COORDS = "(double1 != 0 OR double2 != 0)";
 /** Anything but a two-character code like `PL`, `T1` (Tor) or `XX` is stored as `??` (the sink writes `''` when unknown). */
-export const UNKNOWN_COUNTRY = "??";
+const UNKNOWN_COUNTRY = "??";
 const SINCE_PAGE_SIZE = 10_000;
 /** Fresh reads stop here and fail instead of returning a silently truncated result. */
 export const MAX_FRESH_PAGES = 5;
-export const MAX_CITY_LENGTH = 100;
+const MAX_CITY_LENGTH = 100;
 
 function checkInt(name: string, value: number, min: number, max: number): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < min || value > max) {

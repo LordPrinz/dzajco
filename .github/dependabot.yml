@@ -34,12 +34,3 @@ updates:
     commit-message:
       prefix: "[DZAJ-15] build"
       include: scope
-
-  - package-ecosystem: docker-compose
-    directory: /infra
-    target-branch: dev
-    schedule:
-      interval: weekly
-    commit-message:
-      prefix: "[DZAJ-15] build"
-      include: scope

@@ -34,7 +34,7 @@ export interface RoadmapTask {
 }
 
 const TASK_ID = /^T\d+(?:\.\d+)?[a-z]?$/;
-const AREA_OF_SCOPE: Record<string, Area> = { ci: "infra", deps: "infra" };
+const AREA_OF_SCOPE: Record<string, Area> = { ci: "infra", deps: "infra", migrate: "infra" };
 const TYPE_LABEL: Record<string, string> = {
   feat: "type:feature",
   fix: "type:bug",
