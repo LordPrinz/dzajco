@@ -25,7 +25,6 @@ export const COMMIT_SCOPES = [
   "db",
   "stats",
   "ui",
-  "migrate",
   "infra",
   "ci",
   "docs",

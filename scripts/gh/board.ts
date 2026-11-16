@@ -9,17 +9,7 @@ import {
 
 export const PROJECT_TITLE = "Dzajco";
 
-export const AREAS = [
-  "core",
-  "web",
-  "api",
-  "db",
-  "stats",
-  "ui",
-  "migrate",
-  "infra",
-  "docs",
-] as const;
+export const AREAS = ["core", "web", "api", "db", "stats", "ui", "infra", "docs"] as const;
 export type Area = (typeof AREAS)[number];
 
 export const LABELS = [
@@ -34,7 +24,6 @@ export const LABELS = [
   { name: "area:db", color: "f9a8d4", description: "D1 schema and queries" },
   { name: "area:stats", color: "1abc9c", description: "Visit analytics and rollups" },
   { name: "area:ui", color: "fef2c0", description: "Server-rendered UI" },
-  { name: "area:migrate", color: "d93f0b", description: "Mongo to D1 migration" },
   { name: "area:infra", color: "e99695", description: "CI/CD, deployment, tooling" },
   { name: "area:docs", color: "bfdadc", description: "DESIGN.md, ADRs" },
   { name: "priority:P0", color: "b60205", description: "Blocks other work" },
@@ -80,7 +69,6 @@ export const SELECT_FIELDS: Record<string, Option[]> = {
     areaOption("DB", "db", "PINK"),
     areaOption("Stats", "stats", "BLUE"),
     areaOption("UI", "ui", "YELLOW"),
-    areaOption("Migrate", "migrate", "ORANGE"),
     areaOption("Infra", "infra", "ORANGE"),
     areaOption("Docs", "docs", "GRAY"),
   ],

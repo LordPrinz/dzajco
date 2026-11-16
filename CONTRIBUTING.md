@@ -57,9 +57,9 @@ Open PRs as drafts. Never enable auto-merge. The owner merges.
 - **Branch:** `DZAJ-<n>-short-kebab-description`.
 - **Commit / PR title:** `[DZAJ-<n>] <type>(<optional scope>): <Description>`
   - types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `build`
-  - scopes: `core`, `web`, `api`, `db`, `stats`, `ui`, `migrate`, `infra`, `ci`, `docs`, `deps`
+  - scopes: `core`, `web`, `api`, `db`, `stats`, `ui`, `infra`, `ci`, `docs`, `deps`
   - issue areas (`area:*` labels and the board's Area field): `core`, `web`, `api`, `db`, `stats`, `ui`,
-    `migrate`, `infra`, `docs`
+    `infra`, `docs`
   - issue type labels: `type:spike` marks a spike. Its commit type is still `chore(infra)`.
   - `!` after the type/scope marks a breaking change.
 - PRs into `dev` are **squash-merged**; the PR title becomes the commit on `dev`.

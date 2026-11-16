@@ -56,7 +56,6 @@ The image is for development and tests only. Production is the Cloudflare Worker
 | `bun run build:client`                           | Bundle `src/client` into `public/assets`                        |
 | `bun run check:size`                             | Fail when a built bundle exceeds the gzip budget                |
 | `bun run admin:block`                            | Block or unblock a host, or delete a link (abuse CLI)           |
-| `bun run migrate:mongo`                          | Import v2 links from MongoDB into D1                            |
 | `bun run infra:up` / `infra:down`                | Start and stop the Docker dev environment                       |
 | `bun run types`                                  | Regenerate `worker-configuration.d.ts`                          |
 | `bun run db:migrate:local` / `db:migrate:remote` | Apply D1 migrations                                             |
