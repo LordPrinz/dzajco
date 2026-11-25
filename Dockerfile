@@ -3,7 +3,7 @@
 # Debian (glibc) because workerd does not run on musl. Base images are pinned by digest.
 
 # oven/bun:1.4.4 is the Debian variant; only its bun binary is used.
-FROM oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d AS bun
+FROM oven/bun:1.4.5@sha256:3aa040e5445efa09d75bb428a64ba50db13e2b3ac9b6b0c7f145615f62b2ee18 AS bun
 
 # node:26-bookworm-slim (Node 26.13.1, the version CI pins in setup-node)
 FROM node:26-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1
